@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Score Entry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Tailwind gray-100 */
+        }
+        .btn {
+            padding: 0.65rem 1.25rem;
+            border-radius: 0.375rem; /* Tailwind rounded-md */
+            font-weight: 500; /* Tailwind font-medium */
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary {
+            background-color: #3b82f6; /* Tailwind bg-blue-500 */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb; /* Tailwind bg-blue-600 */
+        }
+        .btn-outline {
+            background-color: transparent;
+            color: #4b5563; /* Tailwind text-gray-600 */
+            border: 1px solid #d1d5db; /* Tailwind border-gray-300 */
+        }
+        .btn-outline:hover {
+            background-color: #f9fafb; /* Tailwind bg-gray-50 */
+            border-color: #9ca3af; /* Tailwind border-gray-400 */
+        }
+        .card {
+            background-color: white;
+            padding: 1.5rem; /* Tailwind p-6 */
+            border-radius: 0.5rem; /* Tailwind rounded-lg */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Tailwind shadow-md */
+            margin-bottom: 1.5rem; /* Tailwind mb-6 */
+        }
+        .input-field, .select-field {
+            width: 100%;
+            padding: 0.75rem; /* Tailwind p-3 */
+            border: 1px solid #d1d5db; /* Tailwind border-gray-300 */
+            border-radius: 0.375rem; /* Tailwind rounded-md */
+            box-sizing: border-box;
+        }
+        .input-sm {
+            padding: 0.5rem 0.75rem; /* Smaller padding for table inputs */
+        }
+
+        /* Custom modal styles */
+        .modal {
+            display: none; position: fixed; z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe; margin: 10% auto; padding: 2rem;
+            border: 1px solid #888; width: 90%; max-width: 500px;
+            border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        .modal-header {
+            padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb; margin-bottom: 1rem;
+        }
+        .modal-title { font-size: 1.25rem; font-weight: 600; }
+        .modal-body { margin-bottom: 1.5rem; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; }
+
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto; /* For responsive tables */
+        }
+        th, td {
+            padding: 0.75rem 1rem; /* Tailwind p-3 px-4 */
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb; /* Tailwind border-gray-200 */
+        }
+        th {
+            background-color: #f9fafb; /* Tailwind bg-gray-50 */
+            font-weight: 600; /* Tailwind font-semibold */
+            color: #374151; /* Tailwind text-gray-700 */
+        }
+        .student-table input[type="number"] {
+            max-width: 80px;
+        }
+        .student-table input[type="checkbox"] {
+            width: 1.25rem; /* Tailwind w-5 */
+            height: 1.25rem; /* Tailwind h-5 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 p-4 sm:p-6 md:p-8">
+
+    <header class="bg-white shadow-md rounded-lg p-4 mb-6">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+            <h1 class="text-2xl font-semibold text-blue-600">Assessment Score Entry</h1>
+            <div class="text-lg text-gray-700 mt-2 sm:mt-0">Teacher: <span id="teacherNameDisplay" class="font-medium">Dr. Jane Doe</span></div>
+        </div>
+    </header>
+
+    <div class="container mx-auto">
+        <div class="card">
+            <label for="courseSelector" class="block text-lg font-medium text-gray-700 mb-2">1. Select Course:</label>
+            <select id="courseSelector" class="select-field text-base">
+                <option value="">-- Please select a course --</option>
+                <option value="ICE-3201">SRE ICE-3201</option>
+                <option value="ICE-2205">DBMS ICE-2205</option>
+                <option value="ICE-2207">OS ICE-2207</option>
+            </select>
+        </div>
+
+        <div id="assessmentDetailsSection" class="hidden">
+            <div class="card">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label for="courseObjectiveSelector" class="block text-sm font-medium text-gray-700 mb-1">2. Select Course Objective:</label>
+                        <select id="courseObjectiveSelector" class="select-field text-sm">
+                            <option value="">-- Select an objective --</option>
+                            </select>
+                    </div>
+                    <div>
+                        <label for="assessmentTypeSelector" class="block text-sm font-medium text-gray-700 mb-1">3. Assessment Type:</label>
+                        <select id="assessmentTypeSelector" class="select-field text-sm">
+                            <option value="">-- Select type --</option>
+                            <option value="quiz">Quiz</option>
+                            <option value="midterm">Mid Term</option>
+                            <option value="assignment">Assignment</option>
+                            <option value="final">Final</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="passMarkInput" class="block text-sm font-medium text-gray-700 mb-1">4. Pass Mark:</label>
+                        <input type="number" id="passMarkInput" class="input-field text-sm" placeholder="e.g., 40" min="0" max="100">
+                    </div>
+                </div>
+            </div>
+
+            <div id="studentScoresSection" class="hidden">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">5. Enter Student Scores for <span id="selectedCourseObjectiveText" class="text-blue-600"></span> (<span id="selectedAssessmentTypeText" class="text-blue-600"></span>)</h3>
+                <div class="card table-container">
+                    <table class="min-w-full bg-white student-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Student ID</th>
+                                <th>Student Name</th>
+                                <th>Obtained Mark</th>
+                                <th>Absent</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentTableBody">
+                            </tbody>
+                    </table>
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button type="button" id="saveScoresBtn" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                        </svg>
+                        Save Scores
+                    </button>
+                </div>
+            </div>
+             <div id="selectObjectiveMessage" class="card text-center text-gray-500">
+                <p>Please select a course objective, assessment type, and set pass mark to enter scores.</p>
+            </div>
+        </div>
+        <div id="noCourseSelectedMessage" class="card text-center text-gray-500">
+            <p>Please select a course above to proceed.</p>
+        </div>
+    </div>
+
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3 id="modalTitle" class="modal-title">Confirm</h3></div>
+            <div class="modal-body"><p id="modalMessage">Are you sure?</p></div>
+            <div class="modal-footer">
+                <button id="modalCancelBtn" class="btn btn-outline">Cancel</button>
+                <button id="modalConfirmBtn" class="btn btn-primary">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notificationToast" class="fixed bottom-5 right-5 bg-green-500 text-white py-3 px-6 rounded-lg shadow-lg hidden transition-opacity duration-300">
+        <p id="toastMessage">Action successful!</p>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const courseSelector = document.getElementById('courseSelector');
+        const assessmentDetailsSection = document.getElementById('assessmentDetailsSection');
+        const noCourseSelectedMessage = document.getElementById('noCourseSelectedMessage');
+        const courseObjectiveSelector = document.getElementById('courseObjectiveSelector');
+        const assessmentTypeSelector = document.getElementById('assessmentTypeSelector');
+        const passMarkInput = document.getElementById('passMarkInput');
+        const studentScoresSection = document.getElementById('studentScoresSection');
+        const selectedCourseObjectiveText = document.getElementById('selectedCourseObjectiveText');
+        const selectedAssessmentTypeText = document.getElementById('selectedAssessmentTypeText');
+        const selectObjectiveMessage = document.getElementById('selectObjectiveMessage');
+        const studentTableBody = document.getElementById('studentTableBody');
+        const saveScoresBtn = document.getElementById('saveScoresBtn');
+
+        // --- Modal & Toast (Reused) ---
+        const confirmationModal = document.getElementById('confirmationModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+        let currentConfirmAction = null;
+
+        function showModal(title, message, onConfirm) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            currentConfirmAction = onConfirm;
+            confirmationModal.style.display = 'block';
+            modalConfirmBtn.textContent = 'Confirm';
+            modalConfirmBtn.classList.remove('btn-danger');
+            modalConfirmBtn.classList.add('btn-primary');
+            modalCancelBtn.style.display = 'inline-flex';
+        }
+        modalCancelBtn.onclick = () => { confirmationModal.style.display = 'none'; currentConfirmAction = null; };
+        modalConfirmBtn.onclick = () => { if (currentConfirmAction) currentConfirmAction(); confirmationModal.style.display = 'none'; currentConfirmAction = null; };
+        window.onclick = (event) => { if (event.target == confirmationModal) { confirmationModal.style.display = 'none'; currentConfirmAction = null; } };
+
+        const notificationToast = document.getElementById('notificationToast');
+        const toastMessage = document.getElementById('toastMessage');
+        function showToast(message, type = 'success') {
+            toastMessage.textContent = message;
+            notificationToast.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'bg-yellow-500');
+            if (type === 'success') notificationToast.classList.add('bg-green-500');
+            else if (type === 'error') notificationToast.classList.add('bg-red-500');
+            else if (type === 'warning') notificationToast.classList.add('bg-yellow-500');
+            notificationToast.classList.remove('opacity-0');
+            notificationToast.classList.add('opacity-100', 'block');
+             notificationToast.classList.remove('hidden');
+            setTimeout(() => {
+                notificationToast.classList.remove('opacity-100');
+                notificationToast.classList.add('opacity-0');
+                setTimeout(() => { notificationToast.classList.add('hidden'); }, 300);
+            }, 3000);
+        }
+
+        // --- Demo Data ---
+        const DEMO_COURSE_OBJECTIVES = {
+            "ICE-3201": [
+                { id: "co1_sre", text: "CO1: Understand SRE principles" },
+                { id: "co2_sre", text: "CO2: Implement monitoring solutions" },
+                { id: "co3_sre", text: "CO3: Manage incident response" }
+            ],
+            "ICE-2205": [
+                { id: "co1_dbms", text: "CO1: Design relational databases" },
+                { id: "co2_dbms", text: "CO2: Write complex SQL queries" },
+                { id: "co3_dbms", text: "CO3: Understand transaction management" }
+            ],
+            "ICE-2207": [
+                { id: "co1_os", text: "CO1: Explain OS concepts" },
+                { id: "co2_os", text: "CO2: Analyze process scheduling algorithms" },
+                { id: "co3_os", text: "CO3: Understand memory management" }
+            ]
+        };
+
+        const DEMO_STUDENTS = Array.from({ length: 50 }, (_, i) => ({
+            id: `ICE-${2000 + i}`,
+            name: `Student ${String.fromCharCode(65 + (i % 26))}${Math.floor(i / 26) || ''}-${i + 1}`
+        }));
+
+        // --- Functions ---
+        function populateCourseObjectives(courseId) {
+            courseObjectiveSelector.innerHTML = '<option value="">-- Select an objective --</option>'; // Clear previous
+            const objectives = DEMO_COURSE_OBJECTIVES[courseId] || [];
+            objectives.forEach(obj => {
+                const option = document.createElement('option');
+                option.value = obj.id;
+                option.textContent = obj.text;
+                courseObjectiveSelector.appendChild(option);
+            });
+        }
+
+        function populateStudentTable() {
+            studentTableBody.innerHTML = ''; // Clear previous
+            DEMO_STUDENTS.forEach((student, index) => {
+                const row = studentTableBody.insertRow();
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${student.id}</td>
+                    <td>${student.name}</td>
+                    <td><input type="number" class="input-field input-sm mark-input" data-studentid="${student.id}" min="0" max="100" placeholder="Mark"></td>
+                    <td><input type="checkbox" class="absent-checkbox" data-studentid="${student.id}"></td>
+                `;
+                const markInput = row.querySelector('.mark-input');
+                const absentCheckbox = row.querySelector('.absent-checkbox');
+                absentCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        markInput.value = '';
+                        markInput.disabled = true;
+                        markInput.classList.add('bg-gray-100');
+                    } else {
+                        markInput.disabled = false;
+                        markInput.classList.remove('bg-gray-100');
+                    }
+                });
+            });
+        }
+        
+        function checkAssessmentPrerequisites() {
+            const courseSelected = courseSelector.value;
+            const objectiveSelected = courseObjectiveSelector.value;
+            const assessmentTypeSelected = assessmentTypeSelector.value;
+            const passMarkSet = passMarkInput.value.trim() !== '';
+
+            if (courseSelected && objectiveSelected && assessmentTypeSelected && passMarkSet) {
+                studentScoresSection.classList.remove('hidden');
+                selectObjectiveMessage.classList.add('hidden');
+                selectedCourseObjectiveText.textContent = courseObjectiveSelector.options[courseObjectiveSelector.selectedIndex].text;
+                selectedAssessmentTypeText.textContent = assessmentTypeSelector.options[assessmentTypeSelector.selectedIndex].text;
+            } else {
+                studentScoresSection.classList.add('hidden');
+                if (courseSelected) { // Only show this message if a course is selected but other details are missing
+                     selectObjectiveMessage.classList.remove('hidden');
+                }
+            }
+        }
+
+
+        courseSelector.addEventListener('change', function() {
+            if (this.value) {
+                assessmentDetailsSection.classList.remove('hidden');
+                noCourseSelectedMessage.classList.add('hidden');
+                populateCourseObjectives(this.value);
+                populateStudentTable(); // Populate students when course changes
+                // Reset downstream selections and visibility
+                courseObjectiveSelector.value = "";
+                assessmentTypeSelector.value = "";
+                passMarkInput.value = "";
+                studentScoresSection.classList.add('hidden');
+                selectObjectiveMessage.classList.remove('hidden'); // Show message to select objective etc.
+            } else {
+                assessmentDetailsSection.classList.add('hidden');
+                noCourseSelectedMessage.classList.remove('hidden');
+                studentScoresSection.classList.add('hidden');
+                selectObjectiveMessage.classList.add('hidden');
+            }
+        });
+
+        courseObjectiveSelector.addEventListener('change', checkAssessmentPrerequisites);
+        assessmentTypeSelector.addEventListener('change', checkAssessmentPrerequisites);
+        passMarkInput.addEventListener('input', checkAssessmentPrerequisites);
+
+
+        saveScoresBtn.addEventListener('click', () => {
+            const selectedCourse = courseSelector.value;
+            const selectedObjectiveId = courseObjectiveSelector.value;
+            const selectedAssessmentType = assessmentTypeSelector.value;
+            const passMark = passMarkInput.value;
+
+            if (!selectedCourse || !selectedObjectiveId || !selectedAssessmentType || passMark.trim() === "") {
+                showToast("Please ensure course, objective, assessment type, and pass mark are set.", "error");
+                return;
+            }
+
+            const studentScores = [];
+            const rows = studentTableBody.querySelectorAll('tr');
+            let allValid = true;
+            rows.forEach(row => {
+                const studentId = row.querySelector('.mark-input').dataset.studentid;
+                const markInput = row.querySelector('.mark-input');
+                const absentCheckbox = row.querySelector('.absent-checkbox');
+                const obtainedMark = markInput.value;
+
+                if (!absentCheckbox.checked && obtainedMark.trim() === "") {
+                    markInput.classList.add('border-red-500');
+                    allValid = false;
+                } else {
+                    markInput.classList.remove('border-red-500');
+                }
+                
+                // Validate mark is a number if not absent
+                if (!absentCheckbox.checked && obtainedMark.trim() !== "" && isNaN(parseFloat(obtainedMark))) {
+                    markInput.classList.add('border-red-500');
+                    showToast(`Invalid mark for student ${studentId}. Please enter a number.`, "error");
+                    allValid = false;
+                }
+
+
+                studentScores.push({
+                    studentId: studentId,
+                    name: DEMO_STUDENTS.find(s => s.id === studentId).name, // Get name for logging
+                    obtainedMark: absentCheckbox.checked ? null : parseFloat(obtainedMark),
+                    isAbsent: absentCheckbox.checked
+                });
+            });
+
+            if (!allValid) {
+                showModal("Validation Error", "Please fill in obtained marks for all present students or mark them as absent. Marks must be numbers.", () => {});
+                modalConfirmBtn.textContent = 'OK';
+                modalCancelBtn.style.display = 'none';
+                return;
+            }
+
+            showModal(
+                'Confirm Save Scores',
+                `Are you sure you want to save scores for ${courseObjectiveSelector.options[courseObjectiveSelector.selectedIndex].text} - ${assessmentTypeSelector.options[assessmentTypeSelector.selectedIndex].text}?`,
+                () => {
+                    console.log("Saving Scores:", {
+                        course: selectedCourse,
+                        objectiveId: selectedObjectiveId,
+                        assessmentType: selectedAssessmentType,
+                        passMark: parseFloat(passMark),
+                        scores: studentScores
+                    });
+                    showToast('Scores saved successfully!', 'success');
+                }
+            );
+        });
+
+        // Initial state
+        if (!courseSelector.value) {
+            assessmentDetailsSection.classList.add('hidden');
+            noCourseSelectedMessage.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

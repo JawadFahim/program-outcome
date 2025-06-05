@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BICE Course Outcome - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f4f8; /* A light, neutral background */
+        }
+        .login-card {
+            background-color: white;
+            padding: 2.5rem; /* Tailwind p-10 */
+            border-radius: 0.75rem; /* Tailwind rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Tailwind shadow-lg */
+            width: 100%;
+            max-width: 28rem; /* Tailwind max-w-md */
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem 1rem; /* Tailwind p-3 px-4 */
+            border: 1px solid #d1d5db; /* Tailwind border-gray-300 */
+            border-radius: 0.375rem; /* Tailwind rounded-md */
+            transition: border-color 0.3s ease;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #3b82f6; /* Tailwind border-blue-500 */
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); /* Focus ring */
+        }
+        .btn-primary {
+            background-color: #2563eb; /* Tailwind bg-blue-600 */
+            color: white;
+            padding: 0.75rem;
+            width: 100%;
+            border-radius: 0.375rem; /* Tailwind rounded-md */
+            font-weight: 500; /* Tailwind font-medium */
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8; /* Tailwind bg-blue-700 */
+        }
+        .logo-placeholder { /* Optional: if you have a logo */
+            height: 3rem; /* Tailwind h-12 */
+            width: auto;
+            margin-bottom: 1.5rem; /* Tailwind mb-6 */
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container px-4 py-8">
+        <div class="login-card">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">BICE Course Outcome</h1>
+                <p class="text-gray-600 mt-1">Teacher Login</p>
+            </div>
+
+            <form id="loginForm">
+                <div class="mb-5">
+                    <label for="teacherId" class="block text-sm font-medium text-gray-700 mb-1">Teacher ID</label>
+                    <input type="text" id="teacherId" name="teacherId" class="input-field" placeholder="Enter your Teacher ID" required>
+                </div>
+
+                <div class="mb-6">
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="password" name="password" class="input-field" placeholder="Enter your password" required>
+                </div>
+
+                <div class="mb-6">
+                    <button type="submit" class="btn-primary">Login</button>
+                </div>
+
+                <div class="text-center">
+                    <a href="#" id="forgotPasswordLink" class="text-sm text-blue-600 hover:text-blue-700 hover:underline">
+                        Forgot Password?
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="forgotPasswordModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden flex items-center justify-center px-4">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-800">Forgot Password</h3>
+                <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <p class="text-gray-600 mb-4">
+                Please contact the system administrator or your department head to reset your password.
+            </p>
+            <div class="text-right">
+                <button id="okModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const okModalBtn = document.getElementById('okModalBtn');
+
+        loginForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent actual form submission for this demo
+            const teacherId = document.getElementById('teacherId').value;
+            const password = document.getElementById('password').value;
+
+            if (teacherId && password) {
+                // In a real application, you would send these to a backend for authentication.
+                // For demo purposes, we'll just log it and simulate a successful login.
+                console.log('Attempting login with Teacher ID:', teacherId);
+                alert('Login attempt submitted! (Backend integration needed)');
+                // Example: Redirect to dashboard on successful login
+                // window.location.href = 'dashboard.html';
+            } else {
+                alert('Please enter both Teacher ID and Password.');
+            }
+        });
+
+        forgotPasswordLink.addEventListener('click', function(event) {
+            event.preventDefault();
+            forgotPasswordModal.classList.remove('hidden');
+        });
+
+        closeModalBtn.addEventListener('click', function() {
+            forgotPasswordModal.classList.add('hidden');
+        });
+        okModalBtn.addEventListener('click', function() {
+            forgotPasswordModal.classList.add('hidden');
+        });
+
+        // Close modal if clicked outside of it
+        window.addEventListener('click', function(event) {
+            if (event.target === forgotPasswordModal) {
+                forgotPasswordModal.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

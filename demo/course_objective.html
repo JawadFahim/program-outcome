@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Objective Mapping</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Tailwind gray-100 */
+        }
+        .btn {
+            padding: 0.65rem 1.25rem; /* Slightly smaller padding */
+            border-radius: 0.375rem; /* Tailwind rounded-md */
+            font-weight: 500; /* Tailwind font-medium */
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary {
+            background-color: #3b82f6; /* Tailwind bg-blue-500 */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb; /* Tailwind bg-blue-600 */
+        }
+        .btn-secondary {
+            background-color: #6b7280; /* Tailwind bg-gray-500 */
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563; /* Tailwind bg-gray-600 */
+        }
+        .btn-danger {
+            background-color: #ef4444; /* Tailwind bg-red-500 */
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626; /* Tailwind bg-red-600 */
+        }
+        .btn-outline {
+            background-color: transparent;
+            color: #4b5563; /* Tailwind text-gray-600 */
+            border: 1px solid #d1d5db; /* Tailwind border-gray-300 */
+        }
+        .btn-outline:hover {
+            background-color: #f9fafb; /* Tailwind bg-gray-50 */
+            border-color: #9ca3af; /* Tailwind border-gray-400 */
+        }
+        .card {
+            background-color: white;
+            padding: 1.5rem; /* Tailwind p-6 */
+            border-radius: 0.5rem; /* Tailwind rounded-lg */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Tailwind shadow-md */
+            margin-bottom: 1.5rem; /* Tailwind mb-6 */
+        }
+        .input-field, .select-field {
+            width: 100%;
+            padding: 0.75rem; /* Tailwind p-3 */
+            border: 1px solid #d1d5db; /* Tailwind border-gray-300 */
+            border-radius: 0.375rem; /* Tailwind rounded-md */
+            box-sizing: border-box;
+        }
+        .textarea-field {
+            width: 100%;
+            padding: 0.75rem; /* Tailwind p-3 */
+            border: 1px solid #d1d5db; /* Tailwind border-gray-300 */
+            border-radius: 0.375rem; /* Tailwind rounded-md */
+            min-height: 80px; /* Keep a minimum height for the textarea */
+        }
+        .course-objective-block {
+            display: flex;
+            flex-direction: column; /* Stack elements vertically on small screens */
+            gap: 1rem; /* Tailwind gap-4 */
+            align-items: flex-start; 
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .course-objective-block {
+                flex-direction: row; /* Side-by-side on larger screens */
+                align-items: center; /* Align items vertically in the center */
+                /* gap: 1rem; /* This is already here, ensure it's desired */
+            }
+            .course-objective-block .textarea-field,
+            .course-objective-block .select-field {
+                flex: 1 1 0%; /* This is key: grow, shrink, basis 0 to share space equally */
+                /* The width: 100% from general styles will apply before flex, which is fine. */
+                /* Remove min-width from select if it was overriding flex behavior */
+            }
+            .course-objective-block .select-field {
+                 /* You might want a min-width here if text gets too cramped, but start without it for equal sharing */
+                 /* e.g., min-width: 180px; but this could make sharing unequal if space is tight */
+            }
+            .course-objective-block .remove-objective-btn-container {
+                margin-left: 0.5rem; /* Space before remove button */
+                flex-shrink: 0; /* Prevent button container from shrinking */
+                /* The button itself will determine the width of this container */
+            }
+        }
+
+        /* Custom modal styles */
+        .modal {
+            display: none; position: fixed; z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe; margin: 10% auto; padding: 2rem;
+            border: 1px solid #888; width: 90%; max-width: 500px;
+            border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        .modal-header {
+            padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb; margin-bottom: 1rem;
+        }
+        .modal-title { font-size: 1.25rem; font-weight: 600; }
+        .modal-body { margin-bottom: 1.5rem; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 p-4 sm:p-6 md:p-8">
+
+    <header class="bg-white shadow-md rounded-lg p-4 mb-6">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+            <h1 class="text-2xl font-semibold text-blue-600">Course Objective Mapping</h1>
+            <div class="text-lg text-gray-700 mt-2 sm:mt-0">Teacher: <span id="teacherNameDisplay" class="font-medium">Dr. Jane Doe</span></div>
+        </div>
+    </header>
+
+    <div class="container mx-auto">
+        <div class="card">
+            <label for="courseSelector" class="block text-lg font-medium text-gray-700 mb-2">Select Course:</label>
+            <select id="courseSelector" class="select-field text-base">
+                <option value="">-- Please select a course --</option>
+                <option value="ICE-3201">SRE ICE-3201</option>
+                <option value="ICE-2205">DBMS ICE-2205</option>
+                <option value="ICE-2207">OS ICE-2207</option>
+            </select>
+        </div>
+
+        <div id="courseObjectivesSection" class="hidden">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-3">Define Course Objectives for <span id="selectedCourseName" class="text-blue-600"></span></h2>
+            <p class="text-gray-600 mb-6">For each course objective you define, select one primary BICE Program Outcome it aligns with.</p>
+
+            <div id="courseObjectivesContainer" class="space-y-6">
+                </div>
+
+            <div class="mt-8 flex flex-wrap gap-3">
+                <button type="button" id="addCourseObjectiveBtn" class="btn btn-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    Add Course Objective
+                </button>
+            </div>
+        </div>
+        <div id="noCourseSelectedMessage" class="card text-center text-gray-500">
+            <p>Please select a course above to begin defining its objectives.</p>
+        </div>
+
+
+        <div id="overallActionButtons" class="mt-8 flex flex-wrap gap-3 hidden">
+            <button type="button" id="saveAllObjectivesBtn" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
+                Save All Objectives
+            </button>
+            <button type="button" id="assessmentScoreBtn" class="btn btn-outline">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Assessment Score
+            </button>
+        </div>
+    </div>
+
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3 id="modalTitle" class="modal-title">Confirm</h3></div>
+            <div class="modal-body"><p id="modalMessage">Are you sure?</p></div>
+            <div class="modal-footer">
+                <button id="modalCancelBtn" class="btn btn-outline">Cancel</button>
+                <button id="modalConfirmBtn" class="btn btn-primary">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notificationToast" class="fixed bottom-5 right-5 bg-green-500 text-white py-3 px-6 rounded-lg shadow-lg hidden transition-opacity duration-300">
+        <p id="toastMessage">Action successful!</p>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const teacherNameDisplay = document.getElementById('teacherNameDisplay'); // Can be set dynamically later
+        const courseSelector = document.getElementById('courseSelector');
+        const courseObjectivesSection = document.getElementById('courseObjectivesSection');
+        const noCourseSelectedMessage = document.getElementById('noCourseSelectedMessage');
+        const selectedCourseNameDisplay = document.getElementById('selectedCourseName');
+        const objectivesContainer = document.getElementById('courseObjectivesContainer');
+        const addObjectiveBtn = document.getElementById('addCourseObjectiveBtn');
+        const saveAllBtn = document.getElementById('saveAllObjectivesBtn');
+        const assessmentScoreBtn = document.getElementById('assessmentScoreBtn');
+        const overallActionButtons = document.getElementById('overallActionButtons');
+
+        // --- Modal & Toast (Reused from previous, ensure they are defined) ---
+        const confirmationModal = document.getElementById('confirmationModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+        let currentConfirmAction = null;
+
+        function showModal(title, message, onConfirm) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            currentConfirmAction = onConfirm;
+            confirmationModal.style.display = 'block';
+            // Ensure confirm button is standard
+            modalConfirmBtn.textContent = 'Confirm';
+            modalConfirmBtn.classList.remove('btn-danger');
+            modalConfirmBtn.classList.add('btn-primary');
+            modalCancelBtn.style.display = 'inline-flex';
+        }
+
+        modalCancelBtn.onclick = () => { confirmationModal.style.display = 'none'; currentConfirmAction = null; };
+        modalConfirmBtn.onclick = () => {
+            if (currentConfirmAction) currentConfirmAction();
+            confirmationModal.style.display = 'none'; currentConfirmAction = null;
+        };
+        window.onclick = (event) => {
+            if (event.target == confirmationModal) {
+                confirmationModal.style.display = 'none'; currentConfirmAction = null;
+            }
+        };
+
+        const notificationToast = document.getElementById('notificationToast');
+        const toastMessage = document.getElementById('toastMessage');
+
+        function showToast(message, type = 'success') {
+            toastMessage.textContent = message;
+            notificationToast.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'bg-yellow-500');
+            if (type === 'success') notificationToast.classList.add('bg-green-500');
+            else if (type === 'error') notificationToast.classList.add('bg-red-500');
+            else if (type === 'warning') notificationToast.classList.add('bg-yellow-500');
+
+            notificationToast.classList.remove('opacity-0');
+            notificationToast.classList.add('opacity-100', 'block');
+            notificationToast.classList.remove('hidden');
+
+
+            setTimeout(() => {
+                notificationToast.classList.remove('opacity-100');
+                notificationToast.classList.add('opacity-0');
+                 setTimeout(() => {
+                     notificationToast.classList.add('hidden');
+                }, 300);
+            }, 3000);
+        }
+
+        // --- Application State & Config ---
+        let objectiveCounter = 0;
+        const BICE_PROGRAM_OUTCOMES = [ // Changed to Program Outcomes as per user's intent
+            "PO1: Engineering knowledge",
+            "PO2: Problem analysis",
+            "PO3: Design/development of solutions",
+            "PO4: Conduct investigations of complex problems",
+            "PO5: Modern tool usage",
+            "PO6: The engineer and society",
+            "PO7: Environment and sustainability",
+            "PO8: Ethics",
+            "PO9: Individual and team work",
+            "PO10: Communication",
+            "PO11: Project management and finance",
+            "PO12: Life-long learning"
+        ];
+
+        // --- Functions ---
+        function updateObjectiveBlockNumbers() {
+            const blocks = objectivesContainer.querySelectorAll('.objective-entry-item');
+            blocks.forEach((block, index) => {
+                block.querySelector('.objective-title').textContent = `Course Objective ${index + 1}`;
+                // Update IDs and names if necessary for form submission, though not strictly needed for this client-side demo
+                block.querySelector('textarea').name = `course_objective_desc_${index + 1}`;
+                block.querySelector('select').name = `program_outcome_map_${index + 1}`;
+            });
+            // Show/hide remove buttons
+            const removeButtons = objectivesContainer.querySelectorAll('.remove-objective-btn');
+            removeButtons.forEach(btn => {
+                btn.style.display = blocks.length > 1 ? 'inline-flex' : 'none';
+            });
+        }
+
+        function createObjectiveBlock() {
+            objectiveCounter++;
+            const blockId = `objectiveBlock_${objectiveCounter}`;
+
+            const div = document.createElement('div');
+            div.className = 'card objective-entry-item p-4'; // Added p-4 for internal padding
+            div.id = blockId;
+
+            let selectOptions = '<option value="">-- Select Program Outcome --</option>';
+            BICE_PROGRAM_OUTCOMES.forEach((outcome, index) => {
+                selectOptions += `<option value="PO${index + 1}">${outcome}</option>`;
+            });
+
+            div.innerHTML = `
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="objective-title text-lg font-medium text-gray-700">Course Objective ${objectivesContainer.children.length + 1}</h4>
+                </div>
+                <div class="course-objective-block">
+                    <textarea class="textarea-field" name="course_objective_desc_${objectiveCounter}" placeholder="Enter course objective description..."></textarea>
+                    <select class="select-field" name="program_outcome_map_${objectiveCounter}">
+                        ${selectOptions}
+                    </select>
+                    <div class="remove-objective-btn-container">
+                         <button type="button" class="btn btn-danger btn-sm remove-objective-btn" onclick="removeObjective('${blockId}')">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            Remove
+                        </button>
+                    </div>
+                </div>
+            `;
+            objectivesContainer.appendChild(div);
+            updateObjectiveBlockNumbers();
+        }
+
+        window.removeObjective = function(blockId) {
+            const blockToRemove = document.getElementById(blockId);
+            if (objectivesContainer.children.length <= 1) {
+                showToast("At least one course objective is required.", "warning");
+                return;
+            }
+            showModal(
+                'Confirm Removal',
+                'Are you sure you want to remove this course objective?',
+                () => {
+                    blockToRemove.remove();
+                    updateObjectiveBlockNumbers();
+                    showToast('Course objective removed.', 'success');
+                }
+            );
+            // Style confirm button for danger
+            modalConfirmBtn.classList.remove('btn-primary');
+            modalConfirmBtn.classList.add('btn-danger');
+        }
+
+        courseSelector.addEventListener('change', function() {
+            if (this.value) {
+                selectedCourseNameDisplay.textContent = this.options[this.selectedIndex].text;
+                courseObjectivesSection.classList.remove('hidden');
+                noCourseSelectedMessage.classList.add('hidden');
+                overallActionButtons.classList.remove('hidden');
+                // Clear previous objectives and add one default block
+                objectivesContainer.innerHTML = '';
+                objectiveCounter = 0; // Reset counter
+                createObjectiveBlock(); // Add the first block for the selected course
+            } else {
+                courseObjectivesSection.classList.add('hidden');
+                noCourseSelectedMessage.classList.remove('hidden');
+                overallActionButtons.classList.add('hidden');
+                objectivesContainer.innerHTML = ''; // Clear objectives
+            }
+        });
+
+        addObjectiveBtn.addEventListener('click', createObjectiveBlock);
+
+        saveAllBtn.addEventListener('click', () => {
+            const selectedCourse = courseSelector.value;
+            if (!selectedCourse) {
+                showToast("Please select a course first.", "error");
+                return;
+            }
+
+            const objectivesData = [];
+            const blocks = objectivesContainer.querySelectorAll('.objective-entry-item');
+            let allValid = true;
+
+            blocks.forEach((block, index) => {
+                const description = block.querySelector('textarea').value.trim();
+                const programOutcome = block.querySelector('select').value;
+
+                if (!description) {
+                    showToast(`Description for Objective ${index + 1} is missing.`, 'error');
+                    block.querySelector('textarea').classList.add('border-red-500');
+                    allValid = false;
+                } else {
+                     block.querySelector('textarea').classList.remove('border-red-500');
+                }
+
+                if (!programOutcome) {
+                    showToast(`Program Outcome for Objective ${index + 1} is not selected.`, 'error');
+                    block.querySelector('select').classList.add('border-red-500');
+                    allValid = false;
+                } else {
+                    block.querySelector('select').classList.remove('border-red-500');
+                }
+
+                objectivesData.push({
+                    courseObjective: description,
+                    mappedProgramOutcome: programOutcome
+                });
+            });
+
+            if (!allValid) {
+                showModal("Validation Error", "Please fill in all required fields for each course objective.", () => {});
+                modalConfirmBtn.textContent = 'OK';
+                modalCancelBtn.style.display = 'none';
+                return;
+            }
+            
+            if (objectivesData.length === 0) {
+                showToast("No course objectives to save.", "warning");
+                return;
+            }
+
+            showModal(
+                'Confirm Save',
+                `Are you sure you want to save ${objectivesData.length} objective(s) for ${selectedCourseNameDisplay.textContent}?`,
+                () => {
+                    console.log("Saving data for course:", selectedCourse);
+                    console.log("Objectives:", objectivesData);
+                    // In a real app, send this data to the backend
+                    showToast('Objectives saved successfully!', 'success');
+                }
+            );
+        });
+
+        assessmentScoreBtn.addEventListener('click', () => {
+            if (!courseSelector.value) {
+                showToast("Please select a course first.", "error");
+                return;
+            }
+            showModal(
+                'Assessment Score',
+                `Functionality for 'Assessment Score' for ${selectedCourseNameDisplay.textContent} is not yet implemented.`,
+                () => {} // No action on confirm
+            );
+            modalConfirmBtn.textContent = 'OK';
+            modalCancelBtn.style.display = 'none';
+        });
+
+        // Initial state
+        if (!courseSelector.value) {
+            courseObjectivesSection.classList.add('hidden');
+            noCourseSelectedMessage.classList.remove('hidden');
+            overallActionButtons.classList.add('hidden');
+        }
+
+    </script>
+</body>
+</html>

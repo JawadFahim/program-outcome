@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Score Summary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Tailwind gray-100 */
+        }
+        .card {
+            background-color: white;
+            padding: 1.5rem; /* Tailwind p-6 */
+            border-radius: 0.5rem; /* Tailwind rounded-lg */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Tailwind shadow-md */
+            margin-bottom: 1.5rem; /* Tailwind mb-6 */
+        }
+        .select-field {
+            width: 100%;
+            padding: 0.75rem; /* Tailwind p-3 */
+            border: 1px solid #d1d5db; /* Tailwind border-gray-300 */
+            border-radius: 0.375rem; /* Tailwind rounded-md */
+            box-sizing: border-box;
+        }
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto; /* For responsive tables */
+        }
+        th, td {
+            padding: 0.75rem 1rem; /* Tailwind p-3 px-4 */
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb; /* Tailwind border-gray-200 */
+            white-space: nowrap; /* Prevent text wrapping in cells initially */
+        }
+        th {
+            background-color: #f9fafb; /* Tailwind bg-gray-50 */
+            font-weight: 600; /* Tailwind font-semibold */
+            color: #374151; /* Tailwind text-gray-700 */
+        }
+        .summary-table th, .summary-table td {
+            font-weight: 500;
+        }
+        .pass {
+            color: #10b981; /* Tailwind green-500 */
+        }
+        .fail {
+            color: #ef4444; /* Tailwind red-500 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 p-4 sm:p-6 md:p-8">
+
+    <header class="bg-white shadow-md rounded-lg p-4 mb-6">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+            <h1 class="text-2xl font-semibold text-blue-600">Final Score Summary</h1>
+            <div class="text-lg text-gray-700 mt-2 sm:mt-0">Teacher: <span id="teacherNameDisplay" class="font-medium">Dr. Jane Doe</span></div>
+        </div>
+    </header>
+
+    <div class="container mx-auto">
+        <div class="card">
+            <label for="courseSelector" class="block text-lg font-medium text-gray-700 mb-2">Select Course:</label>
+            <select id="courseSelector" class="select-field text-base">
+                <option value="">-- Please select a course --</option>
+                <option value="SRE101">SRE ICE-3201 (Demo SRE)</option>
+                <option value="DBMS202">DBMS ICE-2205 (Demo DBMS)</option>
+                <option value="OS303">OS ICE-2207 (Demo OS)</option>
+            </select>
+        </div>
+
+        <div id="scoresDisplaySection" class="hidden">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-1">Scores for <span id="selectedCourseNameDisplay" class="text-blue-600"></span></h2>
+            <p class="text-sm text-gray-500 mb-4">Assumed Pass Mark for each CO: <span id="passMarkDisplay" class="font-semibold">40</span></p>
+
+            <div class="card table-container">
+                <table class="min-w-full bg-white">
+                    <thead id="scoreTableHead">
+                        </thead>
+                    <tbody id="scoreTableBody">
+                        </tbody>
+                </table>
+            </div>
+
+            <div class="card mt-6">
+                <h3 class="text-xl font-semibold text-gray-700 mb-3">Course Objective Pass Percentages</h3>
+                <div class="table-container">
+                    <table class="min-w-full bg-white summary-table">
+                        <thead id="summaryTableHead">
+                            </thead>
+                        <tbody id="summaryTableBody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="noCourseSelectedMessage" class="card text-center text-gray-500">
+            <p>Please select a course to view the final scores.</p>
+        </div>
+    </div>
+
+<script>
+    // --- DOM Elements ---
+    const courseSelector = document.getElementById('courseSelector');
+    const scoresDisplaySection = document.getElementById('scoresDisplaySection');
+    const noCourseSelectedMessage = document.getElementById('noCourseSelectedMessage');
+    const selectedCourseNameDisplay = document.getElementById('selectedCourseNameDisplay');
+    const passMarkDisplay = document.getElementById('passMarkDisplay');
+    const scoreTableHead = document.getElementById('scoreTableHead');
+    const scoreTableBody = document.getElementById('scoreTableBody');
+    const summaryTableHead = document.getElementById('summaryTableHead');
+    const summaryTableBody = document.getElementById('summaryTableBody');
+
+    // --- Demo Data & Configuration ---
+    const PASS_MARK = 40;
+    passMarkDisplay.textContent = PASS_MARK;
+
+    const DEMO_COURSE_DETAILS = {
+        "SRE101": {
+            name: "SRE ICE-3201 (Demo SRE)",
+            objectives: ["CO1-SRE", "CO2-SRE", "CO3-SRE"],
+            students: [
+                // This will be populated to 50 students below
+            ]
+        },
+        "DBMS202": {
+            name: "DBMS ICE-2205 (Demo DBMS)",
+            objectives: ["CO1-DBMS", "CO2-DBMS", "CO3-DBMS", "CO4-DBMS"],
+            students: [
+                { id: "DBMS-001", name: "Frank Green", scores: { "CO1-DBMS": 82, "CO2-DBMS": 70, "CO3-DBMS": 60, "CO4-DBMS": 75 } },
+                { id: "DBMS-002", name: "Grace Hall", scores: { "CO1-DBMS": 35, "CO2-DBMS": 40, "CO3-DBMS": 50, "CO4-DBMS": 30 } },
+                { id: "DBMS-003", name: "Henry King", scores: { "CO1-DBMS": 90, "CO2-DBMS": 85, "CO3-DBMS": 78, "CO4-DBMS": 92 } },
+                { id: "DBMS-004", name: "Ivy Lee", scores: { "CO1-DBMS": 50, "CO2-DBMS": 38, "CO3-DBMS": 45, "CO4-DBMS": 60 } },
+            ]
+        },
+        "OS303": {
+            name: "OS ICE-2207 (Demo OS)",
+            objectives: ["CO1-OS", "CO2-OS"],
+            students: [
+                { id: "OS-001", name: "Jack Miller", scores: { "CO1-OS": 65, "CO2-OS": 70 } },
+                { id: "OS-002", name: "Karen Nelson", scores: { "CO1-OS": 38, "CO2-OS": 42 } },
+                { id: "OS-003", name: "Leo Olsen", scores: { "CO1-OS": 80, "CO2-OS": 30 } },
+            ]
+        }
+    };
+    // Populate 50 students for the SRE course
+    if (DEMO_COURSE_DETAILS["SRE101"]) {
+        const sreObjectives = DEMO_COURSE_DETAILS["SRE101"].objectives;
+        for (let i = 1; i <= 50; i++) {
+            const studentScores = {};
+            sreObjectives.forEach(obj => {
+                // Generate random score: 60% chance to pass (40-100), 40% chance to fail (0-39)
+                const passes = Math.random() < 0.6;
+                studentScores[obj] = passes ? Math.floor(Math.random() * 61) + 40 : Math.floor(Math.random() * 40) ;
+            });
+            DEMO_COURSE_DETAILS["SRE101"].students.push({
+                id: `SRE-${String(i).padStart(3, '0')}`,
+                name: `Student SRE ${i}`,
+                scores: studentScores
+            });
+        }
+    }
+
+
+    // --- Functions ---
+    function displayScores(courseId) {
+        const courseData = DEMO_COURSE_DETAILS[courseId];
+        if (!courseData) {
+            scoresDisplaySection.classList.add('hidden');
+            noCourseSelectedMessage.classList.remove('hidden');
+            noCourseSelectedMessage.textContent = "No data available for this course.";
+            return;
+        }
+
+        selectedCourseNameDisplay.textContent = courseData.name;
+        const objectives = courseData.objectives;
+        const students = courseData.students;
+
+        // 1. Populate Score Table Header
+        scoreTableHead.innerHTML = ''; // Clear previous
+        let headerRowHtml = '<tr><th>#</th><th>Student ID</th><th>Student Name</th>';
+        objectives.forEach(obj => {
+            headerRowHtml += `<th>${obj}</th>`;
+        });
+        headerRowHtml += '</tr>';
+        scoreTableHead.innerHTML = headerRowHtml;
+
+        // 2. Populate Score Table Body
+        scoreTableBody.innerHTML = ''; // Clear previous
+        students.forEach((student, index) => {
+            let studentRowHtml = `<tr><td>${index + 1}</td><td>${student.id}</td><td>${student.name}</td>`;
+            objectives.forEach(obj => {
+                const score = student.scores[obj] !== undefined ? student.scores[obj] : '-';
+                const scoreClass = score >= PASS_MARK ? 'pass' : (score === '-' ? '' : 'fail');
+                studentRowHtml += `<td class="${scoreClass}">${score}</td>`;
+            });
+            studentRowHtml += '</tr>';
+            scoreTableBody.innerHTML += studentRowHtml;
+        });
+
+        // 3. Calculate and Populate Summary Table
+        summaryTableHead.innerHTML = ''; // Clear previous
+        summaryTableBody.innerHTML = ''; // Clear previous
+
+        let summaryHeaderHtml = '<tr>';
+        let summaryDataHtml = '<tr>';
+        objectives.forEach(obj => {
+            summaryHeaderHtml += `<th>${obj}</th>`;
+            let passedCount = 0;
+            students.forEach(student => {
+                if (student.scores[obj] !== undefined && student.scores[obj] >= PASS_MARK) {
+                    passedCount++;
+                }
+            });
+            const passPercentage = students.length > 0 ? ((passedCount / students.length) * 100).toFixed(2) : 0;
+            summaryDataHtml += `<td>${passPercentage}% (${passedCount}/${students.length})</td>`;
+        });
+        summaryHeaderHtml += '</tr>';
+        summaryDataHtml += '</tr>';
+
+        summaryTableHead.innerHTML = summaryHeaderHtml;
+        summaryTableBody.innerHTML = summaryDataHtml;
+
+
+        scoresDisplaySection.classList.remove('hidden');
+        noCourseSelectedMessage.classList.add('hidden');
+    }
+
+    // --- Event Listeners ---
+    courseSelector.addEventListener('change', function() {
+        const selectedCourseId = this.value;
+        if (selectedCourseId) {
+            displayScores(selectedCourseId);
+        } else {
+            scoresDisplaySection.classList.add('hidden');
+            noCourseSelectedMessage.classList.remove('hidden');
+            noCourseSelectedMessage.textContent = "Please select a course to view the final scores.";
+        }
+    });
+
+    // --- Initial State ---
+    if (!courseSelector.value) {
+        scoresDisplaySection.classList.add('hidden');
+        noCourseSelectedMessage.classList.remove('hidden');
+    }
+</script>
+</body>
+</html>
