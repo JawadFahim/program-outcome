@@ -31,8 +31,8 @@ const LoginPage = () => {
 
             if (response.ok) {
                 console.log('Login successful:', data.message);
-                // Redirect to homepage or dashboard
-                router.push('/homepage');
+                // Redirect to homepage or dashboard, now with teacherId as a query parameter
+                router.push(`/homepage?teacherId=${teacherId}`);
             } else {
                 setError(data.message || 'Login failed. Please try again.');
             }
