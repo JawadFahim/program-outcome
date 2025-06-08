@@ -43,6 +43,8 @@ const HomePage = () => {
     const [courses, setCourses] = useState<CourseTaught[]>([]);
     const [courseObjectives, setCourseObjectives] = useState<CourseObjective[]>([]);
     const [objectiveCounter, setObjectiveCounter] = useState<number>(0);
+    const [isSaving, setIsSaving] = useState<boolean>(false);
+    const [isLoadingObjectives, setIsLoadingObjectives] = useState<boolean>(false);
     
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [modalTitle, setModalTitle] = useState<string>('');
@@ -55,6 +57,22 @@ const HomePage = () => {
     const [isToastVisible, setIsToastVisible] = useState<boolean>(false);
     const [toastMessage, setToastMessage] = useState<string>('');
     const [toastType, setToastType] = useState<'success' | 'error' | 'warning'>('success');
+
+    const createObjectiveBlock = useCallback(() => {
+        setObjectiveCounter(prevCounter => {
+            const newCounter = prevCounter + 1;
+            setCourseObjectives(prevObjectives => [
+                ...prevObjectives,
+                {
+                    id: `objectiveBlock_${newCounter}`,
+                    description: '',
+                    programOutcome: '',
+                    displayNumber: prevObjectives.length + 1,
+                }
+            ]);
+            return newCounter;
+        });
+    }, []);
 
     useEffect(() => {
         if (router.isReady) {
@@ -83,6 +101,51 @@ const HomePage = () => {
             }
         }
     }, [router.isReady, router.query.teacherId]);
+
+    useEffect(() => {
+        const fetchObjectives = async () => {
+            const teacherId = router.query.teacherId as string;
+            if (selectedCourse && teacherId) {
+                setIsLoadingObjectives(true);
+                setCourseObjectives([]);
+
+                try {
+                    const response = await fetch(`/api/getCourseObjectives?teacherId=${teacherId}&courseId=${selectedCourse}`);
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch objectives');
+                    }
+                    const data = await response.json();
+                    
+                    if (data && data.length > 0) {
+                        const loadedObjectives = data.map((obj: any, index: number) => ({
+                            id: `loaded_objective_${index}`,
+                            description: obj.courseObjective,
+                            programOutcome: obj.mappedProgramOutcome,
+                            displayNumber: index + 1
+                        }));
+                        setCourseObjectives(loadedObjectives);
+                        setObjectiveCounter(loadedObjectives.length);
+                    } else {
+                        createObjectiveBlock();
+                    }
+                } catch (error) {
+                    console.error("Failed to load course objectives:", error);
+                    showToast("Could not load existing course objectives.", "error");
+                    createObjectiveBlock();
+                } finally {
+                    setIsLoadingObjectives(false);
+                }
+            }
+        };
+
+        fetchObjectives();
+    }, [selectedCourse, createObjectiveBlock]);
+
+    useEffect(() => {
+        if (selectedCourse && !isLoadingObjectives && courseObjectives.length === 0) {
+            createObjectiveBlock();
+        }
+    }, [selectedCourse, courseObjectives, isLoadingObjectives, createObjectiveBlock]);
 
     const BICE_PROGRAM_OUTCOMES: string[] = [
         "PO1: Engineering knowledge",
@@ -135,27 +198,97 @@ const HomePage = () => {
         }, 3300); 
     };
 
-    const createObjectiveBlock = useCallback(() => {
-        setObjectiveCounter(prevCounter => {
-            const newCounter = prevCounter + 1;
-            setCourseObjectives(prevObjectives => [
-                ...prevObjectives,
-                {
-                    id: `objectiveBlock_${newCounter}`,
-                    description: '',
-                    programOutcome: '',
-                    displayNumber: prevObjectives.length + 1,
-                }
-            ]);
-            return newCounter;
-        });
-    }, []);
+    const handleCourseSelectionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const newCourseValue = event.target.value;
+        setCourseObjectives([]);
+        setObjectiveCounter(0);
+        setSelectedCourse(newCourseValue);
+    };
     
-    useEffect(() => {
-        if (selectedCourse && courseObjectives.length === 0) {
-            createObjectiveBlock();
+    const handleObjectiveChange = (id: string, field: keyof Pick<CourseObjective, 'description' | 'programOutcome'>, value: string) => {
+        setCourseObjectives(prevObjectives =>
+            prevObjectives.map(obj =>
+                obj.id === id ? { ...obj, [field]: value } : obj
+            )
+        );
+    };
+
+    const handleSaveAllObjectives = async () => {
+        const teacherId = router.query.teacherId as string;
+        if (!selectedCourse || !teacherId) {
+            showToast("Please select a course and ensure a teacher is logged in.", "error");
+            return;
         }
-    }, [selectedCourse, courseObjectives.length, createObjectiveBlock]);
+        
+        setIsSaving(true);
+
+        let allValid = true;
+        const objectivesData = courseObjectives.map((obj) => {
+            const description = obj.description.trim();
+            const programOutcome = obj.programOutcome;
+
+            if (!description || !programOutcome) {
+                allValid = false;
+            }
+            return {
+                co_no: `CO${obj.displayNumber}`,
+                courseObjective: description,
+                mappedProgramOutcome: programOutcome,
+            };
+        });
+
+        if (!allValid) {
+            showModal("Validation Error", "Please fill in all required fields for each course objective.", () => {}, 'OK', 'btn-primary', false);
+            setIsSaving(false);
+            return;
+        }
+
+        if (objectivesData.length === 0) {
+            showToast("No course objectives to save.", "warning");
+            setIsSaving(false);
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/courseObjectives', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    teacherId: teacherId,
+                    courseId: selectedCourse,
+                    objectives: objectivesData,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showToast(result.message || 'Objectives saved successfully!', 'success');
+            } else {
+                showToast(result.message || 'Failed to save objectives.', 'error');
+            }
+        } catch (error) {
+            console.error('Failed to save objectives:', error);
+            showToast('An unexpected network error occurred.', 'error');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleAssessmentScore = () => {
+        if (!selectedCourse) {
+            showToast("Please select a course first.", "error");
+            return;
+        }
+        showModal(
+            'Assessment Score',
+            `Functionality for 'Assessment Score' for ${getCourseLabel(selectedCourse)} is not yet implemented.`,
+            () => {}, 
+            'OK',
+            'btn-primary',
+            false
+        );
+    };
 
     const handleRemoveObjective = (blockId: string) => {
         if (courseObjectives.length <= 1) {
@@ -171,86 +304,6 @@ const HomePage = () => {
             },
             'Confirm',
             'btn-danger'
-        );
-    };
-
-    const handleCourseSelectionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        const newCourseValue = event.target.value;
-        setSelectedCourse(newCourseValue);
-        if (newCourseValue) {
-            setCourseObjectives([]); 
-            setObjectiveCounter(0); 
-        } else {
-            setCourseObjectives([]);
-        }
-    };
-    
-    const handleObjectiveChange = (id: string, field: keyof Pick<CourseObjective, 'description' | 'programOutcome'>, value: string) => {
-        setCourseObjectives(prevObjectives =>
-            prevObjectives.map(obj =>
-                obj.id === id ? { ...obj, [field]: value } : obj
-            )
-        );
-    };
-
-    const handleSaveAllObjectives = () => {
-        if (!selectedCourse) {
-            showToast("Please select a course first.", "error");
-            return;
-        }
-
-        let allValid = true;
-        const objectivesData = courseObjectives.map((obj) => {
-            const description = obj.description.trim();
-            const programOutcome = obj.programOutcome;
-
-            if (!description) {
-                showToast(`Description for Objective ${obj.displayNumber} is missing.`, 'error');
-                allValid = false;
-            }
-            if (!programOutcome) {
-                showToast(`Program Outcome for Objective ${obj.displayNumber} is not selected.`, 'error');
-                allValid = false;
-            }
-            return {
-                courseObjective: description,
-                mappedProgramOutcome: programOutcome
-            };
-        });
-
-        if (!allValid) {
-            showModal("Validation Error", "Please fill in all required fields for each course objective.", () => {}, 'OK', 'btn-primary', false);
-            return;
-        }
-
-        if (objectivesData.length === 0) {
-            showToast("No course objectives to save.", "warning");
-            return;
-        }
-
-        showModal(
-            'Confirm Save',
-            `Are you sure you want to save ${objectivesData.length} objective(s) for ${getCourseLabel(selectedCourse)}?`,
-            () => {
-                console.log("Saving data for course:", selectedCourse);
-                console.log("Objectives:", objectivesData);
-                showToast('Objectives saved successfully!', 'success');
-            }
-        );
-    };
-
-    const handleAssessmentScore = () => {
-        if (!selectedCourse) {
-            showToast("Please select a course first.", "error");
-            return;
-        }
-        showModal(
-            'Assessment Score',
-            `Functionality for 'Assessment Score' for ${getCourseLabel(selectedCourse)} is not yet implemented.`,
-            () => {}, 
-            'OK',
-            'btn-primary',
-            false
         );
     };
 
@@ -423,47 +476,51 @@ const HomePage = () => {
                             <h2 className="text-2xl font-semibold text-gray-800 mb-3">Define Course Objectives for <span className="text-blue-600">{getCourseLabel(selectedCourse)}</span></h2>
                             <p className="text-gray-600 mb-6">For each course objective, select one primary BICE Program Outcome it aligns with.</p>
 
-                            <div id="courseObjectivesContainer" className="space-y-6">
-                                {courseObjectives.map((obj) => (
-                                    <div key={obj.id} className="card objective-entry-item p-4">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <h4 className="objective-title text-lg font-medium text-gray-700">Course Objective {obj.displayNumber}</h4>
-                                        </div>
-                                        <div className="course-objective-block">
-                                            <textarea 
-                                                className="textarea-field" 
-                                                name={`course_objective_desc_${obj.id}`} 
-                                                placeholder="Enter course objective description..."
-                                                value={obj.description}
-                                                onChange={(e) => handleObjectiveChange(obj.id, 'description', e.target.value)}
-                                            ></textarea>
-                                            <select 
-                                                className="select-field" 
-                                                name={`program_outcome_map_${obj.id}`}
-                                                value={obj.programOutcome}
-                                                onChange={(e) => handleObjectiveChange(obj.id, 'programOutcome', e.target.value)}
-                                            >
-                                                <option value="">-- Select Program Outcome --</option>
-                                                {BICE_PROGRAM_OUTCOMES.map((outcome, i) => (
-                                                    <option key={`po-${i}`} value={`PO${i + 1}`}>{outcome}</option>
-                                                ))}
-                                            </select>
-                                             <div className="remove-objective-btn-container">
-                                                {courseObjectives.length > 1 && (
-                                                    <button 
-                                                        type="button" 
-                                                        className="btn btn-danger btn-sm remove-objective-btn" 
-                                                        onClick={() => handleRemoveObjective(obj.id)}
-                                                    >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                                        Remove
-                                                    </button>
-                                                )}
+                            {isLoadingObjectives ? (
+                                <div className="text-center p-8 text-gray-500">Loading objectives...</div>
+                            ) : (
+                                <div id="courseObjectivesContainer" className="space-y-6">
+                                    {courseObjectives.map((obj) => (
+                                        <div key={obj.id} className="card objective-entry-item p-4">
+                                            <div className="flex justify-between items-center mb-3">
+                                                <h4 className="objective-title text-lg font-medium text-gray-700">Course Objective {obj.displayNumber}</h4>
+                                            </div>
+                                            <div className="course-objective-block">
+                                                <textarea 
+                                                    className="textarea-field" 
+                                                    name={`course_objective_desc_${obj.id}`} 
+                                                    placeholder="Enter course objective description..."
+                                                    value={obj.description}
+                                                    onChange={(e) => handleObjectiveChange(obj.id, 'description', e.target.value)}
+                                                ></textarea>
+                                                <select 
+                                                    className="select-field" 
+                                                    name={`program_outcome_map_${obj.id}`}
+                                                    value={obj.programOutcome}
+                                                    onChange={(e) => handleObjectiveChange(obj.id, 'programOutcome', e.target.value)}
+                                                >
+                                                    <option value="">-- Select Program Outcome --</option>
+                                                    {BICE_PROGRAM_OUTCOMES.map((outcome, i) => (
+                                                        <option key={`po-${i}`} value={`PO${i + 1}`}>{outcome}</option>
+                                                    ))}
+                                                </select>
+                                                 <div className="remove-objective-btn-container">
+                                                    {courseObjectives.length > 1 && (
+                                                        <button 
+                                                            type="button" 
+                                                            className="btn btn-danger btn-sm remove-objective-btn" 
+                                                            onClick={() => handleRemoveObjective(obj.id)}
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                            Remove
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
 
                             <div className="mt-8 flex flex-wrap gap-3">
                                 <button type="button" className="btn btn-secondary" onClick={createObjectiveBlock}>
@@ -485,11 +542,28 @@ const HomePage = () => {
 
                     {selectedCourse && (
                          <div id="overallActionButtons" className="mt-8 flex flex-wrap gap-3">
-                            <button type="button" className="btn btn-primary" onClick={handleSaveAllObjectives}>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                                </svg>
-                                Save All Objectives
+                            <button 
+                                type="button" 
+                                className="btn btn-primary" 
+                                onClick={handleSaveAllObjectives}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                        </svg>
+                                        Save All Objectives
+                                    </>
+                                )}
                             </button>
                             <button type="button" className="btn btn-outline" onClick={handleAssessmentScore}>
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
