@@ -1,7 +1,7 @@
 import { MongoClient, ServerApiVersion } from 'mongodb';
 
 const MONGODB_URI = "mongodb+srv://root:root@bice.l5pnh7p.mongodb.net/?retryWrites=true&w=majority&appName=BICE";
-const MONGODB_DB = process.env.MONGODB_DB; // Optional: if you want to specify the DB in the URI or here
+// const MONGODB_DB = process.env.MONGODB_DB; // Optional: if you want to specify the DB in the URI or here
 
 if (!MONGODB_URI) {
     throw new Error('Please define the MONGODB_URI environment variable inside .env.local');

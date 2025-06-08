@@ -45,9 +45,6 @@ const AssessmentScorePage = () => {
     const [isLoadingObjectives, setIsLoadingObjectives] = useState<boolean>(false);
     const [isLoadingStudents, setIsLoadingStudents] = useState<boolean>(false);
     const [isSaving, setIsSaving] = useState<boolean>(false);
-    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const [modalTitle, setModalTitle] = useState<string>('');
-    const [modalMessage, setModalMessage] = useState<string>('');
     const [isToastVisible, setIsToastVisible] = useState<boolean>(false);
     const [toastMessage, setToastMessage] = useState<string>('');
     const [toastType, setToastType] = useState<'success' | 'error' | 'warning'>('success');
@@ -139,7 +136,7 @@ const AssessmentScorePage = () => {
         setTimeout(() => setIsToastVisible(false), 3300);
     };
 
-    const closeModal = () => setIsModalOpen(false);
+    // const closeModal = () => setIsModalOpen(false);
 
     // --- Event Handlers ---
     const handleCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -228,9 +225,6 @@ const AssessmentScorePage = () => {
         <>
             <Head>
                 <title>Assessment Score Entry</title>
-                <link rel="preconnect" href="https://fonts.googleapis.com" />
-                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
             </Head>
             <style jsx global>{`
                 :root {

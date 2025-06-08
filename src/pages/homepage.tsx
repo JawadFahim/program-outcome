@@ -14,6 +14,11 @@ interface CourseTaught {
     courseName: string;
 }
 
+interface ApiCourseObjective {
+    courseObjective: string;
+    mappedProgramOutcome: string;
+}
+
 interface Teacher {
     id: string;
     name: string;
@@ -42,7 +47,6 @@ const HomePage = () => {
     const [selectedCourse, setSelectedCourse] = useState<string>('');
     const [courses, setCourses] = useState<CourseTaught[]>([]);
     const [courseObjectives, setCourseObjectives] = useState<CourseObjective[]>([]);
-    const [objectiveCounter, setObjectiveCounter] = useState<number>(0);
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [isLoadingObjectives, setIsLoadingObjectives] = useState<boolean>(false);
     
@@ -59,19 +63,15 @@ const HomePage = () => {
     const [toastType, setToastType] = useState<'success' | 'error' | 'warning'>('success');
 
     const createObjectiveBlock = useCallback(() => {
-        setObjectiveCounter(prevCounter => {
-            const newCounter = prevCounter + 1;
-            setCourseObjectives(prevObjectives => [
-                ...prevObjectives,
-                {
-                    id: `objectiveBlock_${newCounter}`,
-                    description: '',
-                    programOutcome: '',
-                    displayNumber: prevObjectives.length + 1,
-                }
-            ]);
-            return newCounter;
-        });
+        setCourseObjectives(prevObjectives => [
+            ...prevObjectives,
+            {
+                id: `objectiveBlock_${Date.now()}`,
+                description: '',
+                programOutcome: '',
+                displayNumber: prevObjectives.length + 1,
+            }
+        ]);
     }, []);
 
     useEffect(() => {
@@ -114,17 +114,16 @@ const HomePage = () => {
                     if (!response.ok) {
                         throw new Error('Failed to fetch objectives');
                     }
-                    const data = await response.json();
+                    const data: ApiCourseObjective[] = await response.json();
                     
                     if (data && data.length > 0) {
-                        const loadedObjectives = data.map((obj: any, index: number) => ({
+                        const loadedObjectives = data.map((obj: ApiCourseObjective, index: number) => ({
                             id: `loaded_objective_${index}`,
                             description: obj.courseObjective,
                             programOutcome: obj.mappedProgramOutcome,
                             displayNumber: index + 1
                         }));
                         setCourseObjectives(loadedObjectives);
-                        setObjectiveCounter(loadedObjectives.length);
                     } else {
                         createObjectiveBlock();
                     }
@@ -139,7 +138,7 @@ const HomePage = () => {
         };
 
         fetchObjectives();
-    }, [selectedCourse, createObjectiveBlock]);
+    }, [selectedCourse, createObjectiveBlock, router.query.teacherId]);
 
     useEffect(() => {
         if (selectedCourse && !isLoadingObjectives && courseObjectives.length === 0) {
@@ -201,7 +200,6 @@ const HomePage = () => {
     const handleCourseSelectionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const newCourseValue = event.target.value;
         setCourseObjectives([]);
-        setObjectiveCounter(0);
         setSelectedCourse(newCourseValue);
     };
     
@@ -307,12 +305,9 @@ const HomePage = () => {
     };
 
     return (
-        <>
+        <div className="bg-gray-50 min-h-screen">
             <Head>
-                <title>Course Objective Mapping</title>
-                <link rel="preconnect" href="https://fonts.googleapis.com" />
-                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+                <title>Course Objective Management</title>
             </Head>
 
             <style jsx global>{`
@@ -647,7 +642,7 @@ const HomePage = () => {
                     <p>{toastMessage}</p>
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 
