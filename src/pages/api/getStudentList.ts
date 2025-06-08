@@ -1,0 +1,59 @@
+import { NextApiRequest, NextApiResponse } from 'next';
+import clientPromise from '../../../lib/mongodb';
+
+interface Student {
+    studentId: string;
+    name: string;
+}
+
+interface StudentListData {
+    studentList: Student[];
+    session: string | null;
+}
+
+interface ErrorResponse {
+    message: string;
+    errorDetails?: string;
+}
+
+export default async function handler(
+    req: NextApiRequest,
+    res: NextApiResponse<StudentListData | ErrorResponse>
+) {
+    if (req.method !== 'GET') {
+        return res.status(405).json({ message: 'Method Not Allowed' });
+    }
+
+    const { teacherId, courseId } = req.query;
+
+    if (!teacherId || !courseId || typeof teacherId !== 'string' || typeof courseId !== 'string') {
+        return res.status(400).json({ message: 'teacherId and courseId are required query parameters.' });
+    }
+
+    try {
+        const client = await clientPromise;
+        const db = client.db("BICE_course_map");
+        const studentsCollection = db.collection('students');
+
+        console.log(`--- GET STUDENT LIST API HIT ---`);
+        console.log(`Searching for students with teacherId: "${teacherId}", courseId: "${courseId}"`);
+
+        const studentDocument = await studentsCollection.findOne({ teacherId, courseId });
+
+        if (studentDocument && Array.isArray(studentDocument.studentList)) {
+            console.log(`Found document. Returning ${studentDocument.studentList.length} students for session ${studentDocument.session}.`);
+            res.status(200).json({
+                studentList: studentDocument.studentList,
+                session: studentDocument.session || null
+            });
+        } else {
+            console.log('No student list found for this teacher/course combination. Returning empty array.');
+            res.status(200).json({ studentList: [], session: null });
+        }
+
+    } catch (error) {
+        console.error('API /getStudentList CATCH Block Error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        res.status(500).json({ message: 'Internal Server Error', errorDetails: errorMessage });
+    }
+} 

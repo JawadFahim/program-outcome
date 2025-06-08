@@ -55,62 +55,184 @@ const LoginPage = () => {
         <>
             <Head>
                 <title>BICE Course Outcome - Login</title>
-                {/* Assuming Tailwind is set up via globals.css or similar */}
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
             </Head>
             <style jsx global>{`
+                :root {
+                    --primary-color: #4f46e5;
+                    --primary-hover: #4338ca;
+                    --text-primary: #111827;
+                    --text-secondary: #6b7280;
+                    --bg-main: #f9fafb;
+                    --bg-card: #ffffff;
+                    --border-color: #d1d5db;
+                    --error-color: #ef4444;
+                }
+
                 body {
                     font-family: 'Inter', sans-serif;
+                    background-color: var(--bg-main);
+                    color: var(--text-primary);
+                    margin: 0;
                 }
+
                 .login-container {
                     min-height: 100vh;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    background-color: #f0f4f8; /* A light, neutral background */
+                    padding: 1rem;
                 }
+
                 .login-card {
-                    background-color: white;
-                    padding: 2.5rem; /* Tailwind p-10 */
-                    border-radius: 0.75rem; /* Tailwind rounded-xl */
-                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Tailwind shadow-lg */
+                    background-color: var(--bg-card);
+                    padding: 2.5rem;
+                    border-radius: 1.5rem;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
                     width: 100%;
-                    max-width: 28rem; /* Tailwind max-w-md */
+                    max-width: 28rem;
+                    border: 1px solid #e5e7eb;
                 }
+                
+                .login-title {
+                    font-size: 2rem;
+                    font-weight: 700;
+                    color: var(--text-primary);
+                    text-align: center;
+                    margin-bottom: 0.5rem;
+                }
+                
+                .login-subtitle {
+                    font-size: 1rem;
+                    color: var(--text-secondary);
+                    text-align: center;
+                    margin-bottom: 2.5rem;
+                }
+
                 .input-field {
                     width: 100%;
-                    padding: 0.75rem 1rem; /* Tailwind p-3 px-4 */
-                    border: 1px solid #d1d5db; /* Tailwind border-gray-300 */
-                    border-radius: 0.375rem; /* Tailwind rounded-md */
-                    transition: border-color 0.3s ease;
+                    padding: 1rem;
+                    border: 1px solid var(--border-color);
+                    border-radius: 0.5rem;
+                    font-size: 1rem;
+                    transition: all 0.2s ease-in-out;
+                    box-sizing: border-box;
                 }
+
                 .input-field:focus {
                     outline: none;
-                    border-color: #3b82f6; /* Tailwind border-blue-500 */
-                    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); /* Focus ring */
+                    border-color: var(--primary-color);
+                    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
                 }
+
                 .btn-primary {
-                    background-color: #2563eb; /* Tailwind bg-blue-600 */
+                    background-color: var(--primary-color);
                     color: white;
-                    padding: 0.75rem;
+                    padding: 1rem;
                     width: 100%;
-                    border-radius: 0.375rem; /* Tailwind rounded-md */
-                    font-weight: 500; /* Tailwind font-medium */
-                    transition: background-color 0.3s ease;
+                    border: none;
+                    border-radius: 0.5rem;
+                    font-weight: 600;
+                    font-size: 1rem;
+                    cursor: pointer;
+                    transition: all 0.2s ease-in-out;
+                    transform: translateY(0);
                 }
+
                 .btn-primary:hover {
-                    background-color: #1d4ed8; /* Tailwind bg-blue-700 */
+                    background-color: var(--primary-hover);
+                    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+                    transform: translateY(-2px);
+                }
+                
+                .form-label {
+                    display: block;
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    color: var(--text-primary);
+                    margin-bottom: 0.5rem;
+                }
+                
+                .form-group {
+                    margin-bottom: 1.5rem;
+                }
+
+                .error-message {
+                    color: var(--error-color);
+                    font-size: 0.875rem;
+                    text-align: center;
+                    margin-bottom: 1rem;
+                }
+
+                .forgot-password-link {
+                    display: block;
+                    text-align: center;
+                    font-size: 0.875rem;
+                    color: var(--primary-color);
+                    text-decoration: none;
+                    margin-top: 1.5rem;
+                }
+
+                .forgot-password-link:hover {
+                    text-decoration: underline;
+                }
+
+                /* Modal Styles */
+                .modal-backdrop {
+                    position: fixed;
+                    inset: 0;
+                    background-color: rgba(0, 0, 0, 0.6);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 1rem;
+                    z-index: 50;
+                }
+                .modal-content {
+                    background-color: var(--bg-card);
+                    padding: 2rem;
+                    border-radius: 1rem;
+                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                    width: 100%;
+                    max-width: 26rem;
+                }
+                .modal-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 1rem;
+                }
+                .modal-title {
+                    font-size: 1.25rem;
+                    font-weight: 600;
+                }
+                .modal-close-btn {
+                    background: none;
+                    border: none;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    color: var(--text-secondary);
+                }
+                .modal-body {
+                    color: var(--text-secondary);
+                    margin-bottom: 1.5rem;
+                }
+                .modal-footer {
+                    text-align: right;
                 }
             `}</style>
-            <div className="login-container px-4 py-8">
+            <div className="login-container">
                 <div className="login-card">
-                    <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold text-gray-800">BICE Course Outcome</h1>
-                        <p className="text-gray-600 mt-1">Teacher Login</p>
+                    <div>
+                        <h1 className="login-title">BICE Course Outcome</h1>
+                        <p className="login-subtitle">Teacher Login</p>
                     </div>
 
                     <form onSubmit={handleLogin}>
-                        <div className="mb-5">
-                            <label htmlFor="teacherIdInput" className="block text-sm font-medium text-gray-700 mb-1">Teacher ID</label>
+                        <div className="form-group">
+                            <label htmlFor="teacherIdInput" className="form-label">Teacher ID</label>
                             <input
                                 type="text"
                                 id="teacherIdInput"
@@ -123,8 +245,8 @@ const LoginPage = () => {
                             />
                         </div>
 
-                        <div className="mb-6">
-                            <label htmlFor="passwordInput" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <div className="form-group">
+                            <label htmlFor="passwordInput" className="form-label">Password</label>
                             <input
                                 type="password"
                                 id="passwordInput"
@@ -137,14 +259,14 @@ const LoginPage = () => {
                             />
                         </div>
 
-                        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+                        {error && <p className="error-message">{error}</p>}
 
-                        <div className="mb-6">
+                        <div className="form-group">
                             <button type="submit" className="btn-primary">Login</button>
                         </div>
 
-                        <div className="text-center">
-                            <a href="#" onClick={openForgotPasswordModal} className="text-sm text-blue-600 hover:text-blue-700 hover:underline">
+                        <div>
+                            <a href="#" onClick={openForgotPasswordModal} className="forgot-password-link">
                                 Forgot Password?
                             </a>
                         </div>
@@ -153,17 +275,17 @@ const LoginPage = () => {
             </div>
 
             {showForgotPasswordModal && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center px-4">
-                    <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-semibold text-gray-800">Forgot Password</h3>
-                            <button onClick={closeForgotPasswordModal} className="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                <div className="modal-backdrop">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h3 className="modal-title">Forgot Password</h3>
+                            <button onClick={closeForgotPasswordModal} className="modal-close-btn">&times;</button>
                         </div>
-                        <p className="text-gray-600 mb-4">
+                        <p className="modal-body">
                             Please contact the system administrator or your department head to reset your password.
                         </p>
-                        <div className="text-right">
-                            <button onClick={closeForgotPasswordModal} className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md">
+                        <div className="modal-footer">
+                            <button onClick={closeForgotPasswordModal} className="btn-primary" style={{ padding: '0.5rem 1.5rem' }}>
                                 OK
                             </button>
                         </div>
