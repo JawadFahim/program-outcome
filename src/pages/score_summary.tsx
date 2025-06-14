@@ -2,6 +2,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getTeacherIdFromAuth, removeAuthTokenCookie } from '../lib/jwt';
+import Layout from '../components/Layout';
 
 // --- Interfaces ---
 interface CourseTaught {
@@ -112,38 +113,10 @@ const ScoreSummaryPage = () => {
     const courseDisplayName = courses.find(c => c.course_id === selectedCourse)?.courseName || selectedCourse;
 
     return (
-        <>
+        <Layout teacherName={teacherName} onLogout={handleLogout} page="summary" title="Score Summary">
             <Head>
                 <title>Final Score Summary</title>
             </Head>
-            <style jsx global>{`
-                body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-                .card { background-color: white; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); margin-bottom: 1.5rem; }
-                .select-field { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; box-sizing: border-box; }
-                .table-container { overflow-x: auto; }
-                th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
-                th { background-color: #f9fafb; font-weight: 600; color: #374151; text-transform: uppercase; font-size: 0.875rem; }
-                .summary-table th, .summary-table td { font-weight: 500; }
-                .pass { color: #10b981; font-weight: 600; }
-                .fail { color: #ef4444; font-weight: 600; }
-                .absent { color: #6b7280; }
-                .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; text-decoration: none; }
-                .btn-outline { background-color: transparent; color: #4f46e5; border-color: #4f46e5; }
-                .btn-danger { background-color: #ef4444; color: white; }
-                .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 2rem auto; }
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-            `}</style>
-
-            <header className="bg-white shadow-md rounded-lg p-4 mb-6 mx-4 sm:mx-6 md:mx-8 mt-4">
-                <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center">
-                    <h1 className="text-2xl font-semibold text-blue-600">Final Score Summary</h1>
-                    <div className="flex items-center gap-4 mt-2 sm:mt-0">
-                         <button onClick={() => router.push('/homepage')} className="btn btn-outline">Back to Home</button>
-                        <span className="text-lg text-gray-700">Teacher: <span className="font-medium">{teacherName}</span></span>
-                        <button onClick={handleLogout} className="btn btn-danger">Logout</button>
-                    </div>
-                </div>
-            </header>
 
             <main className="container mx-auto px-4 sm:px-6 md:px-8">
                 <div className="card">
@@ -185,23 +158,27 @@ const ScoreSummaryPage = () => {
                     <div id="scoresDisplaySection">
                          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Scores for <span className="text-blue-600">{courseDisplayName}</span></h2>
                         <div className="card table-container">
-                             <table className="min-w-full bg-white">
+                             <table className="score-table">
                                 <thead>
                                     <tr>
-                                        <th>#</th>
-                                        <th>Student ID</th>
-                                        <th>Student Name</th>
-                                        {summaryData.courseObjectives.map(co => <th key={co}>{co}</th>)}
+                                        <th className="text-center">#</th>
+                                        <th className="text-center">Student ID</th>
+                                        <th className="text-center">Student Name</th>
+                                        {summaryData.courseObjectives.map(co => <th key={co} className="text-center">{co}</th>)}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {summaryData.studentData.map((student, index) => (
                                         <tr key={student.id}>
-                                            <td>{index + 1}</td>
-                                            <td>{student.id}</td>
-                                            <td>{student.name}</td>
+                                            <td className="text-center">{index + 1}</td>
+                                            <td className="text-center">{student.id}</td>
+                                            <td className="text-center">{student.name}</td>
                                             {summaryData.courseObjectives.map(co => (
-                                                <td key={co} className={student.finalCoStatus[co]?.toLowerCase()}>{student.scores[co]}</td>
+                                                <td key={co} className="text-center">
+                                                    <span className={`score-badge ${student.finalCoStatus[co]?.toLowerCase()}`}>
+                                                        {student.scores[co] !== undefined ? student.scores[co] : 'N/A'}
+                                                    </span>
+                                                </td>
                                             ))}
                                         </tr>
                                     ))}
@@ -211,27 +188,17 @@ const ScoreSummaryPage = () => {
 
                         <div className="card mt-6">
                             <h3 className="text-xl font-semibold text-gray-700 mb-3">Course Objective Pass Percentages</h3>
-                            <div className="table-container">
-                                <table className="min-w-full bg-white summary-table">
-                                    <thead>
-                                        <tr>
-                                            {summaryData.courseObjectives.map(co => <th key={co}>{co}</th>)}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            {summaryData.courseObjectives.map(co => {
-                                                const stats = summaryData.summary[co];
-                                                return (
-                                                    <td key={co}>
-                                                        {stats.percentage.toFixed(2)}% 
-                                                        <span className="text-gray-500 text-sm ml-1">({stats.passed}/{stats.total})</span>
-                                                    </td>
-                                                )
-                                            })}
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div className="summary-stats-grid">
+                                {summaryData.courseObjectives.map(co => {
+                                    const stats = summaryData.summary[co];
+                                    return (
+                                        <div key={co} className="stat-card">
+                                            <h4 className="stat-title">{co}</h4>
+                                            <p className="stat-percentage">{stats.percentage.toFixed(2)}%</p>
+                                            <p className="stat-ratio">{stats.passed} / {stats.total} passed</p>
+                                        </div>
+                                    )
+                                })}
                             </div>
                         </div>
                     </div>
@@ -248,7 +215,7 @@ const ScoreSummaryPage = () => {
                      </div>
                  )}
             </main>
-        </>
+        </Layout>
     );
 };
 

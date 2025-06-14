@@ -1,7 +1,8 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { getTeacherIdFromAuth } from '../lib/jwt';
+import { getTeacherIdFromAuth, removeAuthTokenCookie } from '../lib/jwt';
+import Layout from '../components/Layout';
 
 // --- Interfaces ---
 interface CourseTaught {
@@ -222,236 +223,23 @@ const AssessmentScorePage = () => {
         }
     };
     
+    const handleLogout = () => {
+        removeAuthTokenCookie();
+        router.push('/login');
+    };
+
     // --- Render Logic ---
     const showStudentSection = selectedCourse && selectedObjective && assessmentType && passMark.trim() !== '';
     const selectedObjectiveText = courseObjectives.find(co => co.co_no === selectedObjective)?.courseObjective || '';
 
 
     return (
-        <>
+        <Layout teacherName={teacherName} onLogout={handleLogout} page="assessment" title="Assessment Score">
             <Head>
                 <title>Assessment Score Entry</title>
             </Head>
-            <style jsx global>{`
-                :root {
-                    --primary-color: #4f46e5;
-                    --primary-hover: #4338ca;
-                    --success-color: #10b981;
-                    --warning-color: #f59e0b;
-                    --error-color: #ef4444;
-                    --text-primary: #111827;
-                    --text-secondary: #6b7280;
-                    --bg-main: #f9fafb;
-                    --bg-card: #ffffff;
-                    --border-color: #e5e7eb;
-                    --border-radius: 0.75rem;
-                    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-                }
-
-                body {
-                    font-family: 'Inter', sans-serif;
-                    background-color: var(--bg-main);
-                    color: var(--text-primary);
-                    margin: 0;
-                    line-height: 1.5;
-                }
-
-                .container {
-                    width: 100%;
-                    max-width: 1280px;
-                    margin-left: auto;
-                    margin-right: auto;
-                    padding: 2rem;
-                    box-sizing: border-box;
-                }
-
-                .page-header {
-                    background-color: var(--bg-card);
-                    box-shadow: var(--shadow-lg);
-                    border-radius: var(--border-radius);
-                    padding: 1.5rem 2rem;
-                    margin-bottom: 2rem;
-                    display: flex;
-                    flex-wrap: wrap;
-                    justify-content: space-between;
-                    align-items: center;
-                    gap: 1rem;
-                }
-
-                .page-title {
-                    font-size: 1.75rem;
-                    font-weight: 600;
-                    color: var(--primary-color);
-                }
-
-                .teacher-info {
-                    font-size: 1.125rem;
-                    color: var(--text-secondary);
-                }
-                .teacher-info span {
-                    font-weight: 500;
-                    color: var(--text-primary);
-                }
-
-                .card {
-                    background-color: var(--bg-card);
-                    padding: 2rem;
-                    border-radius: var(--border-radius);
-                    box-shadow: var(--shadow-lg);
-                    margin-bottom: 2rem;
-                }
-
-                .form-label {
-                    display: block;
-                    font-size: 1rem;
-                    font-weight: 500;
-                    color: var(--text-primary);
-                    margin-bottom: 0.75rem;
-                }
-
-                .input-field, .select-field {
-                    width: 100%;
-                    padding: 0.75rem 1rem;
-                    border: 1px solid var(--border-color);
-                    border-radius: 0.5rem;
-                    font-size: 1rem;
-                    transition: all 0.2s ease-in-out;
-                    box-sizing: border-box;
-                    background-color: #fff;
-                }
-
-                .input-field:focus, .select-field:focus {
-                    outline: none;
-                    border-color: var(--primary-color);
-                    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
-                }
-                
-                .select-field:disabled, .input-field:disabled {
-                    background-color: #f3f4f6;
-                    cursor: not-allowed;
-                    color: var(--text-secondary);
-                }
-                
-                .btn {
-                    padding: 0.75rem 1.5rem;
-                    border-radius: 0.5rem;
-                    font-weight: 600;
-                    font-size: 1rem;
-                    transition: all 0.2s ease-in-out;
-                    cursor: pointer;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    border: 1px solid transparent;
-                    text-decoration: none;
-                }
-                .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-                .btn-primary { background-color: var(--primary-color); color: white; }
-                .btn-primary:hover:not(:disabled) { background-color: var(--primary-hover); }
-
-                .assessment-details-grid {
-                    display: grid;
-                    grid-template-columns: repeat(1, 1fr);
-                    gap: 1.5rem;
-                }
-                @media (min-width: 1024px) {
-                    .assessment-details-grid {
-                        grid-template-columns: repeat(3, 1fr);
-                    }
-                }
-
-                .student-scores-header {
-                    margin-bottom: 1.5rem;
-                }
-                .student-scores-header h3 {
-                    font-size: 1.5rem;
-                    font-weight: 600;
-                }
-                .student-scores-header span {
-                    color: var(--primary-color);
-                    font-weight: 600;
-                }
-
-                .table-container {
-                    overflow-x: auto;
-                }
-
-                .student-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    text-align: left;
-                }
-                .student-table th, .student-table td {
-                    padding: 1rem;
-                    border-bottom: 1px solid var(--border-color);
-                    vertical-align: middle;
-                    white-space: nowrap;
-                }
-                .student-table thead th {
-                    background-color: #f9fafb;
-                    font-weight: 600;
-                    font-size: 0.875rem;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                }
-                .student-table tbody tr:last-child td {
-                    border-bottom: none;
-                }
-                .student-table .input-field {
-                    max-width: 100px;
-                    padding: 0.5rem;
-                    text-align: center;
-                }
-                .student-table input[type="checkbox"] {
-                    width: 1.25rem;
-                    height: 1.25rem;
-                    border-radius: 0.25rem;
-                    border: 1px solid var(--border-color);
-                    cursor: pointer;
-                }
-                .actions-footer {
-                    margin-top: 2rem;
-                    display: flex;
-                    justify-content: flex-end;
-                }
-
-                .message-card {
-                    text-align: center;
-                    padding: 4rem 2rem;
-                    color: var(--text-secondary);
-                }
-
-                /* Hide number input spinners */
-                input[type=number]::-webkit-inner-spin-button, 
-                input[type=number]::-webkit-outer-spin-button { 
-                    -webkit-appearance: none; margin: 0;
-                }
-                input[type=number] { -moz-appearance: textfield; }
-                
-                .notification-toast { position: fixed; bottom: 2rem; right: 2rem; color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: var(--shadow-lg); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); opacity: 0; visibility: hidden; transform: translateY(50px); z-index: 2000; display: flex; align-items: center; }
-                .notification-toast.visible { opacity: 1; visibility: visible; transform: translateY(0); }
-                .toast-success { background-color: var(--success-color); }
-                .toast-error { background-color: var(--error-color); }
-                .toast-warning { background-color: var(--warning-color); }
-            `}</style>
             
             <div className="container">
-                <header className="page-header">
-                    <div className="flex items-center gap-4">
-                        <button 
-                            onClick={() => router.push('/homepage')} 
-                            className="btn btn-outline"
-                        >
-                            ← Go Back
-                        </button>
-                        <h1 className="page-title">Assessment Score Entry</h1>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="teacher-info">Teacher: <span>{teacherName}</span></div>
-                        <button onClick={() => router.push('/score_summary')} className="btn btn-secondary">View Summaries</button>
-                    </div>
-                </header>
-
                 <main>
                     <div className="card">
                         <label htmlFor="courseSelector" className="form-label">1. Select Course</label>
@@ -571,7 +359,7 @@ const AssessmentScorePage = () => {
                     <p>{toastMessage}</p>
                 </div>
             </div>
-        </>
+        </Layout>
     );
 };
 
