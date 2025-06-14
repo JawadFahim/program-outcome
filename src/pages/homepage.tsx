@@ -265,14 +265,7 @@ const HomePage = () => {
         }
     };
 
-    const handleAssessmentScore = () => {
-        if (!selectedCourse) {
-            showToast("Please select a course first to enter scores.", "error");
-            return;
-        }
-        // We no longer need to pass teacherId in the query
-        router.push(`/assessment_score`);
-    };
+   
 
     const handleRemoveObjective = (blockId: string) => {
         if (courseObjectives.length <= 1) {
