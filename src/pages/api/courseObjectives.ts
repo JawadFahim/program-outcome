@@ -32,32 +32,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
         const client = await clientPromise;
         const db = client.db("BICE_course_map");
-        const teachersCollection = db.collection('teachers');
+        const coursesCollection = db.collection('courses');
 
         const filter = { 
             teacherId: teacherId, 
-            "coursesTaught.course_id": courseId 
+            courseId: courseId 
         };
 
         const updateDoc = {
             $set: {
-                "coursesTaught.$.courseObjectives": objectives,
+                courseObjectives: objectives,
             },
+            $setOnInsert: {
+                teacherId: teacherId,
+                courseId: courseId
+            }
         };
         
-        const result = await teachersCollection.updateOne(filter, updateDoc);
+        const result = await coursesCollection.updateOne(filter, updateDoc, { upsert: true });
 
         console.log('MongoDB operation result:', result);
 
-        if (result.matchedCount > 0 && result.modifiedCount > 0) {
-            console.log(`Successfully updated objectives for course ${courseId} for teacher ${teacherId}.`);
+        if (result.upsertedCount > 0) {
+            console.log(`Successfully created a new course document for ${courseId}.`);
+            return res.status(201).json({ message: 'Objectives saved successfully in a new document.', result });
+        } else if (result.modifiedCount > 0) {
+            console.log(`Successfully updated objectives for course ${courseId}.`);
             return res.status(200).json({ message: 'Objectives updated successfully.', result });
         } else if (result.matchedCount > 0 && result.modifiedCount === 0) {
-            console.log(`No change needed for course ${courseId} for teacher ${teacherId}. Data was identical.`);
+            console.log(`No change needed for course ${courseId}. Data was identical.`);
             return res.status(200).json({ message: 'No changes needed, objectives were already up to date.', result });
         } else {
-            console.log(`Could not find course ${courseId} for teacher ${teacherId} to update.`);
-            return res.status(404).json({ message: 'Could not find the specified course for this teacher to update.' });
+            // This case should ideally not be reached with upsert: true, but it's good practice to have it.
+            console.log(`Could not find or update course ${courseId}.`);
+            return res.status(404).json({ message: 'Could not find the specified course to update.' });
         }
 
     } catch (error) {

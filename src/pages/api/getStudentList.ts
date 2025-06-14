@@ -11,12 +11,6 @@ interface StudentListData {
     session: string | null;
 }
 
-interface CourseInDB {
-    course_id: string;
-    studentList: Student[];
-    session: string;
-}
-
 interface ErrorResponse {
     message: string;
     errorDetails?: string;
@@ -39,28 +33,25 @@ export default async function handler(
     try {
         const client = await clientPromise;
         const db = client.db("BICE_course_map");
-        const teachersCollection = db.collection('teachers');
+        const studentsCollection = db.collection('students');
 
         console.log(`--- GET STUDENT LIST API HIT ---`);
-        console.log(`Searching for teacherId: "${teacherId}"`);
+        console.log(`Searching for teacherId: "${teacherId}" and courseId: "${courseId}" in 'students' collection.`);
 
-        const teacherDocument = await teachersCollection.findOne({ teacherId: teacherId });
+        const studentDocument = await studentsCollection.findOne({ 
+            teacherId: teacherId, 
+            courseId: courseId 
+        });
 
-        if (teacherDocument) {
-            const course = teacherDocument.coursesTaught?.find((c: CourseInDB) => c.course_id === courseId);
-            if (course && Array.isArray(course.studentList)) {
-                console.log(`Found course. Returning ${course.studentList.length} students for session ${course.session}.`);
-                res.status(200).json({
-                    studentList: course.studentList,
-                    session: course.session || null
-                });
-            } else {
-                 console.log(`Course ${courseId} not found for teacher or student list is missing. Returning empty.`);
-                res.status(200).json({ studentList: [], session: null });
-            }
+        if (studentDocument && Array.isArray(studentDocument.studentList)) {
+            console.log(`Found document. Returning ${studentDocument.studentList.length} students for session ${studentDocument.session}.`);
+            res.status(200).json({
+                studentList: studentDocument.studentList,
+                session: studentDocument.session || null
+            });
         } else {
-            console.log('No teacher document found for this teacherId. Returning empty array.');
-            res.status(404).json({ message: 'Teacher not found.' });
+            console.log(`No student list found for this teacher/course combination. Returning empty.`);
+            res.status(200).json({ studentList: [], session: null });
         }
 
     } catch (error) {
