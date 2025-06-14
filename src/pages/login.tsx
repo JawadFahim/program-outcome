@@ -1,17 +1,17 @@
 import Head from 'next/head';
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/router';
+import { setAuthTokenCookie } from '../lib/jwt';
 
 const LoginPage = () => {
     const [teacherId, setTeacherId] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
     const router = useRouter();
 
     const handleLogin = async (event: FormEvent) => {
         event.preventDefault();
-        setError(''); // Clear previous errors
+        setError('');
 
         if (!teacherId || !password) {
             setError('Please enter both Teacher ID and Password.');
@@ -19,6 +19,7 @@ const LoginPage = () => {
         }
 
         try {
+            // Call the CORRECT API endpoint
             const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {
@@ -30,9 +31,10 @@ const LoginPage = () => {
             const data = await response.json();
 
             if (response.ok) {
-                console.log('Login successful:', data.message);
-                // Redirect to homepage or dashboard, now with teacherId as a query parameter
-                router.push(`/homepage?teacherId=${teacherId}`);
+                // The server sends back a token, which we store in the cookie
+                setAuthTokenCookie(data.token);
+                
+                router.push(`/homepage`);
             } else {
                 setError(data.message || 'Login failed. Please try again.');
             }
@@ -40,15 +42,6 @@ const LoginPage = () => {
             console.error('Login error:', err);
             setError('An unexpected error occurred. Please try again.');
         }
-    };
-
-    const openForgotPasswordModal = (event: React.MouseEvent<HTMLAnchorElement>) => {
-        event.preventDefault();
-        setShowForgotPasswordModal(true);
-    };
-
-    const closeForgotPasswordModal = () => {
-        setShowForgotPasswordModal(false);
     };
 
     return (
@@ -263,32 +256,20 @@ const LoginPage = () => {
                         </div>
 
                         <div>
-                            <a href="#" onClick={openForgotPasswordModal} className="forgot-password-link">
+                            <a 
+                                href="/forgot-password" 
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    router.push('/forgot-password');
+                                }} 
+                                className="forgot-password-link"
+                            >
                                 Forgot Password?
                             </a>
                         </div>
                     </form>
                 </div>
             </div>
-
-            {showForgotPasswordModal && (
-                <div className="modal-backdrop">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h3 className="modal-title">Forgot Password</h3>
-                            <button onClick={closeForgotPasswordModal} className="modal-close-btn">&times;</button>
-                        </div>
-                        <p className="modal-body">
-                            Please contact the system administrator or your department head to reset your password.
-                        </p>
-                        <div className="modal-footer">
-                            <button onClick={closeForgotPasswordModal} className="btn-primary" style={{ padding: '0.5rem 1.5rem' }}>
-                                OK
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     );
 };

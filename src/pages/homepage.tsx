@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState, useCallback } from 'react';
+import { getTeacherIdFromAuth, removeAuthTokenCookie } from '../lib/jwt';
 
 interface CourseObjective {
     id: string;
@@ -42,7 +43,7 @@ const fetchTeacherData = async (teacherId: string): Promise<Teacher | null> => {
 
 const HomePage = () => {
     const router = useRouter();
-
+    const [teacherId, setTeacherId] = useState<string | null>(null);
     const [teacherName, setTeacherName] = useState<string>('Loading...');
     const [selectedCourse, setSelectedCourse] = useState<string>('');
     const [courses, setCourses] = useState<CourseTaught[]>([]);
@@ -62,6 +63,8 @@ const HomePage = () => {
     const [toastMessage, setToastMessage] = useState<string>('');
     const [toastType, setToastType] = useState<'success' | 'error' | 'warning'>('success');
 
+    const [isLoading, setIsLoading] = useState(true);
+
     const createObjectiveBlock = useCallback(() => {
         setCourseObjectives(prevObjectives => [
             ...prevObjectives,
@@ -75,36 +78,45 @@ const HomePage = () => {
     }, []);
 
     useEffect(() => {
-        if (router.isReady) {
-            const currentTeacherId = router.query.teacherId as string;
-            if (currentTeacherId) {
-                setTeacherName('Loading...');
-                setCourses([]);
-                fetchTeacherData(currentTeacherId).then(apiTeacherData => {
-                    if (apiTeacherData) {
-                        setTeacherName(apiTeacherData.name);
-                        setCourses(apiTeacherData.coursesTaught || []);
-                        if (!apiTeacherData.coursesTaught || apiTeacherData.coursesTaught.length === 0) {
-                            showToast(`Teacher ${apiTeacherData.name} has no courses assigned.`, 'warning');
-                        }
-                    } else {
-                        setTeacherName('Teacher Not Found');
-                        showToast(`Details for teacher ID "${currentTeacherId}" could not be retrieved.`, 'error');
-                    }
-                }).catch(error => {
-                    console.error("Error processing teacher data fetch:", error);
-                    setTeacherName('Error fetching data');
-                    showToast('An error occurred while loading teacher information.', 'error');
-                });
-            } else {
-                setTeacherName('Teacher ID not provided');
-            }
+        const id = getTeacherIdFromAuth();
+        if (id) {
+            setTeacherId(id);
+        } else {
+            // This case should be handled by middleware, but as a fallback
+            router.replace('/login');
         }
-    }, [router.isReady, router.query.teacherId]);
+    }, [router]);
+
+    useEffect(() => {
+        const fetchTeacherData = async () => {
+            if (!teacherId) return;
+            
+            setIsLoading(true);
+            try {
+                const response = await fetch(`/api/teachers/${teacherId}`);
+                if (!response.ok) throw new Error('Failed to fetch teacher data');
+                
+                const data = await response.json();
+                setTeacherName(data.name || 'Teacher Not Found');
+                setCourses(data.coursesTaught || []);
+                
+                if (!data.coursesTaught || data.coursesTaught.length === 0) {
+                    showToast(`Teacher ${data.name} has no courses assigned.`, 'warning');
+                }
+            } catch (error) {
+                console.error("Error fetching teacher data:", error);
+                setTeacherName('Error fetching data');
+                showToast('An error occurred while loading teacher information.', 'error');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchTeacherData();
+    }, [teacherId]);
 
     useEffect(() => {
         const fetchObjectives = async () => {
-            const teacherId = router.query.teacherId as string;
             if (selectedCourse && teacherId) {
                 setIsLoadingObjectives(true);
                 setCourseObjectives([]);
@@ -138,7 +150,7 @@ const HomePage = () => {
         };
 
         fetchObjectives();
-    }, [selectedCourse, createObjectiveBlock, router.query.teacherId]);
+    }, [selectedCourse, teacherId, createObjectiveBlock]);
 
     useEffect(() => {
         if (selectedCourse && !isLoadingObjectives && courseObjectives.length === 0) {
@@ -212,9 +224,8 @@ const HomePage = () => {
     };
 
     const handleSaveAllObjectives = async () => {
-        const teacherId = router.query.teacherId as string;
         if (!selectedCourse || !teacherId) {
-            showToast("Please select a course and ensure a teacher is logged in.", "error");
+            showToast("Please select a course and ensure you are logged in.", "error");
             return;
         }
         
@@ -274,17 +285,12 @@ const HomePage = () => {
     };
 
     const handleAssessmentScore = () => {
-        const teacherId = router.query.teacherId as string;
         if (!selectedCourse) {
             showToast("Please select a course first to enter scores.", "error");
             return;
         }
-        if (!teacherId) {
-            showToast("Teacher ID not found. Cannot proceed.", "error");
-            return;
-        }
-        // Navigate to the assessment page, passing the teacherId
-        router.push(`/assessment_score?teacherId=${teacherId}`);
+        // We no longer need to pass teacherId in the query
+        router.push(`/assessment_score`);
     };
 
     const handleRemoveObjective = (blockId: string) => {
@@ -302,6 +308,11 @@ const HomePage = () => {
             'Confirm',
             'btn-danger'
         );
+    };
+
+    const handleLogout = () => {
+        removeAuthTokenCookie();
+        router.push('/login');
     };
 
     return (
@@ -491,7 +502,11 @@ const HomePage = () => {
             <div className="container">
                 <header className="page-header">
                     <h1 className="page-title">Course Objective Mapping</h1>
-                    <div className="teacher-info">Teacher: <span>{teacherName}</span></div>
+                    <div className="flex items-center gap-4">
+                        <div className="teacher-info">Teacher: <span>{teacherName}</span></div>
+                        <button onClick={() => router.push('/score_summary')} className="btn btn-secondary">View Summaries</button>
+                        <button onClick={handleLogout} className="btn btn-danger">Logout</button>
+                    </div>
                 </header>
 
                 <main>
@@ -586,7 +601,7 @@ const HomePage = () => {
 
                     {selectedCourse && (
                          <div id="overallActionButtons" className="action-buttons">
-                            <button 
+                    <button
                                 type="button" 
                                 className="btn btn-primary" 
                                 onClick={handleSaveAllObjectives}

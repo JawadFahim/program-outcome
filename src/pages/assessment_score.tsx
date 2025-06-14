@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { getTeacherIdFromAuth, removeAuthTokenCookie } from '../lib/jwt';
 
 // --- Interfaces ---
 interface CourseTaught {
@@ -26,8 +27,7 @@ interface StudentScore {
 
 const AssessmentScorePage = () => {
     const router = useRouter();
-
-    // --- State Management ---
+    const [teacherId, setTeacherId] = useState<string | null>(null);
     const [teacherName, setTeacherName] = useState<string>('Loading...');
     const [courses, setCourses] = useState<CourseTaught[]>([]);
     const [courseObjectives, setCourseObjectives] = useState<CourseObjective[]>([]);
@@ -52,7 +52,19 @@ const AssessmentScorePage = () => {
     // --- Data Fetching Effects ---
 
     useEffect(() => {
-        const fetchTeacherAndCourses = async (teacherId: string) => {
+        // Get teacherId from JWT on component mount
+        const id = getTeacherIdFromAuth();
+        if (id) {
+            setTeacherId(id);
+        } else {
+            router.replace('/login');
+        }
+    }, [router]);
+
+    useEffect(() => {
+        const fetchTeacherName = async () => {
+            if (!teacherId) return;
+
             setIsLoadingCourses(true);
             try {
                 const response = await fetch(`/api/teachers/${teacherId}`);
@@ -67,21 +79,11 @@ const AssessmentScorePage = () => {
                 setIsLoadingCourses(false);
             }
         };
-
-        if (router.isReady) {
-            const teacherId = router.query.teacherId as string;
-            if (teacherId) {
-                fetchTeacherAndCourses(teacherId);
-            } else {
-                setTeacherName('Teacher ID not provided');
-                setIsLoadingCourses(false);
-            }
-        }
-    }, [router.isReady, router.query.teacherId]);
+        fetchTeacherName();
+    }, [teacherId]);
 
     useEffect(() => {
         const fetchCourseDetails = async () => {
-            const teacherId = router.query.teacherId as string;
             if (selectedCourse && teacherId) {
                 setIsLoadingObjectives(true);
                 setIsLoadingStudents(true);
@@ -125,7 +127,7 @@ const AssessmentScorePage = () => {
             }
         };
         fetchCourseDetails();
-    }, [selectedCourse, router.query.teacherId]);
+    }, [selectedCourse, teacherId]);
 
 
     // --- UI Helpers ---
@@ -162,7 +164,11 @@ const AssessmentScorePage = () => {
     };
 
     const handleSaveScores = async () => {
-        const teacherId = router.query.teacherId as string;
+        if (!teacherId) {
+            showToast("Authentication error. Please log in again.", "error");
+            router.push('/login');
+            return;
+        }
 
         // Validation
         if (!selectedCourse || !selectedObjective || !assessmentType || !passMark || !teacherId || !session) {
@@ -431,8 +437,19 @@ const AssessmentScorePage = () => {
             
             <div className="container">
                 <header className="page-header">
-                    <h1 className="page-title">Assessment Score Entry</h1>
-                    <div className="teacher-info">Teacher: <span>{teacherName}</span></div>
+                    <div className="flex items-center gap-4">
+                        <button 
+                            onClick={() => router.push('/homepage')} 
+                            className="btn btn-outline"
+                        >
+                            ← Go Back
+                        </button>
+                        <h1 className="page-title">Assessment Score Entry</h1>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="teacher-info">Teacher: <span>{teacherName}</span></div>
+                        <button onClick={() => router.push('/score_summary')} className="btn btn-secondary">View Summaries</button>
+                    </div>
                 </header>
 
                 <main>

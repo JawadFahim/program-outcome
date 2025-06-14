@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import clientPromise from '../../../lib/mongodb';
+import clientPromise from '../../lib/mongodb';
 
 interface Objective {
     co_no: string;
@@ -32,35 +32,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
         const client = await clientPromise;
         const db = client.db("BICE_course_map");
-        const coursesCollection = db.collection('courses');
+        const teachersCollection = db.collection('teachers');
 
         const filter = { 
             teacherId: teacherId, 
-            courseId: courseId 
+            "coursesTaught.course_id": courseId 
         };
 
         const updateDoc = {
             $set: {
-                courseObjectives: objectives,
+                "coursesTaught.$.courseObjectives": objectives,
             },
         };
         
-        const options = { upsert: true }; // This is the key for "update or insert"
-
-        const result = await coursesCollection.updateOne(filter, updateDoc, options);
+        const result = await teachersCollection.updateOne(filter, updateDoc);
 
         console.log('MongoDB operation result:', result);
 
-        if (result.upsertedCount > 0) {
-            console.log(`Successfully created a new document for course ${courseId} for teacher ${teacherId}.`);
-            return res.status(201).json({ message: 'Objectives saved successfully (new document created).', result });
-        } else if (result.matchedCount > 0) {
+        if (result.matchedCount > 0 && result.modifiedCount > 0) {
             console.log(`Successfully updated objectives for course ${courseId} for teacher ${teacherId}.`);
             return res.status(200).json({ message: 'Objectives updated successfully.', result });
-        } else {
-             // This case might happen if an existing document was matched but not modified because the data was the same.
+        } else if (result.matchedCount > 0 && result.modifiedCount === 0) {
             console.log(`No change needed for course ${courseId} for teacher ${teacherId}. Data was identical.`);
             return res.status(200).json({ message: 'No changes needed, objectives were already up to date.', result });
+        } else {
+            console.log(`Could not find course ${courseId} for teacher ${teacherId} to update.`);
+            return res.status(404).json({ message: 'Could not find the specified course for this teacher to update.' });
         }
 
     } catch (error) {

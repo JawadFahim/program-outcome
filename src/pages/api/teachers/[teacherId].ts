@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import clientPromise from '../../../../lib/mongodb'; // Adjust path to your mongodb utility
+import clientPromise from '../../../lib/mongodb';
 
 interface CourseTaught {
     course_id: string;
