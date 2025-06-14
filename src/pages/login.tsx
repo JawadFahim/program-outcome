@@ -2,6 +2,7 @@ import Head from 'next/head';
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/router';
 import { setAuthTokenCookie } from '../lib/jwt';
+import Link from 'next/link';
 
 const LoginPage = () => {
     const [teacherId, setTeacherId] = useState('');
@@ -255,18 +256,9 @@ const LoginPage = () => {
                             <button type="submit" className="btn-primary">Login</button>
                         </div>
 
-                        <div>
-                            <a 
-                                href="/forgot-password" 
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    router.push('/forgot-password');
-                                }} 
-                                className="forgot-password-link"
-                            >
-                                Forgot Password?
-                            </a>
-                        </div>
+                        <Link href="/forgot-password" passHref legacyBehavior>
+                            <a className="forgot-password-link">Forgot Password?</a>
+                        </Link>
                     </form>
                 </div>
             </div>

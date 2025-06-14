@@ -10,14 +10,6 @@ interface ScoreEntry {
     obtainedMark: number | 'absent';
 }
 
-interface ScoreDocument {
-    courseId: string;
-    teacherId: string;
-    co_no: string;
-    passMark: number;
-    scores: ScoreEntry[];
-}
-
 interface Student {
     studentId: string;
     name: string;

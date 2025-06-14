@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { getTeacherIdFromAuth, removeAuthTokenCookie } from '../lib/jwt';
+import { getTeacherIdFromAuth } from '../lib/jwt';
 
 // --- Interfaces ---
 interface CourseTaught {

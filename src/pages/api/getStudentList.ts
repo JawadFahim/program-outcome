@@ -11,6 +11,12 @@ interface StudentListData {
     session: string | null;
 }
 
+interface CourseInDB {
+    course_id: string;
+    studentList: Student[];
+    session: string;
+}
+
 interface ErrorResponse {
     message: string;
     errorDetails?: string;
@@ -41,7 +47,7 @@ export default async function handler(
         const teacherDocument = await teachersCollection.findOne({ teacherId: teacherId });
 
         if (teacherDocument) {
-            const course = teacherDocument.coursesTaught?.find((c: any) => c.course_id === courseId);
+            const course = teacherDocument.coursesTaught?.find((c: CourseInDB) => c.course_id === courseId);
             if (course && Array.isArray(course.studentList)) {
                 console.log(`Found course. Returning ${course.studentList.length} students for session ${course.session}.`);
                 res.status(200).json({

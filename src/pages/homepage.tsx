@@ -26,21 +26,6 @@ interface Teacher {
     coursesTaught: CourseTaught[];
 }
 
-const fetchTeacherData = async (teacherId: string): Promise<Teacher | null> => {
-    try {
-        const response = await fetch(`/api/teachers/${teacherId}`);
-        if (!response.ok) {
-            console.error(`API Error: Failed to fetch teacher data for ${teacherId}. Status: ${response.status}`);
-            return null;
-        }
-        const data: Teacher = await response.json();
-        return data;
-    } catch (error) {
-        console.error(`Network or other error in fetchTeacherData for ${teacherId}:`, error);
-        return null;
-    }
-};
-
 const HomePage = () => {
     const router = useRouter();
     const [teacherId, setTeacherId] = useState<string | null>(null);
@@ -62,8 +47,6 @@ const HomePage = () => {
     const [isToastVisible, setIsToastVisible] = useState<boolean>(false);
     const [toastMessage, setToastMessage] = useState<string>('');
     const [toastType, setToastType] = useState<'success' | 'error' | 'warning'>('success');
-
-    const [isLoading, setIsLoading] = useState(true);
 
     const createObjectiveBlock = useCallback(() => {
         setCourseObjectives(prevObjectives => [
@@ -91,7 +74,6 @@ const HomePage = () => {
         const fetchTeacherData = async () => {
             if (!teacherId) return;
             
-            setIsLoading(true);
             try {
                 const response = await fetch(`/api/teachers/${teacherId}`);
                 if (!response.ok) throw new Error('Failed to fetch teacher data');
@@ -107,8 +89,6 @@ const HomePage = () => {
                 console.error("Error fetching teacher data:", error);
                 setTeacherName('Error fetching data');
                 showToast('An error occurred while loading teacher information.', 'error');
-            } finally {
-                setIsLoading(false);
             }
         };
 
