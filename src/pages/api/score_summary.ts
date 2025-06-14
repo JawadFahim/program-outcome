@@ -28,6 +28,12 @@ interface CoPassStats {
     percentage: number;
 }
 
+interface ScoreDocument {
+    co_no: string;
+    passMark: number;
+    scores: ScoreEntry[];
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'GET') {
         return res.status(405).json({ message: 'Method NotAllowed' });
@@ -46,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log(`[Score Summary API] Received request for teacherId: "${teacherId}", courseId: "${courseId}", session: "${session}"`);
 
         // 1. Fetch all score entries for the given course, teacher, and session
-        const scoreEntries = await db.collection(SCORES_COLLECTION).find({ 
+        const scoreEntries = await db.collection<ScoreDocument>(SCORES_COLLECTION).find({ 
             teacherId: teacherId,
             courseId: courseId,
             session: session 

@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
                 url.pathname = '/homepage';
                 return NextResponse.redirect(url);
             }
-        } catch (_error) {
+        } catch {
             // If token verification fails and it's a protected page, redirect to login
             if (!isAuthPage) {
                 const url = request.nextUrl.clone();

@@ -78,7 +78,7 @@ const HomePage = () => {
                 const response = await fetch(`/api/teachers/${teacherId}`);
                 if (!response.ok) throw new Error('Failed to fetch teacher data');
                 
-                const data = await response.json();
+                const data: Teacher = await response.json();
                 setTeacherName(data.name || 'Teacher Not Found');
                 setCourses(data.coursesTaught || []);
                 
