@@ -8,6 +8,7 @@ import Layout from '../components/Layout';
 interface CourseTaught {
     course_id: string;
     courseName: string;
+    session: string;
 }
 
 interface CourseObjective {
@@ -37,6 +38,8 @@ const AssessmentScorePage = () => {
     const [scores, setScores] = useState<Record<string, StudentScore>>({});
     
     const [selectedCourse, setSelectedCourse] = useState('');
+    const [sessions, setSessions] = useState<string[]>([]);
+    const [selectedSession, setSelectedSession] = useState('');
     const [selectedObjective, setSelectedObjective] = useState('');
     const [assessmentType, setAssessmentType] = useState('');
     const [passMark, setPassMark] = useState('');
@@ -85,7 +88,7 @@ const AssessmentScorePage = () => {
 
     useEffect(() => {
         const fetchCourseDetails = async () => {
-            if (selectedCourse && teacherId) {
+            if (selectedCourse && teacherId && selectedSession) {
                 setIsLoadingObjectives(true);
                 setIsLoadingStudents(true);
                 setCourseObjectives([]);
@@ -95,8 +98,8 @@ const AssessmentScorePage = () => {
 
                 try {
                     const [objectivesRes, studentsRes] = await Promise.all([
-                        fetch(`/api/getCourseObjectives?teacherId=${teacherId}&courseId=${selectedCourse}`),
-                        fetch(`/api/getStudentList?teacherId=${teacherId}&courseId=${selectedCourse}`)
+                        fetch(`/api/getCourseObjectives?teacherId=${teacherId}&courseId=${selectedCourse}&session=${selectedSession}`),
+                        fetch(`/api/getStudentList?teacherId=${teacherId}&courseId=${selectedCourse}&session=${selectedSession}`)
                     ]);
 
                     if (!objectivesRes.ok) throw new Error(`Failed to fetch objectives: ${objectivesRes.statusText}`);
@@ -128,7 +131,7 @@ const AssessmentScorePage = () => {
             }
         };
         fetchCourseDetails();
-    }, [selectedCourse, teacherId]);
+    }, [selectedCourse, selectedSession, teacherId]);
 
 
     // --- UI Helpers ---
@@ -143,13 +146,34 @@ const AssessmentScorePage = () => {
 
     // --- Event Handlers ---
     const handleCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedCourse(e.target.value);
+        const newCourseValue = e.target.value;
+        setSelectedCourse(newCourseValue);
+        // Reset downstream state
+        setSelectedSession('');
+        setSessions([]);
+        setSelectedObjective('');
+        setAssessmentType('');
+        setPassMark('');
+        setScores({});
+
+        if (newCourseValue) {
+            const courseSessions = courses
+                .filter(c => c.course_id === newCourseValue)
+                .map(c => c.session)
+                .filter((session, index, self) => self.indexOf(session) === index);
+            setSessions(courseSessions);
+        }
+    };
+    
+    const handleSessionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setSelectedSession(e.target.value);
+        // Reset fields that depend on session
         setSelectedObjective('');
         setAssessmentType('');
         setPassMark('');
         setScores({});
     };
-    
+
     const handleScoreChange = (studentId: string, value: string) => {
         setScores(prev => ({
             ...prev,
@@ -248,23 +272,41 @@ const AssessmentScorePage = () => {
                         <label htmlFor="courseSelector" className="form-label">1. Select Course</label>
                         <select id="courseSelector" className="select-field" value={selectedCourse} onChange={handleCourseChange} disabled={isLoadingCourses || courses.length === 0}>
                             <option value="">{isLoadingCourses ? "Loading courses..." : "-- Please select a course --"}</option>
-                            {courses.map(course => ( <option key={course.course_id} value={course.course_id}> {course.courseName} ({course.course_id}) </option> ))}
+                            {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => ( <option key={course.course_id} value={course.course_id}> {course.courseName} ({course.course_id}) </option> ))}
                         </select>
                     </div>
 
-                    {selectedCourse ? (
+                    {selectedCourse && (
+                         <div className="card">
+                            <label htmlFor="sessionSelector" className="form-label">2. Select Session</label>
+                            <select 
+                                id="sessionSelector" 
+                                className="select-field" 
+                                value={selectedSession} 
+                                onChange={handleSessionChange} 
+                                disabled={sessions.length === 0}
+                            >
+                                <option value="">-- Select a session --</option>
+                                {sessions.map(session => (
+                                    <option key={session} value={session}>{session}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
+                    {selectedCourse && selectedSession ? (
                         <div id="assessmentDetailsSection">
                             <div className="card">
                                 <div className="assessment-details-grid">
                                     <div>
-                                        <label htmlFor="courseObjectiveSelector" className="form-label">2. Course Objective</label>
+                                        <label htmlFor="courseObjectiveSelector" className="form-label">3. Course Objective</label>
                                         <select id="courseObjectiveSelector" className="select-field" value={selectedObjective} onChange={(e) => setSelectedObjective(e.target.value)} disabled={isLoadingObjectives || courseObjectives.length === 0}>
                                             <option value="">{isLoadingObjectives ? "Loading..." : "-- Select an objective --"}</option>
                                             {courseObjectives.map(obj => ( <option key={obj.co_no} value={obj.co_no}> {obj.co_no}: {obj.courseObjective} </option> ))}
                                         </select>
                                     </div>
                                     <div>
-                                        <label htmlFor="assessmentTypeSelector" className="form-label">3. Assessment Type</label>
+                                        <label htmlFor="assessmentTypeSelector" className="form-label">4. Assessment Type</label>
                                         <select id="assessmentTypeSelector" className="select-field" value={assessmentType} onChange={(e) => setAssessmentType(e.target.value)}>
                                             <option value="">-- Select type --</option>
                                             <option value="quiz">Quiz</option>
@@ -274,7 +316,7 @@ const AssessmentScorePage = () => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label htmlFor="passMarkInput" className="form-label">4. Pass Mark</label>
+                                        <label htmlFor="passMarkInput" className="form-label">5. Pass Mark</label>
                                         <input type="number" id="passMarkInput" className="input-field" placeholder="e.g., 40" min="0" max="100" value={passMark} onChange={(e) => setPassMark(e.target.value)} />
                                     </div>
                                 </div>
@@ -283,7 +325,7 @@ const AssessmentScorePage = () => {
                             {showStudentSection && (
                                 <div id="studentScoresSection" className="card">
                                     <div className="student-scores-header">
-                                        <h3>5. Enter Student Scores for <span>{selectedObjectiveText}</span> (<span>{assessmentType}</span>)</h3>
+                                        <h3>6. Enter Student Scores for <span>{selectedObjectiveText}</span> (<span>{assessmentType}</span>)</h3>
                                     </div>
                                     <div className="table-container">
                                         <table className="student-table">
@@ -341,13 +383,13 @@ const AssessmentScorePage = () => {
 
                             {!showStudentSection && (
                                 <div id="selectObjectiveMessage" className="card message-card">
-                                    <p>Please complete steps 1-4 to enter student scores.</p>
+                                    <p>Please complete steps 1-5 to enter student scores.</p>
                                 </div>
                             )}
                         </div>
                     ) : (
                         <div id="noCourseSelectedMessage" className="card message-card">
-                            <p>Please select a course above to proceed.</p>
+                            <p>Please select a course and session to proceed.</p>
                         </div>
                     )}
                 </main>

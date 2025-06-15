@@ -123,7 +123,7 @@ const ScoreSummaryPage = () => {
                     <label htmlFor="courseSelector" className="block text-lg font-medium text-gray-700 mb-2">Select Course:</label>
                     <select id="courseSelector" className="select-field text-base" value={selectedCourse} onChange={handleCourseChange} disabled={courses.length === 0}>
                         <option value="">{courses.length > 0 ? "-- Please select a course --" : "No courses available"}</option>
-                        {courses.map(course => (
+                        {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => (
                              <option key={course.course_id} value={course.course_id}>
                                 {course.courseName} ({course.course_id})
                              </option>
