@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             assessmentType,
             passMark: Number(passMark),
             session,
-            scores, // Array of { studentId, obtainedMark }
+            scores, // Array of { studentId, name, obtainedMark }
             createdAt: new Date(),
         };
 

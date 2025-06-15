@@ -7,6 +7,7 @@ const SCORES_COLLECTION = "scores";
 // Define interfaces for our data structures
 interface ScoreEntry {
     studentId: string;
+    name: string;
     obtainedMark: number | 'absent';
 }
 
@@ -67,22 +68,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             });
         }
         
-        // 2. Build the student list directly from all score entries.
-        const studentIdSet = new Set<string>();
+        // 2. Build a map of student IDs to names from all score entries.
+        const studentNameMap = new Map<string, string>();
         for (const doc of scoreEntries) {
             for (const score of doc.scores) {
-                studentIdSet.add(score.studentId);
+                if (!studentNameMap.has(score.studentId)) {
+                    studentNameMap.set(score.studentId, score.name || score.studentId);
+                }
             }
         }
         
-        const studentList: Student[] = Array.from(studentIdSet).map(id => ({
+        const studentList: Student[] = Array.from(studentNameMap.entries()).map(([id, name]) => ({
             studentId: id,
-            name: id // Using ID as name for now, as names aren't in the scores collection.
+            name: name
         }));
         console.log(`[Score Summary API] Built a list of ${studentList.length} unique students from score entries.`);
         
-        const studentNameMap = new Map(studentList.map(s => [s.studentId, s.name]));
-
         // 3. Aggregate scores and pass marks for each CO
         const coData = new Map<string, { totalMarks: number; totalPassMarks: number; students: Map<string, number | 'absent'> }>();
 

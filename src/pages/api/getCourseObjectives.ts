@@ -20,10 +20,10 @@ export default async function handler(
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
-    const { teacherId, courseId } = req.query;
+    const { teacherId, courseId, session } = req.query;
 
-    if (!teacherId || !courseId || typeof teacherId !== 'string' || typeof courseId !== 'string') {
-        return res.status(400).json({ message: 'teacherId and courseId are required query parameters.' });
+    if (!teacherId || !courseId || !session || typeof teacherId !== 'string' || typeof courseId !== 'string' || typeof session !== 'string') {
+        return res.status(400).json({ message: 'teacherId, courseId, and session are required query parameters.' });
     }
 
     try {
@@ -32,9 +32,9 @@ export default async function handler(
         const coursesCollection = db.collection('courses');
 
         console.log(`--- GET OBJECTIVES API HIT ---`);
-        console.log(`Searching for teacherId: "${teacherId}", courseId: "${courseId}"`);
+        console.log(`Searching for teacherId: "${teacherId}", courseId: "${courseId}", session: "${session}"`);
 
-        const courseDocument = await coursesCollection.findOne({ teacherId, courseId });
+        const courseDocument = await coursesCollection.findOne({ teacherId, courseId, session });
 
         if (courseDocument) {
             console.log(`Found document. Returning ${courseDocument.courseObjectives?.length || 0} objectives.`);

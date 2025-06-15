@@ -177,6 +177,8 @@ const AssessmentScorePage = () => {
             return;
         }
 
+        const studentNameMap = new Map(students.map(s => [s.studentId, s.name]));
+
         let allValid = true;
         const studentScores = Object.entries(scores).map(([studentId, scoreData]) => {
             if (!scoreData.isAbsent && scoreData.mark.trim() === '') {
@@ -184,6 +186,7 @@ const AssessmentScorePage = () => {
             }
             return {
                 studentId,
+                name: studentNameMap.get(studentId),
                 obtainedMark: scoreData.isAbsent ? 'absent' : Number(scoreData.mark)
             };
         });

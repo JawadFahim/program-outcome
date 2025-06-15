@@ -1,364 +1,82 @@
 {
-    "_id": {
-    "$oid": "684c25d0bda1108702287b18"
-  },
-    "teacherId": "JAF",
-    "courseId": "ICE 3207",
-    "co_no": "CO2",
-    "assessmentType": "final",
-    "passMark": 15,
-    "session": "2022-23",
-    "scores": [
-      {
-        "studentId": "2254901013",
-        "obtainedMark": 78
-      },
-      {
-        "studentId": "2254901024",
-        "obtainedMark": 45
-      },
-      {
-        "studentId": "2254901025",
-        "obtainedMark": 92
-      },
-      {
-        "studentId": "2254901027",
-        "obtainedMark": "absent"
-      },
-      {
-        "studentId": "2254901034",
-        "obtainedMark": 67
-      },
-      {
-        "studentId": "2254901045",
-        "obtainedMark": 23
-      },
-      {
-        "studentId": "2254901051",
-        "obtainedMark": 88
-      },
-      {
-        "studentId": "2254901076",
-        "obtainedMark": 56
-      },
-      {
-        "studentId": "2254901086",
-        "obtainedMark": 34
-      },
-      {
-        "studentId": "2254901088",
-        "obtainedMark": 91
-      },
-      {
-        "studentId": "2254901096",
-        "obtainedMark": 72
-      },
-      {
-        "studentId": "2254901102",
-        "obtainedMark": 49
-      },
-      {
-        "studentId": "2254901119",
-        "obtainedMark": 83
-      },
-      {
-        "studentId": "2254901126",
-        "obtainedMark": 61
-      },
-      {
-        "studentId": "2254901127",
-        "obtainedMark": 95
-      },
-      {
-        "studentId": "23549009001",
-        "obtainedMark": "absent"
-      },
-      {
-        "studentId": "23549009003",
-        "obtainedMark": 77
-      },
-      {
-        "studentId": "23549009005",
-        "obtainedMark": 42
-      },
-      {
-        "studentId": "23549009007",
-        "obtainedMark": 89
-      },
-      {
-        "studentId": "23549009011",
-        "obtainedMark": "absent"
-      },
-      {
-        "studentId": "23549009013",
-        "obtainedMark": 53
-      },
-      {
-        "studentId": "23549009015",
-        "obtainedMark": 28
-      },
-      {
-        "studentId": "23549009021",
-        "obtainedMark": 96
-      },
-      {
-        "studentId": "23549009023",
-        "obtainedMark": 71
-      },
-      {
-        "studentId": "23549009025",
-        "obtainedMark": 84
-      },
-      {
-        "studentId": "23549009027",
-        "obtainedMark": 39
-      },
-      {
-        "studentId": "23549009029",
-        "obtainedMark": 62
-      },
-      {
-        "studentId": "23549009031",
-        "obtainedMark": 75
-      },
-      {
-        "studentId": "23549009033",
-        "obtainedMark": 47
-      },
-      {
-        "studentId": "23549009037",
-        "obtainedMark": 93
-      },
-      {
-        "studentId": "23549009039",
-        "obtainedMark": 58
-      },
-      {
-        "studentId": "23549009041",
-        "obtainedMark": 81
-      },
-      {
-        "studentId": "23549009043",
-        "obtainedMark": 36
-      },
-      {
-        "studentId": "23549009045",
-        "obtainedMark": 69
-      },
-      {
-        "studentId": "23549009051",
-        "obtainedMark": 87
-      },
-      {
-        "studentId": "23549009053",
-        "obtainedMark": 52
-      },
-      {
-        "studentId": "23549009055",
-        "obtainedMark": 31
-      },
-      {
-        "studentId": "23549009061",
-        "obtainedMark": 74
-      },
-      {
-        "studentId": "23549009063",
-        "obtainedMark": 43
-      },
-      {
-        "studentId": "23549009065",
-        "obtainedMark": 66
-      },
-      {
-        "studentId": "23549009067",
-        "obtainedMark": 29
-      },
-      {
-        "studentId": "23549009069",
-        "obtainedMark": 94
-      },
-      {
-        "studentId": "23549009071",
-        "obtainedMark": 57
-      },
-      {
-        "studentId": "23549009073",
-        "obtainedMark": 82
-      },
-      {
-        "studentId": "23549009075",
-        "obtainedMark": 35
-      },
-      {
-        "studentId": "23549009081",
-        "obtainedMark": 68
-      },
-      {
-        "studentId": "23549009085",
-        "obtainedMark": 90
-      },
-      {
-        "studentId": "23549009087",
-        "obtainedMark": 51
-      },
-      {
-        "studentId": "23549009091",
-        "obtainedMark": 73
-      },
-      {
-        "studentId": "23549009093",
-        "obtainedMark": 46
-      },
-      {
-        "studentId": "23549009095",
-        "obtainedMark": 64
-      },
-      {
-        "studentId": "23549009097",
-        "obtainedMark": 37
-      },
-      {
-        "studentId": "23549009099",
-        "obtainedMark": 85
-      },
-      {
-        "studentId": "23549009101",
-        "obtainedMark": 59
-      },
-      {
-        "studentId": "23549009002",
-        "obtainedMark": 32
-      },
-      {
-        "studentId": "23549009004",
-        "obtainedMark": 76
-      },
-      {
-        "studentId": "23549009006",
-        "obtainedMark": 41
-      },
-      {
-        "studentId": "23549009008",
-        "obtainedMark": 88
-      },
-      {
-        "studentId": "23549009012",
-        "obtainedMark": 54
-      },
-      {
-        "studentId": "23549009014",
-        "obtainedMark": 97
-      },
-      {
-        "studentId": "23549009016",
-        "obtainedMark": 63
-      },
-      {
-        "studentId": "23549009018",
-        "obtainedMark": 38
-      },
-      {
-        "studentId": "23549009020",
-        "obtainedMark": 79
-      },
-      {
-        "studentId": "23549009022",
-        "obtainedMark": 48
-      },
-      {
-        "studentId": "23549009026",
-        "obtainedMark": 86
-      },
-      {
-        "studentId": "23549009028",
-        "obtainedMark": 55
-      },
-      {
-        "studentId": "23549009030",
-        "obtainedMark": 70
-      },
-      {
-        "studentId": "23549009032",
-        "obtainedMark": 33
-      },
-      {
-        "studentId": "23549009034",
-        "obtainedMark": 92
-      },
-      {
-        "studentId": "23549009038",
-        "obtainedMark": 65
-      },
-      {
-        "studentId": "23549009040",
-        "obtainedMark": 44
-      },
-      {
-        "studentId": "23549009042",
-        "obtainedMark": 80
-      },
-      {
-        "studentId": "23549009044",
-        "obtainedMark": 27
-      },
-      {
-        "studentId": "23549009048",
-        "obtainedMark": 89
-      },
-      {
-        "studentId": "23549009052",
-        "obtainedMark": 60
-      },
-      {
-        "studentId": "23549009054",
-        "obtainedMark": 72
-      },
-      {
-        "studentId": "23549009056",
-        "obtainedMark": 40
-      },
-      {
-        "studentId": "23549009070",
-        "obtainedMark": 83
-      },
-      {
-        "studentId": "23549009074",
-        "obtainedMark": "absent"
-      },
-      {
-        "studentId": "23549009076",
-        "obtainedMark": 58
-      },
-      {
-        "studentId": "23549009078",
-        "obtainedMark": 91
-      },
-      {
-        "studentId": "23549009088",
-        "obtainedMark": 45
-      },
-      {
-        "studentId": "23549009090",
-        "obtainedMark": 67
-      },
-      {
-        "studentId": "23549009096",
-        "obtainedMark": "absent"
-      },
-      {
-        "studentId": "23549009098",
-        "obtainedMark": 94
-      },
-      {
-        "studentId": "23549009100",
-        "obtainedMark": 52
-      },
-      {
-        "studentId": "23549009102",
-        "obtainedMark": 78
-      }
-    ],
-    "createdAt": {
-      "$date": "2025-06-08T16:37:30.389Z"
+  
+  "session": "2021-22",
+  "teacherId": "JAF",
+  "studentList": [
+    {
+      "studentId": "2254901027",
+      "name": "Jawad Anzum Fahim"
+    },
+    {
+      "studentId": "2254901045",
+      "name": "MD NASIMUZZAMAN EMON"
+    },
+    {
+      "studentId": "2254901096",
+      "name": "MD. NAFI - UZ - ZAMAN"
+    },
+    {
+      "studentId": "2254901119",
+      "name": "FARHAD HOSSEN SHUVO"
+    },
+    {
+      "studentId": "23549009001",
+      "name": "SUBAHA NURAIN POURBI"
+    },
+    {
+      "studentId": "23549009003",
+      "name": "RAKIBUL HASAN"
+    },
+    {
+      "studentId": "23549009005",
+      "name": "MD. HEMEL PARVEJ"
     }
+  ],
+  "createdAt": {
+    "$date": "2025-06-08T12:29:53.457Z"
+  },
+  "courseId": "ICE 2205"
+}
+
+
+
+{
+  "_id": {
+    "$oid": "6839e5b93c0b7bd017707324"
+  },
+  "teacherId": "JAF",
+  "password": "1",
+  "email": "jawadanjum712@gmail.com",
+  "name": "Jawad Anzum Fahim",
+  "coursesTaught": [
+    {
+      "course_id": "ICE 2103",
+      "courseName": "Object Oriented Programming",
+      "session": "2021-22"
+    },
+    {
+      "course_id": "ICE 2103",
+      "courseName": "Object Oriented Programming",
+      "session": "2022-23"
+    },
+    {
+      "course_id": "ICE 2205",
+      "courseName": "Data Structures",
+      "session": "2022-23"
+    },
+    {
+      "course_id": "ICE 2205",
+      "courseName": "Data Structures",
+      "session": "2021-22"
+    },
+    {
+      "course_id": "ICE 3207",
+      "courseName": "Software Requirement Engineering",
+      "session": "2021-22"
+    }
+  ],
+  "resetOtp": "456340",
+  "resetOtpExpiry": {
+    "$date": "2025-06-12T09:39:46.810Z"
   }
+}

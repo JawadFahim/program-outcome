@@ -10,6 +10,7 @@ interface Objective {
 interface RequestBody {
     teacherId: string;
     courseId: string;
+    session: string;
     objectives: Objective[];
 }
 
@@ -18,15 +19,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
-    const { teacherId, courseId, objectives } = req.body as RequestBody;
+    const { teacherId, courseId, session, objectives } = req.body as RequestBody;
 
     console.log('--- SAVE OBJECTIVES API HIT ---');
     console.log('Received teacherId:', teacherId);
     console.log('Received courseId:', courseId);
+    console.log('Received session:', session);
     console.log('Received objectives count:', objectives?.length);
 
-    if (!teacherId || !courseId || !objectives || !Array.isArray(objectives) || objectives.length === 0) {
-        return res.status(400).json({ message: 'Missing or invalid data: teacherId, courseId, and a non-empty objectives array are required.' });
+    if (!teacherId || !courseId || !session || !objectives || !Array.isArray(objectives) || objectives.length === 0) {
+        return res.status(400).json({ message: 'Missing or invalid data: teacherId, courseId, session, and a non-empty objectives array are required.' });
     }
 
     try {
@@ -36,7 +38,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const filter = { 
             teacherId: teacherId, 
-            courseId: courseId 
+            courseId: courseId,
+            session: session
         };
 
         const updateDoc = {
@@ -45,7 +48,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             },
             $setOnInsert: {
                 teacherId: teacherId,
-                courseId: courseId
+                courseId: courseId,
+                session: session
             }
         };
         

@@ -14,6 +14,7 @@ interface CourseObjective {
 interface CourseTaught {
     course_id: string;
     courseName: string;
+    session: string;
 }
 
 interface ApiCourseObjective {
@@ -32,6 +33,8 @@ const HomePage = () => {
     const [teacherId, setTeacherId] = useState<string | null>(null);
     const [teacherName, setTeacherName] = useState<string>('Loading...');
     const [selectedCourse, setSelectedCourse] = useState<string>('');
+    const [sessions, setSessions] = useState<string[]>([]);
+    const [selectedSession, setSelectedSession] = useState<string>('');
     const [courses, setCourses] = useState<CourseTaught[]>([]);
     const [courseObjectives, setCourseObjectives] = useState<CourseObjective[]>([]);
     const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -98,12 +101,12 @@ const HomePage = () => {
 
     useEffect(() => {
         const fetchObjectives = async () => {
-            if (selectedCourse && teacherId) {
+            if (selectedCourse && teacherId && selectedSession) {
                 setIsLoadingObjectives(true);
                 setCourseObjectives([]);
 
                 try {
-                    const response = await fetch(`/api/getCourseObjectives?teacherId=${teacherId}&courseId=${selectedCourse}`);
+                    const response = await fetch(`/api/getCourseObjectives?teacherId=${teacherId}&courseId=${selectedCourse}&session=${selectedSession}`);
                     if (!response.ok) {
                         throw new Error('Failed to fetch objectives');
                     }
@@ -127,17 +130,19 @@ const HomePage = () => {
                 } finally {
                     setIsLoadingObjectives(false);
                 }
+            } else {
+                setCourseObjectives([]); // Clear objectives if no session is selected
             }
         };
 
         fetchObjectives();
-    }, [selectedCourse, teacherId, createObjectiveBlock]);
+    }, [selectedCourse, selectedSession, teacherId, createObjectiveBlock]);
 
     useEffect(() => {
-        if (selectedCourse && !isLoadingObjectives && courseObjectives.length === 0) {
+        if (selectedCourse && selectedSession && !isLoadingObjectives && courseObjectives.length === 0) {
             createObjectiveBlock();
         }
-    }, [selectedCourse, courseObjectives, isLoadingObjectives, createObjectiveBlock]);
+    }, [selectedCourse, selectedSession, courseObjectives, isLoadingObjectives, createObjectiveBlock]);
 
     const BICE_PROGRAM_OUTCOMES: string[] = [
         "PO1: Engineering knowledge",
@@ -194,6 +199,22 @@ const HomePage = () => {
         const newCourseValue = event.target.value;
         setCourseObjectives([]);
         setSelectedCourse(newCourseValue);
+        setSelectedSession(''); // Reset session on new course selection
+
+        if (newCourseValue) {
+            const courseSessions = courses
+                .filter(c => c.course_id === newCourseValue)
+                .map(c => c.session)
+                // Filter out duplicate sessions
+                .filter((session, index, self) => self.indexOf(session) === index);
+            setSessions(courseSessions);
+        } else {
+            setSessions([]); // Clear sessions if no course is selected
+        }
+    };
+
+    const handleSessionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        setSelectedSession(event.target.value);
     };
     
     const handleObjectiveChange = (id: string, field: keyof Pick<CourseObjective, 'description' | 'programOutcome'>, value: string) => {
@@ -205,8 +226,8 @@ const HomePage = () => {
     };
 
     const handleSaveAllObjectives = async () => {
-        if (!selectedCourse || !teacherId) {
-            showToast("Please select a course and ensure you are logged in.", "error");
+        if (!selectedCourse || !teacherId || !selectedSession) {
+            showToast("Please select a course and session before saving.", "error");
             return;
         }
         
@@ -246,6 +267,7 @@ const HomePage = () => {
                 body: JSON.stringify({
                     teacherId: teacherId,
                     courseId: selectedCourse,
+                    session: selectedSession,
                     objectives: objectivesData,
                 }),
             });
@@ -264,8 +286,6 @@ const HomePage = () => {
             setIsSaving(false);
         }
     };
-
-   
 
     const handleRemoveObjective = (blockId: string) => {
         if (courseObjectives.length <= 1) {
@@ -306,7 +326,7 @@ const HomePage = () => {
                         disabled={courses.length === 0}
                     >
                         <option value="">-- Please select a course --</option>
-                        {courses.map(course => (
+                        {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => (
                             <option key={course.course_id} value={course.course_id}>
                                 {course.courseName} ({course.course_id})
                             </option>
@@ -314,10 +334,30 @@ const HomePage = () => {
                     </select>
                 </div>
 
-                {selectedCourse ? (
+                {selectedCourse && (
+                    <div className="card">
+                        <label htmlFor="sessionSelector" className="form-label">Select Session:</label>
+                        <select
+                            id="sessionSelector"
+                            className="select-field"
+                            value={selectedSession}
+                            onChange={handleSessionChange}
+                            disabled={sessions.length === 0}
+                        >
+                            <option value="">-- Please select a session --</option>
+                            {sessions.map(session => (
+                                <option key={session} value={session}>
+                                    {session}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {selectedCourse && selectedSession ? (
                     <div id="courseObjectivesSection">
                         <div className="objectives-header">
-                            <h2>Define Course Objectives for <span>{getCourseLabel(selectedCourse)}</span></h2>
+                            <h2>Define Course Objectives for <span>{getCourseLabel(selectedCourse)}</span> ({selectedSession})</h2>
                             <p>For each course objective, select one primary BICE Program Outcome it aligns with.</p>
                         </div>
 
@@ -379,13 +419,13 @@ const HomePage = () => {
                 ) : (
                     <div id="noCourseSelectedMessage" className="card no-course-message">
                         {courses.length > 0 ?
-                            <p>Please select a course above to begin defining its objectives.</p> :
+                            <p>Please select a course and session to begin defining objectives.</p> :
                             <p>No courses are assigned to this teacher, or they are still loading.</p>
                         }
                     </div>
                 )}
 
-                {selectedCourse && (
+                {selectedCourse && selectedSession && (
                      <div id="overallActionButtons" className="action-buttons">
                     <button
                                 type="button" 
