@@ -1,4 +1,4 @@
-import { jwtVerify, SignJWT } from 'jose';
+import { jwtVerify} from 'jose';
 import Cookies from 'js-cookie';
 
 const SECRET_KEY = process.env.JWT_SECRET || 'a-secure-and-long-secret-key-for-testing';
@@ -49,8 +49,8 @@ export const getTeacherIdFromAuth = (): string | null => {
     try {
         const claims = JSON.parse(atob(token.split('.')[1]));
         return claims.teacherId || null;
-    } catch (e) {
-        console.error("Error decoding JWT:", e);
+    } catch  {
+        console.log("Error decoding JWT");
         return null;
     }
 };
@@ -81,6 +81,7 @@ export const verifyJwt = async (token: string) => {
         const { payload } = await jwtVerify(token, JWT_SECRET);
         return payload;
     } catch (e) {
+        console.log("Error verifying JWT", e);
         return null;
     }
 }; 
