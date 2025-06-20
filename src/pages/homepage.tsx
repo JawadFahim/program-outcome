@@ -316,19 +316,19 @@ const HomePage = () => {
             </Head>
 
             <div className="container">
-                <div className="card">
-                    <label htmlFor="courseSelector" className="form-label">Select Course:</label>
-                    <select 
-                        id="courseSelector" 
-                        className="select-field" 
-                        value={selectedCourse} 
-                        onChange={handleCourseSelectionChange}
-                        disabled={courses.length === 0}
-                    >
-                        <option value="">-- Please select a course --</option>
+                    <div className="card">
+                        <label htmlFor="courseSelector" className="form-label">Select Course:</label>
+                        <select 
+                            id="courseSelector" 
+                            className="select-field" 
+                            value={selectedCourse} 
+                            onChange={handleCourseSelectionChange}
+                            disabled={courses.length === 0}
+                        >
+                            <option value="">-- Please select a course --</option>
                         {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => (
-                            <option key={course.course_id} value={course.course_id}>
-                                {course.courseName} ({course.course_id})
+                                <option key={course.course_id} value={course.course_id}>
+                                    {course.courseName} ({course.course_id})
                             </option>
                         ))}
                     </select>
@@ -355,78 +355,78 @@ const HomePage = () => {
                 )}
 
                 {selectedCourse && selectedSession ? (
-                    <div id="courseObjectivesSection">
-                        <div className="objectives-header">
+                        <div id="courseObjectivesSection">
+                            <div className="objectives-header">
                             <h2>Define Course Objectives for <span>{getCourseLabel(selectedCourse)}</span> ({selectedSession})</h2>
-                            <p>For each course objective, select one primary BICE Program Outcome it aligns with.</p>
-                        </div>
+                                <p>For each course objective, select one primary BICE Program Outcome it aligns with.</p>
+                            </div>
 
-                        {isLoadingObjectives ? (
-                            <div className="loading-message">Loading objectives...</div>
-                        ) : (
-                            <div id="courseObjectivesContainer" className="objectives-container">
-                                {courseObjectives.map((obj) => (
-                                    <div key={obj.id} className="card objective-entry-item">
-                                        <div className="objective-entry-header">
-                                            <h4 className="objective-title">Course Objective {obj.displayNumber}</h4>
-                                        </div>
-                                        <div className="course-objective-block">
-                                            <textarea 
-                                                className="textarea-field" 
-                                                name={`course_objective_desc_${obj.id}`} 
-                                                placeholder="Enter course objective description..."
-                                                value={obj.description}
-                                                onChange={(e) => handleObjectiveChange(obj.id, 'description', e.target.value)}
-                                            ></textarea>
-                                            <select 
-                                                className="select-field" 
-                                                name={`program_outcome_map_${obj.id}`}
-                                                value={obj.programOutcome}
-                                                onChange={(e) => handleObjectiveChange(obj.id, 'programOutcome', e.target.value)}
-                                            >
-                                                <option value="">-- Select Program Outcome --</option>
-                                                {BICE_PROGRAM_OUTCOMES.map((outcome, i) => (
-                                                    <option key={`po-${i}`} value={`PO${i + 1}`}>{outcome}</option>
-                                                ))}
-                                            </select>
-                                             <div className="remove-btn-container">
-                                                {courseObjectives.length > 1 && (
-                                                    <button 
-                                                        type="button" 
-                                                        className="btn btn-danger" 
-                                                        onClick={() => handleRemoveObjective(obj.id)}
-                                                    >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                                        Remove
-                                                    </button>
-                                                )}
+                            {isLoadingObjectives ? (
+                                <div className="loading-message">Loading objectives...</div>
+                            ) : (
+                                <div id="courseObjectivesContainer" className="objectives-container">
+                                    {courseObjectives.map((obj) => (
+                                        <div key={obj.id} className="card objective-entry-item">
+                                            <div className="objective-entry-header">
+                                                <h4 className="objective-title">Course Objective {obj.displayNumber}</h4>
+                                            </div>
+                                            <div className="course-objective-block">
+                                                <textarea 
+                                                    className="textarea-field" 
+                                                    name={`course_objective_desc_${obj.id}`} 
+                                                    placeholder="Enter course objective description..."
+                                                    value={obj.description}
+                                                    onChange={(e) => handleObjectiveChange(obj.id, 'description', e.target.value)}
+                                                ></textarea>
+                                                <select 
+                                                    className="select-field" 
+                                                    name={`program_outcome_map_${obj.id}`}
+                                                    value={obj.programOutcome}
+                                                    onChange={(e) => handleObjectiveChange(obj.id, 'programOutcome', e.target.value)}
+                                                >
+                                                    <option value="">-- Select Program Outcome --</option>
+                                                    {BICE_PROGRAM_OUTCOMES.map((outcome, i) => (
+                                                        <option key={`po-${i}`} value={`PO${i + 1}`}>{outcome}</option>
+                                                    ))}
+                                                </select>
+                                                 <div className="remove-btn-container">
+                                                    {courseObjectives.length > 1 && (
+                                                        <button 
+                                                            type="button" 
+                                                            className="btn btn-danger" 
+                                                            onClick={() => handleRemoveObjective(obj.id)}
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                            Remove
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                    ))}
+                                </div>
+                            )}
 
-                        <div className="action-buttons">
-                            <button type="button" className="btn btn-secondary" onClick={createObjectiveBlock}>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                                </svg>
-                                Add Objective
-                            </button>
+                            <div className="action-buttons">
+                                <button type="button" className="btn btn-secondary" onClick={createObjectiveBlock}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                                    </svg>
+                                    Add Objective
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                ) : (
-                    <div id="noCourseSelectedMessage" className="card no-course-message">
-                        {courses.length > 0 ?
+                    ) : (
+                        <div id="noCourseSelectedMessage" className="card no-course-message">
+                            {courses.length > 0 ?
                             <p>Please select a course and session to begin defining objectives.</p> :
-                            <p>No courses are assigned to this teacher, or they are still loading.</p>
-                        }
-                    </div>
-                )}
+                                <p>No courses are assigned to this teacher, or they are still loading.</p>
+                            }
+                        </div>
+                    )}
 
                 {selectedCourse && selectedSession && (
-                     <div id="overallActionButtons" className="action-buttons">
+                         <div id="overallActionButtons" className="action-buttons">
                     <button
                                 type="button" 
                                 className="btn btn-primary" 
@@ -450,32 +450,32 @@ const HomePage = () => {
                                     </>
                                 )}
                             </button>
-                         </div>
-                )}
+                        </div>
+                    )}
             </div>
 
-            {isModalOpen && (
-                <div id="confirmationModal" className="modal-backdrop">
-                    <div className="modal-content">
-                        <div className="modal-header"><h3 className="modal-title">{modalTitle}</h3></div>
-                        <div className="modal-body"><p>{modalMessage}</p></div>
-                        <div className="modal-footer">
-                            {showModalCancel && <button className="btn btn-outline" onClick={closeModal}>Cancel</button>}
-                            <button className={`btn ${modalConfirmClassName}`} onClick={handleModalConfirm}>{modalConfirmText}</button>
+                {isModalOpen && (
+                    <div id="confirmationModal" className="modal-backdrop">
+                        <div className="modal-content">
+                            <div className="modal-header"><h3 className="modal-title">{modalTitle}</h3></div>
+                            <div className="modal-body"><p>{modalMessage}</p></div>
+                            <div className="modal-footer">
+                                {showModalCancel && <button className="btn btn-outline" onClick={closeModal}>Cancel</button>}
+                                <button className={`btn ${modalConfirmClassName}`} onClick={handleModalConfirm}>{modalConfirmText}</button>
+                            </div>
                         </div>
                     </div>
+                )}
+                
+                <div 
+                    id="notificationToast" 
+                    className={`notification-toast ${isToastVisible ? 'visible' : ''} ${
+                        toastType === 'success' ? 'toast-success' : 
+                        toastType === 'error' ? 'toast-error' : 'toast-warning'
+                    }`}
+                >
+                    <p>{toastMessage}</p>
                 </div>
-            )}
-            
-            <div 
-                id="notificationToast" 
-                className={`notification-toast ${isToastVisible ? 'visible' : ''} ${
-                    toastType === 'success' ? 'toast-success' : 
-                    toastType === 'error' ? 'toast-error' : 'toast-warning'
-                }`}
-            >
-                <p>{toastMessage}</p>
-            </div>
         </Layout>
     );
 };

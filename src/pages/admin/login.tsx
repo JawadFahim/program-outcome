@@ -1,11 +1,11 @@
 import Head from 'next/head';
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/router';
-import { setAuthTokenCookie } from '../lib/jwt';
 import Link from 'next/link';
+import { setAdminAuthTokenCookie } from '../../lib/jwt';
 
-const LoginPage = () => {
-    const [teacherId, setTeacherId] = useState('');
+const AdminLoginPage = () => {
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const router = useRouter();
@@ -14,33 +14,28 @@ const LoginPage = () => {
         event.preventDefault();
         setError('');
 
-        if (!teacherId || !password) {
-            setError('Please enter both Teacher ID and Password.');
+        if (!username || !password) {
+            setError('Please enter both username and password.');
             return;
         }
 
         try {
-            // Call the CORRECT API endpoint
-            const response = await fetch('/api/login', {
+            const response = await fetch('/api/admin/login', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ teacherId, password }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password }),
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                // The server sends back a token, which we store in the cookie
-                setAuthTokenCookie(data.token);
-                
-                router.push(`/homepage`);
+                setAdminAuthTokenCookie(data.token);
+                router.push('/admin/homepage');
             } else {
                 setError(data.message || 'Login failed. Please try again.');
             }
         } catch (err) {
-            console.error('Login error:', err);
+            console.error('Admin login error:', err);
             setError('An unexpected error occurred. Please try again.');
         }
     };
@@ -48,15 +43,15 @@ const LoginPage = () => {
     return (
         <>
             <Head>
-                <title>BICE Course Outcome - Login</title>
+                <title>BICE Course Outcome - Admin Login</title>
             </Head>
             <style jsx global>{`
                 :root {
-                    --primary-color: #4f46e5;
-                    --primary-hover: #4338ca;
+                    --primary-color: #10b981; /* Green Theme */
+                    --primary-hover: #059669;
                     --text-primary: #111827;
                     --text-secondary: #6b7280;
-                    --bg-main: #f9fafb;
+                    --bg-main: #f0fdf4; /* Light Green BG */
                     --bg-card: #ffffff;
                     --border-color: #d1d5db;
                     --error-color: #ef4444;
@@ -115,7 +110,7 @@ const LoginPage = () => {
                 .input-field:focus {
                     outline: none;
                     border-color: var(--primary-color);
-                    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+                    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
                 }
 
                 .btn-primary {
@@ -129,13 +124,10 @@ const LoginPage = () => {
                     font-size: 1rem;
                     cursor: pointer;
                     transition: all 0.2s ease-in-out;
-                    transform: translateY(0);
                 }
 
                 .btn-primary:hover {
                     background-color: var(--primary-hover);
-                    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
-                    transform: translateY(-2px);
                 }
                 
                 .form-label {
@@ -157,98 +149,40 @@ const LoginPage = () => {
                     margin-bottom: 1rem;
                 }
 
-                .forgot-password-link {
-                    display: block;
-                    text-align: center;
-                    font-size: 0.875rem;
-                    color: var(--primary-color);
-                    text-decoration: none;
-                    margin-top: 1.5rem;
-                }
-
-                .forgot-password-link:hover {
-                    text-decoration: underline;
-                }
-
-                .admin-login-link {
+                .teacher-login-link {
                     text-align: center;
                     margin-top: 2rem;
                     font-size: 0.875rem;
                 }
                 
-                .admin-login-link a {
+                .teacher-login-link a {
                     color: var(--text-secondary);
                     text-decoration: none;
-                    transition: color 0.2s ease;
                 }
 
-                .admin-login-link a:hover {
+                .teacher-login-link a:hover {
                     color: var(--primary-color);
                     text-decoration: underline;
-                }
-
-                /* Modal Styles */
-                .modal-backdrop {
-                    position: fixed;
-                    inset: 0;
-                    background-color: rgba(0, 0, 0, 0.6);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 1rem;
-                    z-index: 50;
-                }
-                .modal-content {
-                    background-color: var(--bg-card);
-                    padding: 2rem;
-                    border-radius: 1rem;
-                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-                    width: 100%;
-                    max-width: 26rem;
-                }
-                .modal-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 1rem;
-                }
-                .modal-title {
-                    font-size: 1.25rem;
-                    font-weight: 600;
-                }
-                .modal-close-btn {
-                    background: none;
-                    border: none;
-                    font-size: 1.5rem;
-                    cursor: pointer;
-                    color: var(--text-secondary);
-                }
-                .modal-body {
-                    color: var(--text-secondary);
-                    margin-bottom: 1.5rem;
-                }
-                .modal-footer {
-                    text-align: right;
                 }
             `}</style>
             <div className="login-container">
                 <div className="login-card">
                     <div>
                         <h1 className="login-title">BICE Course Outcome</h1>
-                        <p className="login-subtitle">Teacher Login</p>
+                        <p className="login-subtitle">Admin Login</p>
                     </div>
 
                     <form onSubmit={handleLogin}>
                         <div className="form-group">
-                            <label htmlFor="teacherIdInput" className="form-label">Teacher ID</label>
+                            <label htmlFor="usernameInput" className="form-label">Username</label>
                             <input
                                 type="text"
-                                id="teacherIdInput"
-                                name="teacherId"
+                                id="usernameInput"
+                                name="username"
                                 className="input-field"
-                                placeholder="Enter your Teacher ID"
-                                value={teacherId}
-                                onChange={(e) => setTeacherId(e.target.value)}
+                                placeholder="Enter your username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
                                 required
                             />
                         </div>
@@ -273,13 +207,9 @@ const LoginPage = () => {
                             <button type="submit" className="btn-primary">Login</button>
                         </div>
 
-                        <Link href="/forgot-password" passHref legacyBehavior>
-                            <a className="forgot-password-link">Forgot Password?</a>
-                        </Link>
-
-                        <div className="admin-login-link">
-                            <Link href="/admin/login" passHref legacyBehavior>
-                                <a>Are you an Admin?</a>
+                        <div className="teacher-login-link">
+                            <Link href="/login" passHref legacyBehavior>
+                                <a>Not an Admin? Go to Teacher Login</a>
                             </Link>
                         </div>
                     </form>
@@ -289,4 +219,4 @@ const LoginPage = () => {
     );
 };
 
-export default LoginPage; 
+export default AdminLoginPage; 

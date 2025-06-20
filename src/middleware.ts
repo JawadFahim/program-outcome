@@ -1,47 +1,61 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import * as jose from 'jose';
+import { verifyJwt } from './lib/jwt';
 
-// This secret should be in an environment variable
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'a-secure-and-long-secret-key-for-testing');
+const redirectToLogin = (request: NextRequest, path: string) => {
+    const url = request.nextUrl.clone();
+    url.pathname = path;
+    const response = NextResponse.redirect(url);
+    // Clear both cookies on redirect to login
+    response.cookies.delete('auth_token');
+    response.cookies.delete('admin_auth_token');
+    return response;
+};
 
 export async function middleware(request: NextRequest) {
-    const tokenCookie = request.cookies.get('auth_token');
-    const token = tokenCookie?.value;
-    
     const { pathname } = request.nextUrl;
-    
-    const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/forgot-password');
 
-    // If there's no token and the user is trying to access a protected page
-    if (!token && !isAuthPage) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/login';
-        return NextResponse.redirect(url);
+    const teacherToken = request.cookies.get('auth_token')?.value;
+    const adminToken = request.cookies.get('admin_auth_token')?.value;
+
+    const isTeacherPath = !pathname.startsWith('/admin');
+    const isAdminPath = pathname.startsWith('/admin');
+
+    // Handle Teacher Routes
+    if (isTeacherPath) {
+        const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/forgot-password');
+        if (teacherToken) {
+            const payload = await verifyJwt(teacherToken);
+            if (payload && payload.role !== 'admin') {
+                if (isAuthPage) {
+                    const url = request.nextUrl.clone();
+                    url.pathname = '/homepage';
+                    return NextResponse.redirect(url);
+                }
+                return NextResponse.next();
+            }
+        }
+        if (!isAuthPage) {
+            return redirectToLogin(request, '/login');
+        }
     }
-    
-    // If there is a token, verify it
-    if (token) {
-        try {
-            await jose.jwtVerify(token, JWT_SECRET);
-            
-            // If token is valid and user tries to access an auth page, redirect to homepage
-            if (isAuthPage) {
-                const url = request.nextUrl.clone();
-                url.pathname = '/homepage';
-                return NextResponse.redirect(url);
+
+    // Handle Admin Routes
+    if (isAdminPath) {
+        const isAdminLoginPage = pathname.startsWith('/admin/login');
+        if (adminToken) {
+            const payload = await verifyJwt(adminToken);
+            if (payload && payload.role === 'admin') {
+                if (isAdminLoginPage) {
+                    const url = request.nextUrl.clone();
+                    url.pathname = '/admin/homepage';
+                    return NextResponse.redirect(url);
+                }
+                return NextResponse.next();
             }
-        } catch {
-            // If token verification fails and it's a protected page, redirect to login
-            if (!isAuthPage) {
-                const url = request.nextUrl.clone();
-                url.pathname = '/login';
-                
-                // Also, clear the invalid cookie
-                const response = NextResponse.redirect(url);
-                response.cookies.delete('auth_token');
-                return response;
-            }
+        }
+        if (!isAdminLoginPage) {
+            return redirectToLogin(request, '/admin/login');
         }
     }
 
@@ -49,9 +63,14 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    // Matcher to specify which routes the middleware should run on.
-    // This protects all pages except for API routes, static files, and image optimization files.
     matcher: [
+      /*
+       * Match all request paths except for the ones starting with:
+       * - api (API routes)
+       * - _next/static (static files)
+       * - _next/image (image optimization files)
+       * - favicon.ico (favicon file)
+       */
       '/((?!api|_next/static|_next/image|favicon.ico).*)',
     ],
 }; 

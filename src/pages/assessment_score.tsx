@@ -173,7 +173,7 @@ const AssessmentScorePage = () => {
         setPassMark('');
         setScores({});
     };
-
+    
     const handleScoreChange = (studentId: string, value: string) => {
         setScores(prev => ({
             ...prev,
@@ -254,7 +254,7 @@ const AssessmentScorePage = () => {
         removeAuthTokenCookie();
         router.push('/login');
     };
-
+    
     // --- Render Logic ---
     const showStudentSection = selectedCourse && selectedObjective && assessmentType && passMark.trim() !== '';
     const selectedObjectiveText = courseObjectives.find(co => co.co_no === selectedObjective)?.courseObjective || '';
