@@ -24,7 +24,6 @@ interface ScoreEntry {
 }
 
 const AdminHomePage = () => {
-    const router = useRouter();
     const [sessions, setSessions] = useState<string[]>([]);
     const [selectedSession, setSelectedSession] = useState('');
     const [selectedPo, setSelectedPo] = useState('');
