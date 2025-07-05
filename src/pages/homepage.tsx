@@ -9,6 +9,10 @@ interface CourseObjective {
     description: string;
     programOutcome: string;
     displayNumber: number;
+    bloomsTaxonomy: string[];
+    knowledgeProfile: string[];
+    complexEngineeringProblem: string[];
+    complexEngineeringActivity: string[];
 }
 
 interface CourseTaught {
@@ -20,6 +24,10 @@ interface CourseTaught {
 interface ApiCourseObjective {
     courseObjective: string;
     mappedProgramOutcome: string;
+    bloomsTaxonomy?: string[];
+    knowledgeProfile?: string[];
+    complexEngineeringProblem?: string[];
+    complexEngineeringActivity?: string[];
 }
 
 interface Teacher {
@@ -51,6 +59,32 @@ const HomePage = () => {
     const [isToastVisible, setIsToastVisible] = useState<boolean>(false);
     const [toastMessage, setToastMessage] = useState<string>('');
     const [toastType, setToastType] = useState<'success' | 'error' | 'warning'>('success');
+    const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            if (!target.closest('.multiselect-dropdown')) {
+                setOpenDropdowns(currentlyOpen => {
+                    if (Object.values(currentlyOpen).some(isOpen => isOpen)) {
+                        return {};
+                    }
+                    return currentlyOpen;
+                });
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    const toggleDropdown = (id: string) => {
+        setOpenDropdowns(prev => ({
+            [id]: !prev[id],
+        }));
+    };
 
     const createObjectiveBlock = useCallback(() => {
         setCourseObjectives(prevObjectives => [
@@ -60,6 +94,10 @@ const HomePage = () => {
                 description: '',
                 programOutcome: '',
                 displayNumber: prevObjectives.length + 1,
+                bloomsTaxonomy: [],
+                knowledgeProfile: [],
+                complexEngineeringProblem: [],
+                complexEngineeringActivity: [],
             }
         ]);
     }, []);
@@ -117,7 +155,11 @@ const HomePage = () => {
                             id: `loaded_objective_${index}`,
                             description: obj.courseObjective,
                             programOutcome: obj.mappedProgramOutcome,
-                            displayNumber: index + 1
+                            displayNumber: index + 1,
+                            bloomsTaxonomy: obj.bloomsTaxonomy || [],
+                            knowledgeProfile: obj.knowledgeProfile || [],
+                            complexEngineeringProblem: obj.complexEngineeringProblem || [],
+                            complexEngineeringActivity: obj.complexEngineeringActivity || [],
                         }));
                         setCourseObjectives(loadedObjectives);
                     } else {
@@ -157,6 +199,45 @@ const HomePage = () => {
         "PO10: Communication",
         "PO11: Project management and finance",
         "PO12: Life-long learning"
+    ];
+
+    const BLOOMS_TAXONOMY = {
+      'Cognitive Domain': [
+        { code: 'C1', text: 'Remembering' }, { code: 'C2', text: 'Understanding' },
+        { code: 'C3', text: 'Applying' }, { code: 'C4', text: 'Analyzing' },
+        { code: 'C5', text: 'Evaluating' }, { code: 'C6', text: 'Creating' },
+      ],
+      'Affective Domain': [
+        { code: 'A1', text: 'Receiving' }, { code: 'A2', text: 'Responding' },
+        { code: 'A3', text: 'Valuing' }, { code: 'A4', text: 'Organizing' },
+        { code: 'A5', text: 'Characterizing' },
+      ],
+      'Psychomotor Domain (Simpson)': [
+        { code: 'P1', text: 'Perception' }, { code: 'P2', text: 'Set' },
+        { code: 'P3', text: 'Guided Response' }, { code: 'P4', text: 'Mechanism' },
+        { code: 'P5', text: 'Complex Overt Response' }, { code: 'P6', text: 'Adaptation' },
+        { code: 'P7', text: 'Origination' },
+      ],
+    };
+
+    const KNOWLEDGE_PROFILE = [
+      { code: 'K1', text: 'Natural sciences' }, { code: 'K2', text: 'Mathematics & computer science' },
+      { code: 'K3', text: 'Engineering fundamentals' }, { code: 'K4', text: 'Engineering specialist knowledge' },
+      { code: 'K5', text: 'Engineering design' }, { code: 'K6', text: 'Engineering practice' },
+      { code: 'K7', text: 'Engineering in society' }, { code: 'K8', text: 'Research literature' },
+    ];
+
+    const COMPLEX_ENGINEERING_PROBLEM = [
+        { code: 'P1', text: 'Depth of knowledge required' }, { code: 'P2', text: 'Conflicting requirements' },
+        { code: 'P3', text: 'Depth of analysis' }, { code: 'P4', text: 'Familiarity of issues' },
+        { code: 'P5', text: 'Applicable codes' }, { code: 'P6', text: 'Stakeholder involvement' },
+        { code: 'P7', text: 'Interdependence' },
+    ];
+
+    const COMPLEX_ENGINEERING_ACTIVITY = [
+        { code: 'A1', text: 'Range of resources' }, { code: 'A2', text: 'Level of interaction' },
+        { code: 'A3', text: 'Innovation' }, { code: 'A4', text: 'Societal/environmental consequences' },
+        { code: 'A5', text: 'Familiarity' },
     ];
 
     const getCourseLabel = (value: string): string => {
@@ -225,6 +306,22 @@ const HomePage = () => {
         );
     };
 
+    const handleMultiSelectChange = (
+        objectiveId: string, 
+        field: 'bloomsTaxonomy' | 'knowledgeProfile' | 'complexEngineeringProblem' | 'complexEngineeringActivity', 
+        value: string
+    ) => {
+        setCourseObjectives(prev => prev.map(obj => {
+            if (obj.id === objectiveId) {
+                const newValues = obj[field].includes(value)
+                    ? obj[field].filter(v => v !== value)
+                    : [...obj[field], value];
+                return { ...obj, [field]: newValues };
+            }
+            return obj;
+        }));
+    };
+
     const handleSaveAllObjectives = async () => {
         if (!selectedCourse || !teacherId || !selectedSession) {
             showToast("Please select a course and session before saving.", "error");
@@ -245,6 +342,10 @@ const HomePage = () => {
                 co_no: `CO${obj.displayNumber}`,
                 courseObjective: description,
                 mappedProgramOutcome: programOutcome,
+                bloomsTaxonomy: obj.bloomsTaxonomy,
+                knowledgeProfile: obj.knowledgeProfile,
+                complexEngineeringProblem: obj.complexEngineeringProblem,
+                complexEngineeringActivity: obj.complexEngineeringActivity,
             };
         });
 
@@ -369,37 +470,177 @@ const HomePage = () => {
                                         <div key={obj.id} className="card objective-entry-item">
                                             <div className="objective-entry-header">
                                                 <h4 className="objective-title">Course Objective {obj.displayNumber}</h4>
-                                            </div>
-                                            <div className="course-objective-block">
-                                                <textarea 
-                                                    className="textarea-field" 
-                                                    name={`course_objective_desc_${obj.id}`} 
-                                                    placeholder="Enter course objective description..."
-                                                    value={obj.description}
-                                                    onChange={(e) => handleObjectiveChange(obj.id, 'description', e.target.value)}
-                                                ></textarea>
-                                                <select 
-                                                    className="select-field" 
-                                                    name={`program_outcome_map_${obj.id}`}
-                                                    value={obj.programOutcome}
-                                                    onChange={(e) => handleObjectiveChange(obj.id, 'programOutcome', e.target.value)}
-                                                >
-                                                    <option value="">-- Select Program Outcome --</option>
-                                                    {BICE_PROGRAM_OUTCOMES.map((outcome, i) => (
-                                                        <option key={`po-${i}`} value={`PO${i + 1}`}>{outcome}</option>
-                                                    ))}
-                                                </select>
-                                                 <div className="remove-btn-container">
+                                                <div className="remove-btn-container">
                                                     {courseObjectives.length > 1 && (
                                                         <button 
                                                             type="button" 
-                                                            className="btn btn-danger" 
+                                                            className="btn btn-danger btn-sm"
                                                             onClick={() => handleRemoveObjective(obj.id)}
                                                         >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                                                             Remove
                                                         </button>
                                                     )}
+                                                </div>
+                                            </div>
+                                            <div className="course-objective-block">
+                                                <div className="form-group full-width">
+                                                    <label>Objective Description</label>
+                                                    <textarea 
+                                                        className="textarea-field" 
+                                                        name={`course_objective_desc_${obj.id}`} 
+                                                        placeholder="Enter course objective description..."
+                                                        value={obj.description}
+                                                        onChange={(e) => handleObjectiveChange(obj.id, 'description', e.target.value)}
+                                                    ></textarea>
+                                                </div>
+
+                                                <div className="grid-2-cols">
+                                                    <div className="form-group">
+                                                        <label>Program Outcome (PO)</label>
+                                                        <select 
+                                                            className="select-field" 
+                                                            name={`program_outcome_map_${obj.id}`}
+                                                            value={obj.programOutcome}
+                                                            onChange={(e) => handleObjectiveChange(obj.id, 'programOutcome', e.target.value)}
+                                                        >
+                                                            <option value="">-- Select Program Outcome --</option>
+                                                            {BICE_PROGRAM_OUTCOMES.map((outcome, i) => (
+                                                                <option key={`po-${i}`} value={`PO${i + 1}`}>{outcome}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+
+                                                    <div className="form-group">
+                                                        <label>Bloom's Taxonomy</label>
+                                                        <div className="multiselect-dropdown">
+                                                            <button type="button" className="multiselect-toggle" onClick={() => toggleDropdown(`${obj.id}-blooms`)}>
+                                                                <span className={!obj.bloomsTaxonomy || obj.bloomsTaxonomy.length === 0 ? 'placeholder' : ''}>
+                                                                    {obj.bloomsTaxonomy.length > 0 
+                                                                        ? obj.bloomsTaxonomy.length > 2 
+                                                                            ? `${obj.bloomsTaxonomy.slice(0, 2).join(', ')}...` 
+                                                                            : obj.bloomsTaxonomy.join(', ')
+                                                                        : "-- Select --"
+                                                                    }
+                                                                </span>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="20" width="20"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                                            </button>
+                                                            {openDropdowns[`${obj.id}-blooms`] && (
+                                                                <div className="multiselect-options">
+                                                                    {Object.entries(BLOOMS_TAXONOMY).map(([domain, levels]) => (
+                                                                        <div key={domain}>
+                                                                            <strong>{domain}</strong>
+                                                                            {levels.map(level => (
+                                                                                <label key={level.code} className="multiselect-option">
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={obj.bloomsTaxonomy.includes(level.code)}
+                                                                                        onChange={() => handleMultiSelectChange(obj.id, 'bloomsTaxonomy', level.code)}
+                                                                                    />
+                                                                                    {level.code}: {level.text}
+                                                                                </label>
+                                                                            ))}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid-3-cols">
+                                                    <div className="form-group">
+                                                        <label>Knowledge Profile (K)</label>
+                                                        <div className="multiselect-dropdown">
+                                                            <button type="button" className="multiselect-toggle" onClick={() => toggleDropdown(`${obj.id}-knowledge`)}>
+                                                                <span className={!obj.knowledgeProfile || obj.knowledgeProfile.length === 0 ? 'placeholder' : ''}>
+                                                                    {obj.knowledgeProfile.length > 0 
+                                                                        ? obj.knowledgeProfile.length > 2
+                                                                            ? `${obj.knowledgeProfile.slice(0, 2).join(', ')}...`
+                                                                            : obj.knowledgeProfile.join(', ')
+                                                                        : "-- Select --"
+                                                                    }
+                                                                </span>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="20" width="20"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                                            </button>
+                                                            {openDropdowns[`${obj.id}-knowledge`] && (
+                                                                <div className="multiselect-options">
+                                                                    {KNOWLEDGE_PROFILE.map(k => (
+                                                                        <label key={k.code} className="multiselect-option" title={k.text}>
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={obj.knowledgeProfile.includes(k.code)}
+                                                                                onChange={() => handleMultiSelectChange(obj.id, 'knowledgeProfile', k.code)}
+                                                                            />
+                                                                            {k.code}: {k.text.split(':')[0]}
+                                                                        </label>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="form-group">
+                                                        <label>Complex Problem (P)</label>
+                                                        <div className="multiselect-dropdown">
+                                                            <button type="button" className="multiselect-toggle" onClick={() => toggleDropdown(`${obj.id}-problem`)}>
+                                                                <span className={!obj.complexEngineeringProblem || obj.complexEngineeringProblem.length === 0 ? 'placeholder' : ''}>
+                                                                    {obj.complexEngineeringProblem.length > 0 
+                                                                        ? obj.complexEngineeringProblem.length > 2
+                                                                            ? `${obj.complexEngineeringProblem.slice(0, 2).join(', ')}...`
+                                                                            : obj.complexEngineeringProblem.join(', ')
+                                                                        : "-- Select --"
+                                                                    }
+                                                                </span>
+                                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="20" width="20"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                                            </button>
+                                                            {openDropdowns[`${obj.id}-problem`] && (
+                                                                <div className="multiselect-options">
+                                                                    {COMPLEX_ENGINEERING_PROBLEM.map(p => (
+                                                                        <label key={p.code} className="multiselect-option" title={p.text}>
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={obj.complexEngineeringProblem.includes(p.code)}
+                                                                                onChange={() => handleMultiSelectChange(obj.id, 'complexEngineeringProblem', p.code)}
+                                                                            />
+                                                                            {p.code}: {p.text.split(':')[0]}
+                                                                        </label>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="form-group">
+                                                        <label>Complex Activity (A)</label>
+                                                        <div className="multiselect-dropdown">
+                                                            <button type="button" className="multiselect-toggle" onClick={() => toggleDropdown(`${obj.id}-activity`)}>
+                                                                <span className={!obj.complexEngineeringActivity || obj.complexEngineeringActivity.length === 0 ? 'placeholder' : ''}>
+                                                                    {obj.complexEngineeringActivity.length > 0 
+                                                                        ? obj.complexEngineeringActivity.length > 2
+                                                                            ? `${obj.complexEngineeringActivity.slice(0, 2).join(', ')}...`
+                                                                            : obj.complexEngineeringActivity.join(', ')
+                                                                        : "-- Select --"
+                                                                    }
+                                                                </span>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="20" width="20"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                                            </button>
+                                                            {openDropdowns[`${obj.id}-activity`] && (
+                                                                <div className="multiselect-options">
+                                                                    {COMPLEX_ENGINEERING_ACTIVITY.map(a => (
+                                                                        <label key={a.code} className="multiselect-option" title={a.text}>
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={obj.complexEngineeringActivity.includes(a.code)}
+                                                                                onChange={() => handleMultiSelectChange(obj.id, 'complexEngineeringActivity', a.code)}
+                                                                            />
+                                                                            {a.code}: {a.text.split(':')[0]}
+                                                                        </label>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

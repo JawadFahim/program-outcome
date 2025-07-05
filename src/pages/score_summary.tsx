@@ -19,6 +19,8 @@ interface CoPassStats {
     total: number;
     passed: number;
     percentage: number;
+    assessmentTypes: string[];
+    finalPassMark: number;
 }
 interface SummaryData {
     courseObjectives: string[];
@@ -191,11 +193,17 @@ const ScoreSummaryPage = () => {
                             <div className="summary-stats-grid">
                                 {summaryData.courseObjectives.map(co => {
                                     const stats = summaryData.summary[co];
+                                    if (!stats) return null;
                                     return (
                                         <div key={co} className="stat-card">
                                             <h4 className="stat-title">{co}</h4>
                                             <p className="stat-percentage">{stats.percentage.toFixed(2)}%</p>
                                             <p className="stat-ratio">{stats.passed} / {stats.total} passed</p>
+                                            <div className="stat-details-footer">
+                                                <span>{stats.assessmentTypes.join(' + ')}</span>
+                                                <br></br>
+                                                <span>Pass Mark: {stats.finalPassMark}</span>
+                                            </div>
                                         </div>
                                     )
                                 })}

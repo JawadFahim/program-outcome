@@ -1,0 +1,274 @@
+:root {
+    --admin-primary: #10b981;
+    --admin-primary-hover: #059669;
+    --admin-text-primary: #111827;
+    --admin-text-secondary: #6b7280;
+    --admin-bg-main: #f0fdf4;
+    --admin-bg-card: #ffffff;
+    --admin-border-color: #e5e7eb;
+    --admin-error: #ef4444;
+}
+
+body.admin-teacher-details {
+    background-color: var(--admin-bg-main);
+    font-family: 'Inter', sans-serif;
+}
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--admin-text-primary);
+}
+.btn-add-teacher {
+    background-color: var(--admin-primary);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.btn-add-teacher:hover {
+    background-color: var(--admin-primary-hover);
+}
+.teacher-list {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+.teacher-card {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+    overflow: hidden; /* To contain children border-radius */
+}
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+}
+.teacher-id-badge {
+    background-color: #e0f2f1;
+    color: #047857;
+    padding: 0.75rem 1rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 1rem;
+}
+.teacher-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+.teacher-email {
+    color: var(--admin-text-secondary);
+    font-size: 1rem;
+}
+.card-body {
+    padding: 1.5rem;
+}
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #10b981;
+    padding-bottom: 0.5rem;
+    display: inline-block;
+}
+.course-accordion {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+.course-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    cursor: pointer;
+    background-color: #fff;
+}
+.course-header:hover {
+    background-color: #f9fafb;
+}
+.course-title {
+    font-weight: 600;
+}
+.course-session {
+    font-size: 0.9rem;
+    color: #4b5563;
+    background-color: #e5e7eb;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+}
+.arrow-icon {
+    transition: transform 0.2s;
+}
+.arrow-icon.open {
+    transform: rotate(90deg);
+}
+.objectives-container {
+    padding: 0 1rem 1rem;
+}
+.objectives-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.objectives-table th, .objectives-table td {
+    text-align: left;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+.objectives-table th {
+    background-color: #f3f4f6;
+    font-weight: 600;
+}
+.message {
+    padding: 2rem;
+    text-align: center;
+    color: #6b7280;
+}
+.add-teacher-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background-color: #10b981;
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    font-size: 2.5rem;
+    line-height: 60px;
+    text-align: center;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.add-teacher-btn:hover {
+    background-color: #059669;
+    transform: translateY(-3px) scale(1.05);
+}
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.modal-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+}
+.modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+.form-group {
+    margin-bottom: 1rem;
+}
+.form-label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+.form-input, .form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+.courses-fieldset {
+    border: 1px solid #d1d5db;
+    padding: 1rem;
+    border-radius: 8px;
+}
+.courses-legend {
+    font-weight: 600;
+    padding: 0 0.5rem;
+}
+.course-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+.add-course-btn, .remove-course-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    border: 1px solid;
+}
+.add-course-btn {
+    background-color: #e0f2f1;
+    color: #047857;
+    border-color: #047857;
+}
+.remove-course-btn {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border-color: #b91c1c;
+}
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--admin-border-color);
+}
+.btn-submit {
+    background-color: var(--admin-primary);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-submit:disabled {
+    background-color: #a7f3d0;
+    cursor: not-allowed;
+}
+.submit-error {
+    color: #b91c1c;
+    text-align: center;
+    margin-top: 1rem;
+} 

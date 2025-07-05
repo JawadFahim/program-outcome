@@ -1,156 +1,140 @@
-import clientPromise from '../../lib/mongodb';
 import { NextApiRequest, NextApiResponse } from 'next';
+import clientPromise from '../../lib/mongodb';
+import { Db } from 'mongodb';
 
-const DB_NAME = "BICE_course_map";
-const SCORES_COLLECTION = "scores";
-
-// Define interfaces for our data structures
-interface ScoreEntry {
-    studentId: string;
-    name: string;
-    obtainedMark: number | 'absent';
-}
-
-interface Student {
-    studentId: string;
-    name: string;
-}
-
-interface AggregatedStudentData {
-    id: string;
-    name: string;
-    scores: Record<string, number>;
-    finalCoStatus: Record<string, 'Pass' | 'Fail' | 'Absent'>;
-}
-
-interface CoPassStats {
-    total: number;
-    passed: number;
-    percentage: number;
-}
-
-interface ScoreDocument {
+interface ScoreDoc {
+    teacherId: string;
+    courseId: string;
+    session: string;
     co_no: string;
-    passMark: number;
-    scores: ScoreEntry[];
+    assessmentType: string;
+    passMark: string;
+    scores: {
+        studentId: string;
+        name:string;
+        obtainedMark: number | 'absent';
+    }[];
 }
+
+interface AggregatedCoData {
+    assessmentTypes: string[];
+    finalPassMark: number;
+    studentScores: Record<string, { totalMark: number; isAbsent: boolean }>;
+}
+
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'GET') {
-        return res.status(405).json({ message: 'Method NotAllowed' });
+        return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
-    const { courseId, session, teacherId } = req.query;
+    const { teacherId, courseId, session } = req.query;
 
-    if (!courseId || typeof courseId !== 'string' || !session || typeof session !== 'string' || !teacherId || typeof teacherId !== 'string') {
-        return res.status(400).json({ message: 'Course ID, Session, and Teacher ID are required and must be strings' });
+    if (!teacherId || !courseId || !session) {
+        return res.status(400).json({ message: 'Missing required query parameters.' });
     }
 
     try {
         const client = await clientPromise;
-        const db = client.db(DB_NAME);
+        const db: Db = client.db("BICE_course_map");
 
-        console.log(`[Score Summary API] Received request for teacherId: "${teacherId}", courseId: "${courseId}", session: "${session}"`);
-
-        // 1. Fetch all score entries for the given course, teacher, and session
-        const scoreEntries = await db.collection<ScoreDocument>(SCORES_COLLECTION).find({ 
-            teacherId: teacherId,
-            courseId: courseId,
-            session: session 
+        const scoreDocs = await db.collection<ScoreDoc>('scores').find({
+            teacherId: teacherId as string,
+            courseId: courseId as string,
+            session: session as string,
         }).toArray();
-        console.log(`[Score Summary API] Found ${scoreEntries.length} score entries for this course/session.`);
-        
-        if (scoreEntries.length === 0) {
-            return res.status(200).json({ 
-                courseObjectives: [],
-                studentData: [],
-                summary: {}
-            });
-        }
-        
-        // 2. Build a map of student IDs to names from all score entries.
-        const studentNameMap = new Map<string, string>();
-        for (const doc of scoreEntries) {
-            for (const score of doc.scores) {
-                if (!studentNameMap.has(score.studentId)) {
-                    studentNameMap.set(score.studentId, score.name || score.studentId);
-                }
-            }
-        }
-        
-        const studentList: Student[] = Array.from(studentNameMap.entries()).map(([id, name]) => ({
-            studentId: id,
-            name: name
-        }));
-        console.log(`[Score Summary API] Built a list of ${studentList.length} unique students from score entries.`);
-        
-        // 3. Aggregate scores and pass marks for each CO
-        const coData = new Map<string, { totalMarks: number; totalPassMarks: number; students: Map<string, number | 'absent'> }>();
 
-        for (const doc of scoreEntries) {
+        if (scoreDocs.length === 0) {
+            return res.status(200).json({ courseObjectives: [], studentData: [], summary: {} });
+        }
+        
+        const studentMasterList: Record<string, string> = {};
+        const aggregatedData: Record<string, AggregatedCoData> = {};
+
+        // Aggregate data in-memory
+        for (const doc of scoreDocs) {
             const co = doc.co_no;
-            if (!coData.has(co)) {
-                coData.set(co, { totalMarks: 0, totalPassMarks: 0, students: new Map() });
+            if (!aggregatedData[co]) {
+                aggregatedData[co] = {
+                    assessmentTypes: [],
+                    finalPassMark: 0,
+                    studentScores: {},
+                };
             }
-            const coInfo = coData.get(co)!;
-            coInfo.totalPassMarks += doc.passMark; // Sum up pass marks for the CO
-            
-            for (const score of doc.scores) {
-                const currentScore = coInfo.students.get(score.studentId) || 0;
-                if (score.obtainedMark === 'absent' || currentScore === 'absent') {
-                    coInfo.students.set(score.studentId, 'absent');
-                } else if (typeof currentScore === 'number') {
-                    coInfo.students.set(score.studentId, currentScore + score.obtainedMark);
+            aggregatedData[co].assessmentTypes.push(doc.assessmentType);
+            aggregatedData[co].finalPassMark += Number(doc.passMark);
+
+            for (const studentScore of doc.scores) {
+                const { studentId, name, obtainedMark } = studentScore;
+                if (!studentMasterList[studentId]) {
+                    studentMasterList[studentId] = name;
+                }
+                if (!aggregatedData[co].studentScores[studentId]) {
+                    aggregatedData[co].studentScores[studentId] = { totalMark: 0, isAbsent: false };
+                }
+
+                if (obtainedMark === 'absent') {
+                    aggregatedData[co].studentScores[studentId].isAbsent = true;
+                } else {
+                    aggregatedData[co].studentScores[studentId].totalMark += Number(obtainedMark);
                 }
             }
         }
+
+        // --- Final Processing and Structuring ---
         
-        const courseObjectives = Array.from(coData.keys()).sort();
+        const courseObjectives = Object.keys(aggregatedData).sort();
+        const summary: Record<string, object> = {};
+        const studentDataMap: Record<string, { id: string; name: string; scores: Record<string, number>; finalCoStatus: Record<string, string> }> = {};
 
-        // 4. Consolidate into final student data structure
-        const aggregatedStudentData: AggregatedStudentData[] = studentList.map(student => {
-            const finalScores: Record<string, number> = {};
-            const finalCoStatus: Record<string, 'Pass' | 'Fail' | 'Absent'> = {};
+        // Initialize studentDataMap
+        for (const studentId in studentMasterList) {
+            studentDataMap[studentId] = {
+                id: studentId,
+                name: studentMasterList[studentId],
+                scores: {},
+                finalCoStatus: {},
+            };
+        }
 
-            for (const co of courseObjectives) {
-                const coInfo = coData.get(co)!;
-                const studentScore = coInfo.students.get(student.studentId);
+        for (const co of courseObjectives) {
+            const coData = aggregatedData[co];
+            let passedCount = 0;
+            const totalStudents = Object.keys(coData.studentScores).length;
+
+            for (const studentId in coData.studentScores) {
+                const studentResult = coData.studentScores[studentId];
+                studentDataMap[studentId].scores[co] = studentResult.totalMark;
                 
-                if (studentScore === 'absent') {
-                    finalScores[co] = 0; // Or some other placeholder
-                    finalCoStatus[co] = 'Absent';
-                } else if (studentScore !== undefined) {
-                    finalScores[co] = studentScore;
-                    finalCoStatus[co] = studentScore >= coInfo.totalPassMarks ? 'Pass' : 'Fail';
+                if (studentResult.isAbsent) {
+                    studentDataMap[studentId].finalCoStatus[co] = 'Absent';
+                } else if (studentResult.totalMark >= coData.finalPassMark) {
+                    studentDataMap[studentId].finalCoStatus[co] = 'Pass';
+                    passedCount++;
                 } else {
-                    finalScores[co] = 0; // Student has no score for this CO
-                    finalCoStatus[co] = 'Fail';
+                    studentDataMap[studentId].finalCoStatus[co] = 'Fail';
                 }
             }
-            return {
-                id: student.studentId,
-                name: studentNameMap.get(student.studentId) || student.studentId,
-                scores: finalScores,
-                finalCoStatus
-            };
-        });
-
-        // 5. Calculate final summary statistics
-        const summary: Record<string, CoPassStats> = {};
-        for (const co of courseObjectives) {
-            const passedCount = aggregatedStudentData.filter(s => s.finalCoStatus[co] === 'Pass').length;
-            const totalStudents = studentList.length;
+            
             summary[co] = {
                 total: totalStudents,
                 passed: passedCount,
                 percentage: totalStudents > 0 ? (passedCount / totalStudents) * 100 : 0,
+                assessmentTypes: coData.assessmentTypes,
+                finalPassMark: coData.finalPassMark,
             };
         }
+        
+        const finalStudentData = Object.values(studentDataMap);
 
-        res.status(200).json({ courseObjectives, studentData: aggregatedStudentData, summary });
+        return res.status(200).json({
+            courseObjectives,
+            studentData: finalStudentData,
+            summary,
+        });
 
     } catch (error) {
-        console.error('Score Summary API Error:', error);
-        res.status(500).json({ message: 'Internal Server Error' });
+        console.error('API Error in score_summary:', error);
+        return res.status(500).json({ message: 'Internal Server Error' });
     }
 } 

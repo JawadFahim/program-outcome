@@ -21,3 +21,4 @@ const Layout = ({ children, teacherName, onLogout, page, title }: LayoutProps) =
 };
 
 export default Layout;
+ 

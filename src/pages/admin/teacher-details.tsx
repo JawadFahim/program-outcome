@@ -1,7 +1,8 @@
 import Head from 'next/head';
-
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import '../../styles/admin/teacher-details.css';
+import AdminNavbar from '../../components/admin/AdminNavbar';
 
 interface CourseObjective {
     co_no: string;
@@ -38,6 +39,13 @@ const TeacherDetailsPage = () => {
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
     const [courses, setCourses] = useState([{ courseId: '', courseName: '', session: '2021-22' }]);
+
+    useEffect(() => {
+        document.body.classList.add('admin-teacher-details');
+        return () => {
+            document.body.classList.remove('admin-teacher-details');
+        };
+    }, []);
 
     const fetchTeachers = async () => {
         try {
@@ -126,311 +134,14 @@ const TeacherDetailsPage = () => {
             <Head>
                 <title>Teacher Details - Admin</title>
             </Head>
-            <style jsx>{`
-                body {
-                    background-color: #f9fafb;
-                    font-family: 'Inter', sans-serif;
-                }
-                .container {
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    padding: 0 2rem 2rem;
-                }
-                .header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    background-color: #fff;
-                    border-bottom: 1px solid #e5e7eb;
-                    position: sticky;
-                    top: 0;
-                    z-index: 10;
-                    padding: 1rem 2rem;
-                    margin: 0 -2rem; /* Extend to full width */
-                }
-                .header-title {
-                    font-size: 1.5rem;
-                    font-weight: 600;
-                }
-                .nav-link {
-                    font-weight: 500;
-                    color: #10b981;
-                    text-decoration: none;
-                }
-                .nav-link:hover {
-                    text-decoration: underline;
-                }
-                .teacher-list {
-                    margin-top: 2rem;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 2rem;
-                }
-                .teacher-card {
-                    background-color: #fff;
-                    border-radius: 12px;
-                    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-                    overflow: hidden; /* To contain children border-radius */
-                }
-                .card-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 1.5rem;
-                    padding: 1.5rem;
-                    background-color: #f8f9fa;
-                }
-                .teacher-id-badge {
-                    background-color: #e0f2f1;
-                    color: #047857;
-                    padding: 0.75rem 1rem;
-                    border-radius: 9999px;
-                    font-weight: 700;
-                    font-size: 1rem;
-                }
-                .teacher-name {
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                }
-                .teacher-email {
-                    color: #6b7280;
-                    font-size: 1rem;
-                }
-                .card-body {
-                    padding: 1.5rem;
-                }
-                .section-title {
-                    font-size: 1.25rem;
-                    font-weight: 600;
-                    margin-bottom: 1rem;
-                    border-bottom: 2px solid #10b981;
-                    padding-bottom: 0.5rem;
-                    display: inline-block;
-                }
-                .course-accordion {
-                    border: 1px solid #e5e7eb;
-                    border-radius: 8px;
-                    margin-bottom: 1rem;
-                }
-                .course-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 1rem;
-                    cursor: pointer;
-                    background-color: #fff;
-                }
-                .course-header:hover {
-                    background-color: #f9fafb;
-                }
-                .course-title {
-                    font-weight: 600;
-                }
-                .course-session {
-                    font-size: 0.9rem;
-                    color: #4b5563;
-                    background-color: #e5e7eb;
-                    padding: 0.25rem 0.5rem;
-                    border-radius: 6px;
-                }
-                .arrow-icon {
-                    transition: transform 0.2s;
-                }
-                .arrow-icon.open {
-                    transform: rotate(90deg);
-                }
-                .objectives-container {
-                    padding: 0 1rem 1rem;
-                }
-                .objectives-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                }
-                .objectives-table th, .objectives-table td {
-                    text-align: left;
-                    padding: 0.75rem;
-                    border-bottom: 1px solid #e5e7eb;
-                }
-                .objectives-table th {
-                    background-color: #f3f4f6;
-                    font-size: 0.875rem;
-                }
-                .message {
-                    text-align: center;
-                    padding: 4rem;
-                    font-size: 1.25rem;
-                }
-                .header-content {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    width: 100%;
-                }
-                .header-actions {
-                    display: flex;
-                    gap: 1.5rem;
-                    align-items: center;
-                }
-                .add-teacher-btn {
-                    background-color: #10b981;
-                    color: white;
-                    border: none;
-                    padding: 0.75rem 1.5rem;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: background-color 0.2s;
-                }
-                .add-teacher-btn:hover {
-                    background-color: #059669;
-                }
-
-                /* Modal Styles */
-                .modal-overlay {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-color: rgba(0, 0, 0, 0.5);
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    z-index: 1000;
-                }
-                .modal-content {
-                    background-color: white;
-                    padding: 2.5rem;
-                    border-radius: 12px;
-                    width: 100%;
-                    max-width: 600px;
-                    max-height: 90vh;
-                    overflow-y: auto;
-                    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-                }
-                .modal-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 2rem;
-                }
-                .modal-title {
-                    font-size: 1.75rem;
-                    font-weight: 700;
-                }
-                .close-btn {
-                    background: none;
-                    border: none;
-                    font-size: 2rem;
-                    cursor: pointer;
-                    color: #9ca3af;
-                }
-                .close-btn:hover {
-                    color: #1f2937;
-                }
-                .form-group {
-                    margin-bottom: 1.5rem;
-                }
-                .form-label {
-                    display: block;
-                    font-weight: 600;
-                    margin-bottom: 0.5rem;
-                    color: #374151;
-                }
-                .form-input {
-                    width: 100%;
-                    padding: 0.75rem;
-                    border: 1px solid #d1d5db;
-                    border-radius: 8px;
-                    font-size: 1rem;
-                }
-                .courses-section {
-                    margin-top: 2rem;
-                    border-top: 1px solid #e5e7eb;
-                    padding-top: 1.5rem;
-                }
-                 .courses-section-title {
-                    font-size: 1.25rem;
-                    font-weight: 600;
-                    margin-bottom: 1rem;
-                }
-                .course-entry {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr 1fr auto;
-                    gap: 1rem;
-                    align-items: center;
-                    margin-bottom: 1rem;
-                    background-color: #f9fafb;
-                    padding: 1rem;
-                    border-radius: 8px;
-                }
-                .remove-course-btn {
-                    background-color: #fee2e2;
-                    color: #ef4444;
-                    border: none;
-                    width: 38px;
-                    height: 38px;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-weight: bold;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 1rem;
-                }
-                .add-course-btn {
-                    background: none;
-                    border: 1px dashed #10b981;
-                    color: #10b981;
-                    width: 100%;
-                    padding: 0.75rem;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: background-color 0.2s, color 0.2s;
-                }
-                 .add-course-btn:hover {
-                    background-color: #e0f2f1;
-                }
-                .modal-footer {
-                    margin-top: 2rem;
-                    display: flex;
-                    justify-content: flex-end;
-                    gap: 1rem;
-                }
-                .submit-btn {
-                    background-color: #10b981;
-                    color: white;
-                    border: none;
-                    padding: 0.75rem 1.5rem;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                }
-                .submit-btn:disabled {
-                    background-color: #d1d5db;
-                    cursor: not-allowed;
-                }
-                .submit-error {
-                    color: #ef4444;
-                    text-align: right;
-                    margin-top: 1rem;
-                    margin-bottom: -1rem;
-                }
-            `}</style>
+            <AdminNavbar page="teachers" />
             <div className="container">
-                <header className="header">
-                     <div className="header-content">
-                        <h1 className="header-title">Teacher Details</h1>
-                        <div className="header-actions">
-                            <button onClick={() => { setIsModalOpen(true); resetForm(); }} className="add-teacher-btn">
+                <div className="page-header">
+                    <h1 className="page-title">Teacher Management</h1>
+                    <button onClick={() => { setIsModalOpen(true); resetForm(); }} className="btn-add-teacher">
                                 + Add Teacher
                             </button>
-                            <Link href="/admin/homepage" legacyBehavior>
-                                <a className="nav-link">Back to Dashboard</a>
-                            </Link>
-                        </div>
                     </div>
-                </header>
                 <main>
                     {loading && <p className="message">Loading teacher data...</p>}
                     {error && <p className="message" style={{color: '#ef4444'}}>{error}</p>}
@@ -504,7 +215,7 @@ const TeacherDetailsPage = () => {
                 </main>
             </div>
             {isModalOpen && (
-                <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+                <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h2 className="modal-title">Add New Teacher</h2>

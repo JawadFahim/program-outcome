@@ -77,7 +77,7 @@ body {
     margin-bottom: 0.75rem;
 }
 
-.input-field, .select-field, .textarea-field {
+.input-field, .select-field, .textarea-field, .multiselect-toggle {
     width: 100%;
     padding: 0.75rem 1rem;
     border: 1px solid var(--border-color);
@@ -86,9 +86,10 @@ body {
     transition: all 0.2s ease-in-out;
     box-sizing: border-box;
     background-color: #fff;
+    font-family: inherit;
 }
 
-.input-field:focus, .select-field:focus, .textarea-field:focus {
+.input-field:focus, .select-field:focus, .textarea-field:focus, .multiselect-toggle:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
@@ -150,11 +151,75 @@ body {
 .objective-entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .objective-title { font-size: 1.125rem; font-weight: 500; }
 
-.course-objective-block { display: flex; flex-direction: column; gap: 1rem; }
+.course-objective-block { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+.grid-2-cols {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1.5rem;
+}
 @media (min-width: 768px) {
-    .course-objective-block { flex-direction: row; align-items: center; }
+    .grid-2-cols { grid-template-columns: repeat(2, 1fr); }
+}
+
+.grid-3-cols {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1.5rem;
+}
+@media (min-width: 1024px) {
+    .grid-3-cols { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 768px) {
+    .course-objective-block {
+        flex-direction: column;
+        align-items: stretch;
+    }
     .course-objective-block > * { flex: 1; }
-    .course-objective-block .remove-btn-container { flex: 0 0 auto; margin-left: 1rem; }
+    .objective-entry-header .remove-btn-container { 
+        margin-left: 1rem;
+        flex: 0 0 auto; 
+    }
+}
+
+.remove-btn-container .btn-sm {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.875rem;
+}
+.remove-btn-container .btn-sm svg {
+    height: 1em;
+    width: 1em;
+    margin-right: 0.25rem;
+}
+
+.multiselect-toggle span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 0.5rem;
+}
+
+.multiselect-toggle span.placeholder {
+    color: var(--text-secondary);
+    font-weight: 400;
 }
 
 .action-buttons { margin-top: 2rem; display: flex; flex-wrap: wrap; gap: 0.75rem; }
@@ -235,6 +300,11 @@ body {
 }
 
 .student-scores-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
     margin-bottom: 1.5rem;
 }
 .student-scores-header h3 {
@@ -397,4 +467,89 @@ input[type=number] {
 }
 .student-table th, .student-table td {
     white-space: nowrap;
+}
+
+/* Custom Multiselect Dropdown Styles */
+.multiselect-dropdown {
+    position: relative;
+}
+
+.multiselect-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    cursor: pointer;
+}
+
+.multiselect-toggle > span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 0.5rem;
+}
+
+.multiselect-toggle > svg {
+    flex-shrink: 0;
+}
+
+.multiselect-options {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    box-shadow: var(--shadow-lg);
+    z-index: 20;
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.multiselect-options strong {
+    display: block;
+    padding: 0.75rem 0.5rem 0.25rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--primary-color);
+}
+
+.multiselect-option {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.9rem;
+}
+
+.multiselect-option:hover {
+    background-color: var(--bg-main);
+}
+
+.multiselect-option input[type="checkbox"] {
+    margin-right: 0.75rem;
+    height: 1rem;
+    width: 1rem;
+    accent-color: var(--primary-color);
+}
+                
+@media (min-width: 768px) {
+    .course-objective-block { flex-direction: column; }
+    .course-objective-block .remove-btn-container { flex: 0 0 auto; margin-left: 1rem; }
+}
+                
+.action-buttons { margin-top: 2rem; display: flex; flex-wrap: wrap; gap: 0.75rem; }
+
+.btn-sm {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.875rem;
+}
+.btn-sm svg {
+    height: 1em;
+    width: 1em;
 } 

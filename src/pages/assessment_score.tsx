@@ -27,22 +27,43 @@ interface StudentScore {
     isAbsent: boolean;
 }
 
+// This represents the state for a single assessment panel (new or existing)
+interface AssessmentEntry {
+    id: string; // Unique ID for the panel (assessmentType for saved, generated for new)
+    assessmentType: string;
+    passMark: string;
+    scores: Record<string, StudentScore>;
+    isSavedInDb: boolean;
+    isEditing: boolean;
+}
+
+interface SavedScoreData {
+    assessmentType: string;
+    passMark: string;
+    scores: {
+        studentId: string;
+        name: string;
+        obtainedMark: number | 'absent';
+    }[];
+}
+
 const AssessmentScorePage = () => {
     const router = useRouter();
     const [teacherId, setTeacherId] = useState<string | null>(null);
     const [teacherName, setTeacherName] = useState<string>('Loading...');
     const [courses, setCourses] = useState<CourseTaught[]>([]);
     const [courseObjectives, setCourseObjectives] = useState<CourseObjective[]>([]);
+    // This will hold the master student list for the selected course/session/CO
     const [students, setStudents] = useState<Student[]>([]);
     const [session, setSession] = useState<string | null>(null);
-    const [scores, setScores] = useState<Record<string, StudentScore>>({});
+    
+    // This state now manages all assessment panels on the page
+    const [assessmentEntries, setAssessmentEntries] = useState<AssessmentEntry[]>([]);
     
     const [selectedCourse, setSelectedCourse] = useState('');
     const [sessions, setSessions] = useState<string[]>([]);
     const [selectedSession, setSelectedSession] = useState('');
     const [selectedObjective, setSelectedObjective] = useState('');
-    const [assessmentType, setAssessmentType] = useState('');
-    const [passMark, setPassMark] = useState('');
 
     // UI State
     const [isLoadingCourses, setIsLoadingCourses] = useState<boolean>(true);
@@ -87,51 +108,123 @@ const AssessmentScorePage = () => {
     }, [teacherId]);
 
     useEffect(() => {
-        const fetchCourseDetails = async () => {
+        const fetchCourseObjectives = async () => {
             if (selectedCourse && teacherId && selectedSession) {
                 setIsLoadingObjectives(true);
-                setIsLoadingStudents(true);
                 setCourseObjectives([]);
+                setSelectedObjective('');
                 setStudents([]);
                 setSession(null);
-                setScores({});
+                setAssessmentEntries([]);
 
                 try {
-                    const [objectivesRes, studentsRes] = await Promise.all([
-                        fetch(`/api/getCourseObjectives?teacherId=${teacherId}&courseId=${selectedCourse}&session=${selectedSession}`),
-                        fetch(`/api/getStudentList?teacherId=${teacherId}&courseId=${selectedCourse}&session=${selectedSession}`)
-                    ]);
+                    const objectivesRes = await fetch(`/api/getCourseObjectives?teacherId=${teacherId}&courseId=${selectedCourse}&session=${selectedSession}`);
 
                     if (!objectivesRes.ok) throw new Error(`Failed to fetch objectives: ${objectivesRes.statusText}`);
                     const objectivesData = await objectivesRes.json();
                     setCourseObjectives(objectivesData || []);
-
-                    if (!studentsRes.ok) throw new Error(`Failed to fetch students: ${studentsRes.statusText}`);
-                    const studentsData = await studentsRes.json();
-                    setStudents(studentsData.studentList || []);
-                    setSession(studentsData.session || null);
-
-                    if ((studentsData.studentList || []).length === 0) {
-                        showToast('No students are enrolled in this course.', 'warning');
-                    } else {
-                        // Initialize scores state
-                        const initialScores: Record<string, StudentScore> = {};
-                        (studentsData.studentList || []).forEach((student: Student) => {
-                            initialScores[student.studentId] = { mark: '', isAbsent: false };
-                        });
-                        setScores(initialScores);
-                    }
                 } catch (error) {
-                    console.error("Failed to load course details:", error);
-                    showToast('Could not load data for this course.', 'error');
+                    console.error("Failed to load course objectives:", error);
+                    showToast('Could not load objectives for this course.', 'error');
                 } finally {
                     setIsLoadingObjectives(false);
+                }
+            } else {
+                setCourseObjectives([]);
+                setSelectedObjective('');
+            }
+        };
+        fetchCourseObjectives();
+    }, [selectedCourse, selectedSession, teacherId]);
+
+    useEffect(() => {
+        const fetchAssessmentsAndStudents = async () => {
+            if (selectedObjective && selectedCourse && teacherId && selectedSession) {
+                setIsLoadingStudents(true);
+                setAssessmentEntries([]);
+                setStudents([]);
+
+                try {
+                    // Step 1: Fetch the master student list for the course. This is always the source of truth for who is in the class.
+                    const studentListRes = await fetch(
+                        `/api/getStudentList?teacherId=${teacherId}&courseId=${selectedCourse}&session=${selectedSession}`,
+                        { cache: 'no-store' }
+                    );
+                    if (!studentListRes.ok) throw new Error('Failed to fetch the master student list.');
+                    
+                    const studentsData = await studentListRes.json();
+                    const studentList: Student[] = studentsData.studentList || [];
+                    setStudents(studentList);
+                    setSession(studentsData.session || null);
+
+                    if (studentList.length === 0) {
+                        showToast('No students are enrolled in this course.', 'warning');
+                        setIsLoadingStudents(false);
+                        return;
+                    }
+
+                    // Step 2: Concurrently, fetch all saved assessments for this CO
+                    const assessmentsRes = await fetch(`/api/getAssessmentsForCO?teacherId=${teacherId}&courseId=${selectedCourse}&session=${selectedSession}&co_no=${selectedObjective}`);
+                    if (!assessmentsRes.ok) throw new Error('Failed to fetch saved assessments');
+                    
+                    const savedAssessments: SavedScoreData[] = await assessmentsRes.json();
+
+                    if (savedAssessments.length > 0) {
+                        // Create a panel for each saved assessment, populating scores against the master student list
+                        const loadedEntries: AssessmentEntry[] = savedAssessments.map(data => {
+                            const initialScores: Record<string, StudentScore> = {};
+                            // Initialize scores for all students from the master list
+                            studentList.forEach(student => {
+                                initialScores[student.studentId] = { mark: '', isAbsent: false };
+                            });
+                            // Then, fill in the marks for students who have saved scores
+                            data.scores.forEach(s => {
+                                if (initialScores[s.studentId]) {
+                                    initialScores[s.studentId] = {
+                                        mark: s.obtainedMark === 'absent' ? '' : String(s.obtainedMark),
+                                        isAbsent: s.obtainedMark === 'absent',
+                                    };
+                                }
+                            });
+                            return {
+                                id: data.assessmentType,
+                                assessmentType: data.assessmentType,
+                                passMark: data.passMark,
+                                scores: initialScores,
+                                isSavedInDb: true,
+                                isEditing: false,
+                            };
+                        });
+                        setAssessmentEntries(loadedEntries);
+                        showToast(`Loaded ${loadedEntries.length} saved assessment(s).`, 'success');
+
+                    } else {
+                        // No saved assessments found, so create one blank panel for the user to fill out
+                        const initialScores: Record<string, StudentScore> = {};
+                        studentList.forEach(student => {
+                            initialScores[student.studentId] = { mark: '', isAbsent: false };
+                        });
+                        const newEntry: AssessmentEntry = {
+                            id: 'new-0',
+                            assessmentType: '',
+                            passMark: '',
+                            scores: initialScores,
+                            isSavedInDb: false,
+                            isEditing: true,
+                        };
+                        setAssessmentEntries([newEntry]);
+                    }
+                } catch (error) {
+                    console.error("Failed to load student/score details:", error);
+                    showToast('An error occurred while loading data.', 'error');
+                } finally {
                     setIsLoadingStudents(false);
                 }
             }
         };
-        fetchCourseDetails();
-    }, [selectedCourse, selectedSession, teacherId]);
+
+        fetchAssessmentsAndStudents();
+    }, [selectedObjective, selectedCourse, selectedSession, teacherId]);
 
 
     // --- UI Helpers ---
@@ -151,10 +244,9 @@ const AssessmentScorePage = () => {
         // Reset downstream state
         setSelectedSession('');
         setSessions([]);
+        setCourseObjectives([]);
         setSelectedObjective('');
-        setAssessmentType('');
-        setPassMark('');
-        setScores({});
+        setAssessmentEntries([]);
 
         if (newCourseValue) {
             const courseSessions = courses
@@ -168,35 +260,69 @@ const AssessmentScorePage = () => {
     const handleSessionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedSession(e.target.value);
         // Reset fields that depend on session
+        setCourseObjectives([]);
         setSelectedObjective('');
-        setAssessmentType('');
-        setPassMark('');
-        setScores({});
+        setAssessmentEntries([]);
     };
     
-    const handleScoreChange = (studentId: string, value: string) => {
-        setScores(prev => ({
-            ...prev,
-            [studentId]: { ...prev[studentId], mark: value }
+    const handleScoreChange = (entryId: string, studentId: string, value: string) => {
+        setAssessmentEntries(prev => prev.map(entry => 
+            entry.id === entryId 
+                ? { ...entry, scores: { ...entry.scores, [studentId]: { ...entry.scores[studentId], mark: value } } }
+                : entry
+        ));
+    };
+
+    const handleAbsentChange = (entryId: string, studentId: string, isChecked: boolean) => {
+        setAssessmentEntries(prev => prev.map(entry => {
+            if (entry.id !== entryId) return entry;
+            const newScores = { ...entry.scores };
+            newScores[studentId] = { ...newScores[studentId], isAbsent: isChecked, mark: isChecked ? '' : newScores[studentId].mark };
+            return { ...entry, scores: newScores };
         }));
     };
 
-    const handleAbsentChange = (studentId: string, isChecked: boolean) => {
-        setScores(prev => ({
-            ...prev,
-            [studentId]: { ...prev[studentId], isAbsent: isChecked, mark: isChecked ? '' : prev[studentId].mark }
-        }));
+    const handleFieldChange = (entryId: string, field: 'assessmentType' | 'passMark', value: string) => {
+        setAssessmentEntries(prev => prev.map(entry => 
+            entry.id === entryId ? { ...entry, [field]: value } : entry
+        ));
+    };
+    
+    const handleEditToggle = (entryId: string) => {
+        setAssessmentEntries(prev => prev.map(entry =>
+            entry.id === entryId ? { ...entry, isEditing: !entry.isEditing } : entry
+        ));
     };
 
-    const handleSaveScores = async () => {
-        if (!teacherId) {
+    const handleAddNewAssessment = () => {
+        if (students.length === 0) {
+            showToast("Student list not available. Cannot add new assessment.", "error");
+            return;
+        }
+        const initialScores: Record<string, StudentScore> = {};
+        students.forEach(student => {
+            initialScores[student.studentId] = { mark: '', isAbsent: false };
+        });
+        const newEntry: AssessmentEntry = {
+            id: `new-${Date.now()}`,
+            assessmentType: '',
+            passMark: '',
+            scores: initialScores,
+            isSavedInDb: false,
+            isEditing: true,
+        };
+        setAssessmentEntries(prev => [...prev, newEntry]);
+    };
+
+    const handleSaveScores = async (entry: AssessmentEntry) => {
+        if (!teacherId || !session) {
             showToast("Authentication error. Please log in again.", "error");
             router.push('/login');
             return;
         }
 
         // Validation
-        if (!selectedCourse || !selectedObjective || !assessmentType || !passMark || !teacherId || !session) {
+        if (!selectedCourse || !selectedObjective || !entry.assessmentType || !entry.passMark) {
             showToast("Please ensure all fields (Course, Objective, Type, Pass Mark) are filled.", "error");
             return;
         }
@@ -204,13 +330,13 @@ const AssessmentScorePage = () => {
         const studentNameMap = new Map(students.map(s => [s.studentId, s.name]));
 
         let allValid = true;
-        const studentScores = Object.entries(scores).map(([studentId, scoreData]) => {
+        const studentScores = Object.entries(entry.scores).map(([studentId, scoreData]) => {
             if (!scoreData.isAbsent && scoreData.mark.trim() === '') {
                 allValid = false;
             }
             return {
                 studentId,
-                name: studentNameMap.get(studentId),
+                name: studentNameMap.get(studentId) || 'Unknown',
                 obtainedMark: scoreData.isAbsent ? 'absent' : Number(scoreData.mark)
             };
         });
@@ -230,8 +356,8 @@ const AssessmentScorePage = () => {
                     teacherId,
                     courseId: selectedCourse,
                     co_no: selectedObjective,
-                    assessmentType,
-                    passMark,
+                    assessmentType: entry.assessmentType,
+                    passMark: entry.passMark,
                     session,
                     scores: studentScores,
                 })
@@ -239,8 +365,14 @@ const AssessmentScorePage = () => {
 
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || 'Server error');
-
+            
             showToast(result.message || "Scores saved successfully!", "success");
+
+            // After saving, refresh the state to reflect the changes
+            // A simple way is to re-trigger the data fetch for the current objective
+            const currentObjective = selectedObjective;
+            setSelectedObjective(''); 
+            setTimeout(() => setSelectedObjective(currentObjective), 100);
 
         } catch (error) {
             console.error('Failed to save scores:', error);
@@ -256,8 +388,13 @@ const AssessmentScorePage = () => {
     };
     
     // --- Render Logic ---
-    const showStudentSection = selectedCourse && selectedObjective && assessmentType && passMark.trim() !== '';
+    const showStudentSection = selectedCourse && selectedObjective;
     const selectedObjectiveText = courseObjectives.find(co => co.co_no === selectedObjective)?.courseObjective || '';
+    const savedAssessmentTypes = assessmentEntries
+        .filter(e => e.isSavedInDb)
+        .map(e => e.assessmentType);
+    const allAssessmentTypes = ['quiz', 'midterm', 'assignment', 'final'];
+    const canAddNew = savedAssessmentTypes.length > 0 && savedAssessmentTypes.length < allAssessmentTypes.length;
 
 
     return (
@@ -296,94 +433,126 @@ const AssessmentScorePage = () => {
 
                     {selectedCourse && selectedSession ? (
                         <div id="assessmentDetailsSection">
-                            <div className="card">
-                                <div className="assessment-details-grid">
-                                    <div>
-                                        <label htmlFor="courseObjectiveSelector" className="form-label">3. Course Objective</label>
-                                        <select id="courseObjectiveSelector" className="select-field" value={selectedObjective} onChange={(e) => setSelectedObjective(e.target.value)} disabled={isLoadingObjectives || courseObjectives.length === 0}>
-                                            <option value="">{isLoadingObjectives ? "Loading..." : "-- Select an objective --"}</option>
-                                            {courseObjectives.map(obj => ( <option key={obj.co_no} value={obj.co_no}> {obj.co_no}: {obj.courseObjective} </option> ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label htmlFor="assessmentTypeSelector" className="form-label">4. Assessment Type</label>
-                                        <select id="assessmentTypeSelector" className="select-field" value={assessmentType} onChange={(e) => setAssessmentType(e.target.value)}>
-                                            <option value="">-- Select type --</option>
-                                            <option value="quiz">Quiz</option>
-                                            <option value="midterm">Mid Term</option>
-                                            <option value="assignment">Assignment</option>
-                                            <option value="final">Final</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label htmlFor="passMarkInput" className="form-label">5. Pass Mark</label>
-                                        <input type="number" id="passMarkInput" className="input-field" placeholder="e.g., 40" min="0" max="100" value={passMark} onChange={(e) => setPassMark(e.target.value)} />
-                                    </div>
-                                </div>
+                             <div className="card">
+                                <label htmlFor="courseObjectiveSelector" className="form-label">3. Course Objective</label>
+                                <select id="courseObjectiveSelector" className="select-field" value={selectedObjective} onChange={(e) => setSelectedObjective(e.target.value)} disabled={isLoadingObjectives || courseObjectives.length === 0}>
+                                    <option value="">{isLoadingObjectives ? "Loading..." : "-- Select an objective --"}</option>
+                                    {courseObjectives.map(obj => ( <option key={obj.co_no} value={obj.co_no}> {obj.co_no}: {obj.courseObjective} </option> ))}
+                                </select>
                             </div>
 
-                            {showStudentSection && (
-                                <div id="studentScoresSection" className="card">
-                                    <div className="student-scores-header">
-                                        <h3>6. Enter Student Scores for <span>{selectedObjectiveText}</span> (<span>{assessmentType}</span>)</h3>
-                                    </div>
-                                    <div className="table-container">
-                                        <table className="student-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>#</th>
-                                                    <th>Student ID</th>
-                                                    <th>Student Name</th>
-                                                    <th>Obtained Mark</th>
-                                                    <th className="text-center">Absent</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {isLoadingStudents ? (
-                                                    <tr><td colSpan={5} className="text-center p-8">Loading student list...</td></tr>
-                                                ) : students.length > 0 ? (
-                                                    students.map((student, index) => (
-                                                        <tr key={student.studentId}>
-                                                            <td>{index + 1}</td>
-                                                            <td>{student.studentId}</td>
-                                                            <td>{student.name}</td>
-                                                            <td>
-                                                                <input 
-                                                                    type="number" 
-                                                                    className="input-field" 
-                                                                    value={scores[student.studentId]?.mark || ''}
-                                                                    onChange={(e) => handleScoreChange(student.studentId, e.target.value)}
-                                                                    disabled={scores[student.studentId]?.isAbsent}
-                                                                    min="0" max="100" placeholder="Mark" 
-                                                                    onWheel={(e) => e.currentTarget.blur()}
-                                                                />
-                                                            </td>
-                                                            <td className="text-center">
-                                                                <input 
-                                                                    type="checkbox" 
-                                                                    checked={scores[student.studentId]?.isAbsent || false}
-                                                                    onChange={(e) => handleAbsentChange(student.studentId, e.target.checked)}
-                                                                />
-                                                            </td>
+                            {isLoadingStudents ? (
+                                <div className="card text-center p-8">Loading assessment data...</div>
+                            ) : assessmentEntries.length === 0 && showStudentSection ? (
+                                <div className="card message-card">
+                                    <p>No students found for this course, or no assessment data exists.</p>
+                                </div>
+                            ) : (
+                                assessmentEntries.map((entry) => {
+                                    const isLocked = !entry.isEditing;
+                                    const availableAssessmentTypes = allAssessmentTypes.filter(t => !savedAssessmentTypes.includes(t));
+
+                                    return (
+                                        <div key={entry.id} className="card">
+                                            <div className="assessment-details-grid">
+                                                <div>
+                                                    <label htmlFor={`assessmentTypeSelector-${entry.id}`} className="form-label">4. Assessment Type</label>
+                                                    {entry.isSavedInDb ? (
+                                                        <p className="font-bold text-lg pt-2">{entry.assessmentType.charAt(0).toUpperCase() + entry.assessmentType.slice(1)}</p>
+                                                    ) : (
+                                                        <select 
+                                                            id={`assessmentTypeSelector-${entry.id}`} 
+                                                            className="select-field" 
+                                                            value={entry.assessmentType} 
+                                                            onChange={(e) => handleFieldChange(entry.id, 'assessmentType', e.target.value)} 
+                                                            disabled={isLocked}
+                                                        >
+                                                            <option value="">-- Select type --</option>
+                                                            {/* For new entries, show only available types. For existing but being edited, show its own type. */}
+                                                            {availableAssessmentTypes.map(type => (
+                                                                <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <label htmlFor={`passMarkInput-${entry.id}`} className="form-label">5. Pass Mark</label>
+                                                    <input type="number" id={`passMarkInput-${entry.id}`} className="input-field" placeholder="e.g., 40" min="0" max="100" value={entry.passMark} onChange={(e) => handleFieldChange(entry.id, 'passMark', e.target.value)} disabled={isLocked} onWheel={(e) => e.currentTarget.blur()} />
+                                                </div>
+                                                <div className="assessment-actions">
+                                                     {entry.isSavedInDb && (
+                                                        <button type="button" onClick={() => handleEditToggle(entry.id)} className="btn btn-secondary">
+                                                            {isLocked ? 'Edit Scores' : 'Cancel Edit'}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="student-scores-header mt-6">
+                                                <h3>Scores for <span>{selectedObjectiveText}</span></h3>
+                                            </div>
+                                            <div className="table-container">
+                                                <table className="student-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>#</th>
+                                                            <th>Student ID</th>
+                                                            <th>Student Name</th>
+                                                            <th>Obtained Mark</th>
+                                                            <th className="text-center">Absent</th>
                                                         </tr>
-                                                    ))
-                                                ) : (
-                                                    <tr><td colSpan={5} className="text-center p-8">No students found for this course.</td></tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div className="actions-footer">
-                                        <button type="button" onClick={handleSaveScores} className="btn btn-primary" disabled={isSaving}>
-                                            {isSaving ? 'Saving...' : 'Save Scores'}
-                                        </button>
-                                    </div>
+                                                    </thead>
+                                                    <tbody>
+                                                        {students.map((student, index) => (
+                                                            <tr key={student.studentId}>
+                                                                <td>{index + 1}</td>
+                                                                <td>{student.studentId}</td>
+                                                                <td>{student.name}</td>
+                                                                <td>
+                                                                    <input 
+                                                                        type="number" 
+                                                                        className="input-field" 
+                                                                        value={entry.scores[student.studentId]?.mark || ''}
+                                                                        onChange={(e) => handleScoreChange(entry.id, student.studentId, e.target.value)}
+                                                                        disabled={isLocked || entry.scores[student.studentId]?.isAbsent}
+                                                                        min="0" max="100" placeholder="Mark" 
+                                                                        onWheel={(e) => e.currentTarget.blur()}
+                                                                    />
+                                                                </td>
+                                                                <td className="text-center">
+                                                                    <input 
+                                                                        type="checkbox" 
+                                                                        checked={entry.scores[student.studentId]?.isAbsent || false}
+                                                                        onChange={(e) => handleAbsentChange(entry.id, student.studentId, e.target.checked)}
+                                                                        disabled={isLocked}
+                                                                    />
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div className="actions-footer">
+                                                <button type="button" onClick={() => handleSaveScores(entry)} className="btn btn-primary" disabled={isSaving || isLocked}>
+                                                    {isSaving ? 'Saving...' : entry.isSavedInDb ? 'Update Scores' : 'Save Scores'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                            
+                            {canAddNew && (
+                                <div className="text-center mt-6">
+                                    <button type="button" onClick={handleAddNewAssessment} className="btn btn-primary-outline">
+                                        + Add Another Assessment
+                                    </button>
                                 </div>
                             )}
 
-                            {!showStudentSection && (
+                            {!showStudentSection && selectedCourse && selectedSession && (
                                 <div id="selectObjectiveMessage" className="card message-card">
-                                    <p>Please complete steps 1-5 to enter student scores.</p>
+                                    <p>Please select a Course Objective to view or enter scores.</p>
                                 </div>
                             )}
                         </div>
