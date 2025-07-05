@@ -1,7 +1,5 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
-import { removeAdminAuthTokenCookie } from '../../lib/jwt';
 import { useState, useEffect } from 'react';
 import { PROGRAM_OUTCOMES } from '../../lib/constants';
 import '../../styles/admin/homepage.css';
@@ -81,10 +79,7 @@ const AdminHomePage = () => {
         }
     };
 
-    const handleLogout = () => {
-        removeAdminAuthTokenCookie();
-        router.push('/admin/login');
-    };
+
     
     const selectedPoName = PROGRAM_OUTCOMES.find(p => p.no === selectedPo)?.name;
 

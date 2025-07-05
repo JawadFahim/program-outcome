@@ -512,7 +512,7 @@ const HomePage = () => {
                                                     </div>
 
                                                     <div className="form-group">
-                                                        <label>Bloom's Taxonomy</label>
+                                                        <label>Bloom&apos;s Taxonomy</label>
                                                         <div className="multiselect-dropdown">
                                                             <button type="button" className="multiselect-toggle" onClick={() => toggleDropdown(`${obj.id}-blooms`)}>
                                                                 <span className={!obj.bloomsTaxonomy || obj.bloomsTaxonomy.length === 0 ? 'placeholder' : ''}>
