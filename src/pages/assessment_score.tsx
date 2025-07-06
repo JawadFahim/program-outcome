@@ -272,7 +272,7 @@ const AssessmentScorePage = () => {
                 : entry
         ));
     };
-
+    
     const handleAbsentChange = (entryId: string, studentId: string, isChecked: boolean) => {
         setAssessmentEntries(prev => prev.map(entry => {
             if (entry.id !== entryId) return entry;
@@ -365,7 +365,7 @@ const AssessmentScorePage = () => {
 
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || 'Server error');
-            
+
             showToast(result.message || "Scores saved successfully!", "success");
 
             // After saving, refresh the state to reflect the changes
@@ -433,13 +433,13 @@ const AssessmentScorePage = () => {
 
                     {selectedCourse && selectedSession ? (
                         <div id="assessmentDetailsSection">
-                             <div className="card">
+                            <div className="card">
                                 <label htmlFor="courseObjectiveSelector" className="form-label">3. Course Objective</label>
-                                <select id="courseObjectiveSelector" className="select-field" value={selectedObjective} onChange={(e) => setSelectedObjective(e.target.value)} disabled={isLoadingObjectives || courseObjectives.length === 0}>
-                                    <option value="">{isLoadingObjectives ? "Loading..." : "-- Select an objective --"}</option>
-                                    {courseObjectives.map(obj => ( <option key={obj.co_no} value={obj.co_no}> {obj.co_no}: {obj.courseObjective} </option> ))}
-                                </select>
-                            </div>
+                                        <select id="courseObjectiveSelector" className="select-field" value={selectedObjective} onChange={(e) => setSelectedObjective(e.target.value)} disabled={isLoadingObjectives || courseObjectives.length === 0}>
+                                            <option value="">{isLoadingObjectives ? "Loading..." : "-- Select an objective --"}</option>
+                                            {courseObjectives.map(obj => ( <option key={obj.co_no} value={obj.co_no}> {obj.co_no}: {obj.courseObjective} </option> ))}
+                                        </select>
+                                    </div>
 
                             {isLoadingStudents ? (
                                 <div className="card text-center p-8">Loading assessment data...</div>
@@ -455,7 +455,7 @@ const AssessmentScorePage = () => {
                                     return (
                                         <div key={entry.id} className="card">
                                             <div className="assessment-details-grid">
-                                                <div>
+                                    <div>
                                                     <label htmlFor={`assessmentTypeSelector-${entry.id}`} className="form-label">4. Assessment Type</label>
                                                     {entry.isSavedInDb ? (
                                                         <p className="font-bold text-lg pt-2">{entry.assessmentType.charAt(0).toUpperCase() + entry.assessmentType.slice(1)}</p>
@@ -467,76 +467,76 @@ const AssessmentScorePage = () => {
                                                             onChange={(e) => handleFieldChange(entry.id, 'assessmentType', e.target.value)} 
                                                             disabled={isLocked}
                                                         >
-                                                            <option value="">-- Select type --</option>
+                                            <option value="">-- Select type --</option>
                                                             {/* For new entries, show only available types. For existing but being edited, show its own type. */}
                                                             {availableAssessmentTypes.map(type => (
                                                                 <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
                                                             ))}
-                                                        </select>
+                                        </select>
                                                     )}
-                                                </div>
-                                                <div>
+                                    </div>
+                                    <div>
                                                     <label htmlFor={`passMarkInput-${entry.id}`} className="form-label">5. Pass Mark</label>
                                                     <input type="number" id={`passMarkInput-${entry.id}`} className="input-field" placeholder="e.g., 40" min="0" max="100" value={entry.passMark} onChange={(e) => handleFieldChange(entry.id, 'passMark', e.target.value)} disabled={isLocked} onWheel={(e) => e.currentTarget.blur()} />
-                                                </div>
+                                    </div>
                                                 <div className="assessment-actions">
                                                      {entry.isSavedInDb && (
                                                         <button type="button" onClick={() => handleEditToggle(entry.id)} className="btn btn-secondary">
                                                             {isLocked ? 'Edit Scores' : 'Cancel Edit'}
                                                         </button>
                                                     )}
-                                                </div>
-                                            </div>
+                                </div>
+                            </div>
 
                                             <div className="student-scores-header mt-6">
                                                 <h3>Scores for <span>{selectedObjectiveText}</span></h3>
-                                            </div>
-                                            <div className="table-container">
-                                                <table className="student-table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>#</th>
-                                                            <th>Student ID</th>
-                                                            <th>Student Name</th>
-                                                            <th>Obtained Mark</th>
-                                                            <th className="text-center">Absent</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
+                                    </div>
+                                    <div className="table-container">
+                                        <table className="student-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Student ID</th>
+                                                    <th>Student Name</th>
+                                                    <th>Obtained Mark</th>
+                                                    <th className="text-center">Absent</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
                                                         {students.map((student, index) => (
-                                                            <tr key={student.studentId}>
-                                                                <td>{index + 1}</td>
-                                                                <td>{student.studentId}</td>
-                                                                <td>{student.name}</td>
-                                                                <td>
-                                                                    <input 
-                                                                        type="number" 
-                                                                        className="input-field" 
+                                                        <tr key={student.studentId}>
+                                                            <td>{index + 1}</td>
+                                                            <td>{student.studentId}</td>
+                                                            <td>{student.name}</td>
+                                                            <td>
+                                                                <input 
+                                                                    type="number" 
+                                                                    className="input-field" 
                                                                         value={entry.scores[student.studentId]?.mark || ''}
                                                                         onChange={(e) => handleScoreChange(entry.id, student.studentId, e.target.value)}
                                                                         disabled={isLocked || entry.scores[student.studentId]?.isAbsent}
-                                                                        min="0" max="100" placeholder="Mark" 
-                                                                        onWheel={(e) => e.currentTarget.blur()}
-                                                                    />
-                                                                </td>
-                                                                <td className="text-center">
-                                                                    <input 
-                                                                        type="checkbox" 
+                                                                    min="0" max="100" placeholder="Mark" 
+                                                                    onWheel={(e) => e.currentTarget.blur()}
+                                                                />
+                                                            </td>
+                                                            <td className="text-center">
+                                                                <input 
+                                                                    type="checkbox" 
                                                                         checked={entry.scores[student.studentId]?.isAbsent || false}
                                                                         onChange={(e) => handleAbsentChange(entry.id, student.studentId, e.target.checked)}
                                                                         disabled={isLocked}
-                                                                    />
-                                                                </td>
-                                                            </tr>
+                                                                />
+                                                            </td>
+                                                        </tr>
                                                         ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            <div className="actions-footer">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div className="actions-footer">
                                                 <button type="button" onClick={() => handleSaveScores(entry)} className="btn btn-primary" disabled={isSaving || isLocked}>
                                                     {isSaving ? 'Saving...' : entry.isSavedInDb ? 'Update Scores' : 'Save Scores'}
-                                                </button>
-                                            </div>
+                                        </button>
+                                    </div>
                                         </div>
                                     );
                                 })

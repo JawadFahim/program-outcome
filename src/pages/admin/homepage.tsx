@@ -1,9 +1,10 @@
 import Head from 'next/head';
-
 import { useState, useEffect } from 'react';
 import { PROGRAM_OUTCOMES } from '../../lib/constants';
 import '../../styles/admin/homepage.css';
 import AdminNavbar from '../../components/admin/AdminNavbar';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Score {
     studentId: string;
@@ -78,8 +79,61 @@ const AdminHomePage = () => {
         }
     };
 
+    const generatePdf = () => {
+        if (!dashboardData.length || !selectedPo || !selectedSession) return;
 
-    
+        const doc = new jsPDF();
+        const poName = PROGRAM_OUTCOMES.find(p => p.no === selectedPo)?.name || '';
+
+        // PDF Header
+        doc.setFontSize(18);
+        doc.text('Program Outcome Achievement Report', 14, 22);
+        doc.setFontSize(12);
+        doc.text(`Program Outcome: ${selectedPo}: ${poName}`, 14, 32);
+        doc.text(`Session: ${selectedSession}`, 14, 38);
+
+        let startY = 45; // Initial Y position for the first table
+
+        dashboardData.forEach((entry, index) => {
+            const tableHeight = (entry.scores.length + 1) * 10 + 20; // Estimate table height
+            if (startY + tableHeight > 280) { // Check if it fits on the page
+                doc.addPage();
+                startY = 20;
+            }
+
+            // Entry Header
+            doc.setFontSize(14);
+            doc.text(`${entry.courseId} - ${entry.co_no}`, 14, startY);
+            
+            doc.setFontSize(10);
+            doc.text(
+                `Teacher: ${entry.teacherId} | Assessment: ${entry.assessmentType} | Pass Mark: ${entry.passMark}`,
+                14,
+                startY + 6
+            );
+            
+            // Student scores table for the entry
+            const tableHead = [['Student ID', 'Student Name', 'Mark']];
+            const tableBody = entry.scores.map(score => [
+                score.studentId,
+                score.name,
+                String(score.obtainedMark)
+            ]);
+
+            autoTable(doc, {
+                head: tableHead,
+                body: tableBody,
+                startY: startY + 8,
+                theme: 'striped',
+                headStyles: { fillColor: [74, 94, 114] },
+            });
+
+            startY = (doc as any).lastAutoTable.finalY + 15; // Add margin for the next entry
+        });
+
+        doc.save(`PO_Report_${selectedPo}_${selectedSession}.pdf`);
+    };
+
     const selectedPoName = PROGRAM_OUTCOMES.find(p => p.no === selectedPo)?.name;
 
     return (
@@ -158,6 +212,14 @@ const AdminHomePage = () => {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    )}
+
+                    {dashboardData.length > 0 && !loading && (
+                        <div className="text-center mt-6">
+                             <button onClick={generatePdf} className="btn-fetch">
+                                 Generate PDF Report
+                             </button>
                         </div>
                     )}
 

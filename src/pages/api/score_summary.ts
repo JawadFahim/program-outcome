@@ -10,7 +10,7 @@ interface ScoreDoc {
     assessmentType: string;
     passMark: string;
     scores: {
-        studentId: string;
+    studentId: string;
         name:string;
         obtainedMark: number | 'absent';
     }[];
@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             courseId: courseId as string,
             session: session as string,
         }).toArray();
-
+        
         if (scoreDocs.length === 0) {
             return res.status(200).json({ courseObjectives: [], studentData: [], summary: {} });
         }
@@ -97,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             };
         }
 
-        for (const co of courseObjectives) {
+            for (const co of courseObjectives) {
             const coData = aggregatedData[co];
             let passedCount = 0;
             const totalStudents = Object.keys(coData.studentScores).length;
@@ -124,7 +124,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 finalPassMark: coData.finalPassMark,
             };
         }
-        
+
         const finalStudentData = Object.values(studentDataMap);
 
         return res.status(200).json({

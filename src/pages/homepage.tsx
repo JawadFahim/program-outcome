@@ -486,29 +486,29 @@ const HomePage = () => {
                                             <div className="course-objective-block">
                                                 <div className="form-group full-width">
                                                     <label>Objective Description</label>
-                                                    <textarea 
-                                                        className="textarea-field" 
-                                                        name={`course_objective_desc_${obj.id}`} 
-                                                        placeholder="Enter course objective description..."
-                                                        value={obj.description}
-                                                        onChange={(e) => handleObjectiveChange(obj.id, 'description', e.target.value)}
-                                                    ></textarea>
+                                                <textarea 
+                                                    className="textarea-field" 
+                                                    name={`course_objective_desc_${obj.id}`} 
+                                                    placeholder="Enter course objective description..."
+                                                    value={obj.description}
+                                                    onChange={(e) => handleObjectiveChange(obj.id, 'description', e.target.value)}
+                                                ></textarea>
                                                 </div>
 
                                                 <div className="grid-2-cols">
                                                     <div className="form-group">
                                                         <label>Program Outcome (PO)</label>
-                                                        <select 
-                                                            className="select-field" 
-                                                            name={`program_outcome_map_${obj.id}`}
-                                                            value={obj.programOutcome}
-                                                            onChange={(e) => handleObjectiveChange(obj.id, 'programOutcome', e.target.value)}
-                                                        >
-                                                            <option value="">-- Select Program Outcome --</option>
-                                                            {BICE_PROGRAM_OUTCOMES.map((outcome, i) => (
-                                                                <option key={`po-${i}`} value={`PO${i + 1}`}>{outcome}</option>
-                                                            ))}
-                                                        </select>
+                                                <select 
+                                                    className="select-field" 
+                                                    name={`program_outcome_map_${obj.id}`}
+                                                    value={obj.programOutcome}
+                                                    onChange={(e) => handleObjectiveChange(obj.id, 'programOutcome', e.target.value)}
+                                                >
+                                                    <option value="">-- Select Program Outcome --</option>
+                                                    {BICE_PROGRAM_OUTCOMES.map((outcome, i) => (
+                                                        <option key={`po-${i}`} value={`PO${i + 1}`}>{outcome}</option>
+                                                    ))}
+                                                </select>
                                                     </div>
 
                                                     <div className="form-group">
@@ -624,7 +624,7 @@ const HomePage = () => {
                                                                     }
                                                                 </span>
                                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="20" width="20"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                                                            </button>
+                                                        </button>
                                                             {openDropdowns[`${obj.id}-activity`] && (
                                                                 <div className="multiselect-options">
                                                                     {COMPLEX_ENGINEERING_ACTIVITY.map(a => (

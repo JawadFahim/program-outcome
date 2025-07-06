@@ -3,6 +3,8 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getTeacherIdFromAuth, removeAuthTokenCookie } from '../lib/jwt';
 import Layout from '../components/Layout';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 // --- Interfaces ---
 interface CourseTaught {
@@ -112,6 +114,74 @@ const ScoreSummaryPage = () => {
         router.push('/login');
     };
 
+    const generatePdf = () => {
+        if (!summaryData) return;
+
+        const doc = new jsPDF();
+
+        // Title
+        doc.setFontSize(20);
+        doc.text("Score Summary", 14, 22);
+
+        // Course Details
+        doc.setFontSize(12);
+        doc.text(`Course: ${courseDisplayName} (${selectedCourse})`, 14, 32);
+        doc.text(`Session: ${selectedSession}`, 14, 38);
+        doc.text(`Teacher: ${teacherName}`, 14, 44);
+
+        // Student Scores Table
+        const studentTableHead = [['#', 'Student ID', 'Student Name', ...summaryData.courseObjectives]];
+        const studentTableBody = summaryData.studentData.map((student, index) => [
+            index + 1,
+            student.id,
+            student.name,
+            ...summaryData.courseObjectives.map(co => {
+                const score = student.scores[co];
+                const status = student.finalCoStatus[co];
+                if (score === undefined || score === null) return 'N/A';
+                return `${score} (${status})`;
+            })
+        ]);
+
+        autoTable(doc, {
+            head: studentTableHead,
+            body: studentTableBody,
+            startY: 50,
+            theme: 'grid',
+            headStyles: { fillColor: [41, 128, 185] }, // Darker Blue
+            styles: { halign: 'center' },
+        });
+
+        // CO Summary Table
+        let finalY = (doc as any).lastAutoTable.finalY;
+        doc.setFontSize(16);
+        doc.text("Course Objective Pass Percentages", 14, finalY + 12);
+
+        const summaryTableHead = [['CO', 'Pass %', 'Passed/Total', 'Assessment Types', 'Total Pass Mark']];
+        const summaryTableBody = summaryData.courseObjectives.map(co => {
+            const stats = summaryData.summary[co];
+            if (!stats) return [];
+            return [
+                co,
+                `${stats.percentage.toFixed(2)}%`,
+                `${stats.passed} / ${stats.total}`,
+                stats.assessmentTypes.join(' + '),
+                stats.finalPassMark
+            ];
+        }).filter(row => row.length > 0);
+
+        autoTable(doc, {
+            head: summaryTableHead,
+            body: summaryTableBody,
+            startY: finalY + 16,
+            theme: 'striped',
+            headStyles: { fillColor: [22, 160, 133] }, // Teal
+            styles: { halign: 'center' },
+        });
+        
+        doc.save(`${courseDisplayName.replace(/\s+/g, '_')}_${selectedSession}_Summary.pdf`);
+    };
+
     const courseDisplayName = courses.find(c => c.course_id === selectedCourse)?.courseName || selectedCourse;
 
     return (
@@ -208,6 +278,12 @@ const ScoreSummaryPage = () => {
                                     )
                                 })}
                             </div>
+                        </div>
+
+                        <div className="text-center mt-8 mb-4">
+                            <button onClick={generatePdf} className="btn-primary" disabled={!summaryData || summaryData.studentData.length === 0}>
+                                Generate PDF
+                            </button>
                         </div>
                     </div>
                 )}

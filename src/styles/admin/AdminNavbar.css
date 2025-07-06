@@ -1,0 +1,55 @@
+.admin-header {
+    background-color: #fff;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.header-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.nav-link {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #4b5563;
+    text-decoration: none;
+    transition: color 0.2s;
+    padding: 0.5rem 0;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-link:hover {
+    color: #10b981;
+}
+
+.nav-link.active {
+    color: #10b981;
+    border-bottom-color: #10b981;
+}
+
+.logout-btn {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.logout-btn:hover {
+    background-color: #dc2626;
+} 

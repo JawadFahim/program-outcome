@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { removeAdminAuthTokenCookie } from '../../lib/jwt';
+import '../../styles/admin/AdminNavbar.css';
 
 interface AdminNavbarProps {
-    page: 'dashboard' | 'teachers';
+    page: 'dashboard' | 'teachers' | 'student';
 }
 
 const AdminNavbar = ({ page }: AdminNavbarProps) => {
@@ -18,6 +19,9 @@ const AdminNavbar = ({ page }: AdminNavbarProps) => {
         if (page === 'teachers') {
             return 'Teacher Management';
         }
+        if (page === 'student') {
+            return 'Student Information';
+        }
         return 'Admin Dashboard';
     };
 
@@ -25,16 +29,19 @@ const AdminNavbar = ({ page }: AdminNavbarProps) => {
         <header className="admin-header">
             <div className="header-nav">
                 <h1 className="header-title">{getTitle()}</h1>
-                {page !== 'dashboard' && (
-                    <Link href="/admin/homepage" legacyBehavior>
-                        <a className="nav-link">Dashboard</a>
-                    </Link>
-                )}
-                {page !== 'teachers' && (
-                    <Link href="/admin/teacher-details" legacyBehavior>
-                        <a className="nav-link">Teacher Details</a>
-                    </Link>
-                )}
+                
+                <Link href="/admin/homepage" className={`nav-link ${page === 'dashboard' ? 'active' : ''}`}>
+                    Dashboard
+                </Link>
+                
+                <Link href="/admin/teacher-details" className={`nav-link ${page === 'teachers' ? 'active' : ''}`}>
+                    Teacher Management
+                </Link>
+
+                <Link href="/admin/student" className={`nav-link ${page === 'student' ? 'active' : ''}`}>
+                    Student Info
+                </Link>
+                
             </div>
             <button onClick={handleLogout} className="logout-btn">Logout</button>
         </header>
@@ -42,3 +49,4 @@ const AdminNavbar = ({ page }: AdminNavbarProps) => {
 };
 
 export default AdminNavbar;
+ 
