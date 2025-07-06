@@ -6,6 +6,12 @@ import Layout from '../components/Layout';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+interface jsPDFWithAutoTable extends jsPDF {
+    lastAutoTable?: {
+        finalY?: number;
+    };
+}
+
 // --- Interfaces ---
 interface CourseTaught {
     course_id: string;
@@ -117,7 +123,7 @@ const ScoreSummaryPage = () => {
     const generatePdf = () => {
         if (!summaryData) return;
 
-        const doc = new jsPDF();
+        const doc: jsPDFWithAutoTable = new jsPDF();
 
         // Title
         doc.setFontSize(20);
@@ -153,7 +159,7 @@ const ScoreSummaryPage = () => {
         });
 
         // CO Summary Table
-        let finalY = (doc as any).lastAutoTable.finalY;
+        const finalY = doc.lastAutoTable?.finalY ?? 50;
         doc.setFontSize(16);
         doc.text("Course Objective Pass Percentages", 14, finalY + 12);
 

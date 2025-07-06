@@ -6,6 +6,12 @@ import AdminNavbar from '../../components/admin/AdminNavbar';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+interface jsPDFWithAutoTable extends jsPDF {
+    lastAutoTable?: {
+        finalY?: number;
+    };
+}
+
 interface Score {
     studentId: string;
     name: string;
@@ -82,7 +88,7 @@ const AdminHomePage = () => {
     const generatePdf = () => {
         if (!dashboardData.length || !selectedPo || !selectedSession) return;
 
-        const doc = new jsPDF();
+        const doc: jsPDFWithAutoTable = new jsPDF();
         const poName = PROGRAM_OUTCOMES.find(p => p.no === selectedPo)?.name || '';
 
         // PDF Header
@@ -94,7 +100,7 @@ const AdminHomePage = () => {
 
         let startY = 45; // Initial Y position for the first table
 
-        dashboardData.forEach((entry, index) => {
+        dashboardData.forEach((entry) => {
             const tableHeight = (entry.scores.length + 1) * 10 + 20; // Estimate table height
             if (startY + tableHeight > 280) { // Check if it fits on the page
                 doc.addPage();
@@ -128,7 +134,7 @@ const AdminHomePage = () => {
                 headStyles: { fillColor: [74, 94, 114] },
             });
 
-            startY = (doc as any).lastAutoTable.finalY + 15; // Add margin for the next entry
+            startY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 15 : startY;
         });
 
         doc.save(`PO_Report_${selectedPo}_${selectedSession}.pdf`);
