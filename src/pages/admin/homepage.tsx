@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { PROGRAM_OUTCOMES } from '../../lib/constants';
 import '../../styles/admin/homepage.css';
 import AdminNavbar from '../../components/admin/AdminNavbar';

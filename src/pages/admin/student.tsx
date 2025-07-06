@@ -135,7 +135,7 @@ const StudentInfoPage = () => {
                 }
             });
     
-            startY = (doc as any).lastAutoTable.finalY;
+            startY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
         });
     
         doc.save(`student-report-${studentId}-${new Date().toISOString().slice(0,10)}.pdf`);
