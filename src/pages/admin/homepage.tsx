@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PROGRAM_OUTCOMES } from '../../lib/constants';
 import '../../styles/admin/homepage.css';
 import AdminNavbar from '../../components/admin/AdminNavbar';
@@ -37,11 +37,26 @@ const AdminHomePage = () => {
     const [dashboardData, setDashboardData] = useState<ScoreEntry[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+    const handleDropdownToggle = (name: string) => {
+        setOpenDropdown(prev => (prev === name ? null : name));
+    };
 
     useEffect(() => {
         document.body.classList.add('admin-homepage');
+
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            if (!target.closest('.custom-select')) {
+                setOpenDropdown(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+
         return () => {
             document.body.classList.remove('admin-homepage');
+            document.removeEventListener('mousedown', handleClickOutside);
         }
     }, []);
 
@@ -61,6 +76,16 @@ const AdminHomePage = () => {
         };
         fetchSessions();
     }, []);
+
+    const handleSessionSelect = (session: string) => {
+        setSelectedSession(session);
+        setOpenDropdown(null);
+    };
+
+    const handlePoSelect = (po: string) => {
+        setSelectedPo(po);
+        setOpenDropdown(null);
+    };
 
     const handleFetchData = async () => {
         if (!selectedSession || !selectedPo) {
@@ -139,7 +164,7 @@ const AdminHomePage = () => {
 
         doc.save(`PO_Report_${selectedPo}_${selectedSession}.pdf`);
     };
-
+    
     const selectedPoName = PROGRAM_OUTCOMES.find(p => p.no === selectedPo)?.name;
 
     return (
@@ -153,16 +178,44 @@ const AdminHomePage = () => {
                     <div className="card filters">
                         <div className="select-group">
                             <label htmlFor="session-select" className="select-label">Filter by Session</label>
-                            <select id="session-select" className="select-dropdown" value={selectedSession} onChange={e => setSelectedSession(e.target.value)}>
-                                {sessions.map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
+                            <div className="custom-select">
+                                <button id="session-select" className="custom-select-toggle" onClick={() => handleDropdownToggle('session')}>
+                                    <span className={!selectedSession ? 'placeholder' : ''}>
+                                        {selectedSession || 'Select a Session'}
+                                    </span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="20" width="20"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                </button>
+                                {openDropdown === 'session' && (
+                                    <div className="custom-select-options">
+                                        {sessions.map(s => (
+                                            <div key={s} className={`custom-select-option ${selectedSession === s ? 'selected' : ''}`} onClick={() => handleSessionSelect(s)}>
+                                                {s}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="select-group">
                             <label htmlFor="po-select" className="select-label">Filter by Program Outcome</label>
-                            <select id="po-select" className="select-dropdown" value={selectedPo} onChange={e => setSelectedPo(e.target.value)}>
-                                <option value="" disabled>Select a PO</option>
-                                {PROGRAM_OUTCOMES.map(po => <option key={po.no} value={po.no}>{po.no}: {po.name}</option>)}
-                            </select>
+                            <div className="custom-select">
+                                <button id="po-select" className="custom-select-toggle" onClick={() => handleDropdownToggle('po')}>
+                                    <span className={!selectedPo ? 'placeholder' : ''}>
+                                        {selectedPo ? `${selectedPo}: ${PROGRAM_OUTCOMES.find(p => p.no === selectedPo)?.name}` : 'Select a PO'}
+                                    </span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="20" width="20"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                </button>
+                                {openDropdown === 'po' && (
+                                    <div className="custom-select-options">
+                                        <div className="custom-select-option" onClick={() => handlePoSelect('')}>Select a PO</div>
+                                        {PROGRAM_OUTCOMES.map(po => (
+                                            <div key={po.no} className={`custom-select-option ${selectedPo === po.no ? 'selected' : ''}`} onClick={() => handlePoSelect(po.no)}>
+                                                {po.no}: {po.name}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <button onClick={handleFetchData} className="btn-fetch" disabled={loading}>
                             {loading ? 'Loading...' : 'Get Data'}
@@ -173,37 +226,42 @@ const AdminHomePage = () => {
                     
                     {dashboardData.length > 0 && (
                         <div className="results-header">
-                            <h2 className="po-title">{selectedPo}: {selectedPoName}</h2>
-                            <p className="po-name">Showing {dashboardData.length} entries</p>
+                            <div>
+                                <h2 className="po-title">{selectedPo}: {selectedPoName}</h2>
+                                <p className="po-name">Showing {dashboardData.length} entries</p>
+                            </div>
+                            <button onClick={generatePdf} className="btn-fetch">
+                                Generate PDF Report
+                            </button>
                         </div>
                     )}
 
                     {loading && <p className="message">Loading data...</p>}
 
                     {!loading && dashboardData.length > 0 && (
-                         <div className="results-grid">
-                            {dashboardData.map(entry => (
-                                <div key={entry._id} className="result-card">
-                                    <div className="card-header">
-                                        <h3 className="course-id">{entry.courseId} - {entry.co_no}</h3>
-                                        <div className="card-details">
+                    <div className="results-grid">
+                        {dashboardData.map(entry => (
+                            <div key={entry._id} className="result-card">
+                                <div className="card-header">
+                                    <h3 className="course-id">{entry.courseId} - {entry.co_no}</h3>
+                                    <div className="card-details">
                                             <span className="detail-pill">Teacher: <strong>{entry.teacherId}</strong></span>
                                             <span className="detail-pill">Assessment: <strong>{entry.assessmentType}</strong></span>
                                             <span className="detail-pill">Pass Mark: <strong>{entry.passMark}</strong></span>
                                         </div>
-                                    </div>
-                                    <div className="table-container">
-                                        <table className="score-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Student ID</th>
+                                </div>
+                                <div className="table-container">
+                                    <table className="score-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Student ID</th>
                                                     <th className="text-center">Mark</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {entry.scores.map(score => (
-                                                    <tr key={score.studentId}>
-                                                        <td>{score.studentId}</td>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {entry.scores.map(score => (
+                                                <tr key={score.studentId}>
+                                                    <td>{score.studentId}</td>
                                                         <td className={`text-center score-cell ${
                                                             typeof score.obtainedMark === 'number' 
                                                                 ? (score.obtainedMark >= entry.passMark ? 'score-pass' : 'score-fail')
@@ -211,22 +269,14 @@ const AdminHomePage = () => {
                                                         }`}>
                                                             {String(score.obtainedMark)}
                                                         </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {dashboardData.length > 0 && !loading && (
-                        <div className="text-center mt-6">
-                             <button onClick={generatePdf} className="btn-fetch">
-                                 Generate PDF Report
-                             </button>
-                        </div>
+                            </div>
+                        ))}
+                    </div>
                     )}
 
                     {!loading && dashboardData.length === 0 && selectedPo && (

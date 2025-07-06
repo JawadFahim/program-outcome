@@ -1,5 +1,7 @@
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import AdminNavbar from '../../components/admin/AdminNavbar';
 import '../../styles/admin/homepage.css';
 
@@ -58,6 +60,87 @@ const StudentInfoPage = () => {
         }
     };
 
+    const handleGeneratePdf = () => {
+        if (studentData.length === 0 || !studentId) return;
+    
+        const doc = new jsPDF({ orientation: 'landscape' });
+    
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Student Assessment Report', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+    
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Student: ${studentName} (${studentId})`, 14, 35);
+    
+        const generationDate = new Date().toLocaleString();
+        doc.text(`Generated on: ${generationDate}`, doc.internal.pageSize.getWidth() - 14, 35, { align: 'right' });
+    
+        const groupedData = studentData.reduce((acc, entry) => {
+            if (!acc[entry.courseId]) {
+                acc[entry.courseId] = [];
+            }
+            acc[entry.courseId].push(entry);
+            return acc;
+        }, {} as Record<string, StudentResult[]>);
+    
+        let startY = 45;
+    
+        Object.keys(groupedData).sort().forEach(courseId => {
+            const courseEntries = groupedData[courseId];
+            
+            if (startY > 45) {
+                startY += 8;
+            }
+            
+            const tableHeight = 15 + courseEntries.length * 8; 
+            if (startY + tableHeight > doc.internal.pageSize.getHeight() - 20) {
+                doc.addPage();
+                startY = 20;
+            }
+
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(courseId, 14, startY);
+    
+            const tableBody = courseEntries.map(entry => {
+                const verdict = typeof entry.obtainedMark === 'number'
+                    ? (entry.obtainedMark >= entry.passMark ? 'Pass' : 'Fail')
+                    : 'Absent';
+                return [
+                    entry.co_no,
+                    entry.assessmentType,
+                    entry.session,
+                    entry.teacherId,
+                    entry.po_no,
+                    entry.passMark.toString(),
+                    String(entry.obtainedMark),
+                    verdict,
+                ];
+            });
+    
+            autoTable(doc, {
+                startY: startY + 5,
+                head: [['CO', 'Assessment', 'Session', 'Teacher', 'PO', 'Pass Mark', 'Obtained', 'Verdict']],
+                body: tableBody,
+                theme: 'grid',
+                headStyles: { fillColor: [39, 174, 96] },
+                styles: { fontSize: 9, cellPadding: 2 },
+                didDrawPage: (data) => {
+                    if (data.pageNumber > 1) {
+                        doc.setFontSize(12);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('Student Assessment Report (Continued)', doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+                    }
+                }
+            });
+    
+            startY = (doc as any).lastAutoTable.finalY;
+        });
+    
+        doc.save(`student-report-${studentId}-${new Date().toISOString().slice(0,10)}.pdf`);
+    };
+
     return (
         <>
             <Head>
@@ -66,29 +149,36 @@ const StudentInfoPage = () => {
             <AdminNavbar page="student" />
             <div className="admin-container">
                 <main>
-                    <div className="card filters">
-                        <div className="select-group" style={{ flexGrow: 1 }}>
+                    <div className="card">
+                        <div className="select-group">
                             <label htmlFor="student-id-input" className="select-label">Enter Student ID</label>
+                            <div className="input-with-btn">
                             <input
                                 type="text"
                                 id="student-id-input"
-                                className="select-dropdown" // Reusing style
+                                    className="search-input"
                                 value={studentId}
                                 onChange={e => setStudentId(e.target.value)}
                                 placeholder="e.g., 2254901027"
                             />
+                                <button onClick={handleFetchData} className="btn-inside" disabled={loading}>
+                                    {loading ? 'Loading...' : 'Get Data'}
+                                </button>
+                            </div>
                         </div>
-                        <button onClick={handleFetchData} className="btn-fetch" disabled={loading}>
-                            {loading ? 'Loading...' : 'Get Data'}
-                        </button>
                     </div>
 
                     {error && <p className="message error-message">{error}</p>}
                     
                     {studentData.length > 0 && (
                         <div className="results-header">
+                            <div>
                             <h2 className="po-title">Showing results for: {studentName} ({studentId})</h2>
                             <p className="po-name">Found {studentData.length} assessment records.</p>
+                            </div>
+                            <button onClick={handleGeneratePdf} className="btn-primary" disabled={loading}>
+                                Generate PDF
+                            </button>
                         </div>
                     )}
 
@@ -150,6 +240,46 @@ const StudentInfoPage = () => {
                 </main>
             </div>
             <style jsx>{`
+                .input-with-btn {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                }
+                .search-input {
+                    width: 100%;
+                    padding: 0.75rem 1rem;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 0.5rem;
+                    font-size: 1rem;
+                    box-sizing: border-box;
+                    padding-right: 120px;
+                }
+                .search-input:focus {
+                    outline: none;
+                    border-color: #10b981;
+                    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+                }
+                .btn-inside {
+                    position: absolute;
+                    right: 5px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    background-color: #10b981;
+                    color: white;
+                    border: none;
+                    padding: 0.5rem 1.2rem;
+                    border-radius: 0.375rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: background-color 0.2s;
+                }
+                .btn-inside:hover:not(:disabled) {
+                    background-color: #059669;
+                }
+                .btn-inside:disabled {
+                    background-color: #6ee7b7;
+                    cursor: not-allowed;
+                }
                 .student-result-details {
                     padding: 15px;
                     border-top: 1px solid #eee;
@@ -177,6 +307,30 @@ const StudentInfoPage = () => {
                 .text-green-600 { color: #28a745; }
                 .text-red-600 { color: #dc3545; }
                 .text-gray-500 { color: #6c757d; }
+                .results-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 1rem;
+                }
+                .btn-primary {
+                    background-color: #10b981;
+                    color: white;
+                    border: none;
+                    padding: 0.6rem 1.2rem;
+                    border-radius: 0.375rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    height: fit-content;
+                    transition: background-color 0.2s;
+                }
+                .btn-primary:hover:not(:disabled) {
+                    background-color: #059669;
+                }
+                .btn-primary:disabled {
+                    background-color: #d1d5db;
+                    cursor: not-allowed;
+                }
             `}</style>
         </>
     );

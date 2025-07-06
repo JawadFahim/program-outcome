@@ -91,6 +91,84 @@ body.admin-homepage {
     font-size: 1rem;
     width: 100%;
 }
+
+/* Custom Select Dropdown */
+.custom-select {
+    position: relative;
+}
+
+.custom-select-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--admin-border-color);
+    border-radius: 0.5rem;
+    background-color: #fff;
+    font-size: 1rem;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.custom-select-toggle:focus {
+    outline: none;
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+}
+
+.custom-select-toggle span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.custom-select-toggle .placeholder {
+    color: var(--admin-text-secondary);
+}
+
+.custom-select-toggle svg {
+    flex-shrink: 0;
+    transition: transform 0.2s;
+}
+
+.custom-select-options {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background-color: var(--admin-bg-card);
+    border: 1px solid var(--admin-border-color);
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+    z-index: 10;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.custom-select-option {
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    user-select: none;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.custom-select-option:hover {
+    background-color: var(--admin-bg-main);
+}
+
+.custom-select-option.selected {
+    font-weight: 600;
+    color: var(--admin-primary);
+    background-color: var(--admin-bg-main);
+}
+
 .btn-fetch {
     background-color: var(--admin-primary);
     color: white;
@@ -109,6 +187,9 @@ body.admin-homepage {
     background-color: var(--admin-primary-hover);
 }
 .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-top: 2.5rem;
     margin-bottom: 1rem;
     padding-bottom: 1rem;

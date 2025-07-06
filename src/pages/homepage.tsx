@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { getTeacherIdFromAuth, removeAuthTokenCookie } from '../lib/jwt';
 import Layout from '../components/Layout';
 
@@ -60,17 +60,37 @@ const HomePage = () => {
     const [toastMessage, setToastMessage] = useState<string>('');
     const [toastType, setToastType] = useState<'success' | 'error' | 'warning'>('success');
     const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
+    const [openSelects, setOpenSelects] = useState<Record<string, boolean>>({});
 
+    const useOutsideAlerter = (ref: React.RefObject<HTMLElement | null>, close: () => void) => {
+        useEffect(() => {
+            const handleClickOutside = (event: MouseEvent) => {
+                if (ref.current && !ref.current.contains(event.target as Node)) {
+                    close();
+                }
+            };
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
+        }, [ref, close]);
+    };
+
+    const courseSelectRef = useRef<HTMLDivElement>(null);
+    const sessionSelectRef = useRef<HTMLDivElement>(null);
+
+    useOutsideAlerter(courseSelectRef, () => setOpenSelects(prev => ({ ...prev, course: false })));
+    useOutsideAlerter(sessionSelectRef, () => setOpenSelects(prev => ({ ...prev, session: false })));
+    
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as HTMLElement;
             if (!target.closest('.multiselect-dropdown')) {
-                setOpenDropdowns(currentlyOpen => {
-                    if (Object.values(currentlyOpen).some(isOpen => isOpen)) {
-                        return {};
-                    }
-                    return currentlyOpen;
-                });
+                setOpenDropdowns({});
+            }
+             // Close all custom selects if clicked outside
+            if (!target.closest('.custom-select')) {
+                setOpenSelects({});
             }
         };
 
@@ -82,6 +102,13 @@ const HomePage = () => {
 
     const toggleDropdown = (id: string) => {
         setOpenDropdowns(prev => ({
+            [id]: !prev[id],
+        }));
+    };
+
+    const toggleSelect = (id: string) => {
+        setOpenSelects(prev => ({
+            ...Object.keys(prev).reduce((acc, key) => ({ ...acc, [key]: false }), {}),
             [id]: !prev[id],
         }));
     };
@@ -276,8 +303,7 @@ const HomePage = () => {
         }, 3300); 
     };
 
-    const handleCourseSelectionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        const newCourseValue = event.target.value;
+    const handleCourseSelectionChange = (newCourseValue: string) => {
         setCourseObjectives([]);
         setSelectedCourse(newCourseValue);
         setSelectedSession(''); // Reset session on new course selection
@@ -292,10 +318,12 @@ const HomePage = () => {
         } else {
             setSessions([]); // Clear sessions if no course is selected
         }
+        setOpenSelects({});
     };
 
-    const handleSessionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedSession(event.target.value);
+    const handleSessionChange = (newSession: string) => {
+        setSelectedSession(newSession);
+        setOpenSelects({});
     };
     
     const handleObjectiveChange = (id: string, field: keyof Pick<CourseObjective, 'description' | 'programOutcome'>, value: string) => {
@@ -304,6 +332,9 @@ const HomePage = () => {
                 obj.id === id ? { ...obj, [field]: value } : obj
             )
         );
+        if (field === 'programOutcome') {
+            setOpenSelects({});
+        }
     };
 
     const handleMultiSelectChange = (
@@ -419,39 +450,72 @@ const HomePage = () => {
             <div className="container">
                     <div className="card">
                         <label htmlFor="courseSelector" className="form-label">Select Course:</label>
-                        <select 
+                        <div className="custom-select" ref={courseSelectRef}>
+                            <button 
                             id="courseSelector" 
-                            className="select-field" 
-                            value={selectedCourse} 
-                            onChange={handleCourseSelectionChange}
+                                type="button"
+                                className={`custom-select-toggle ${courses.length === 0 ? 'disabled' : ''}`}
+                                onClick={() => toggleSelect('course')}
                             disabled={courses.length === 0}
                         >
-                            <option value="">-- Please select a course --</option>
-                        {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => (
-                                <option key={course.course_id} value={course.course_id}>
+                                <span className={!selectedCourse ? 'placeholder' : ''}>
+                                    {selectedCourse 
+                                        ? courses.find(c => c.course_id === selectedCourse)?.courseName + ` (${selectedCourse})`
+                                        : '-- Please select a course --'
+                                    }
+                                </span>
+                            </button>
+                            {openSelects['course'] && (
+                                <ul className="custom-select-options">
+                                    {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => (
+                                        <li 
+                                            key={course.course_id} 
+                                            className={`custom-select-option ${selectedCourse === course.course_id ? 'selected' : ''}`}
+                                            onClick={() => handleCourseSelectionChange(course.course_id)}
+                                        >
                                     {course.courseName} ({course.course_id})
-                            </option>
-                        ))}
-                    </select>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
                 </div>
 
                 {selectedCourse && (
                     <div className="card">
                         <label htmlFor="sessionSelector" className="form-label">Select Session:</label>
-                        <select
-                            id="sessionSelector"
-                            className="select-field"
-                            value={selectedSession}
-                            onChange={handleSessionChange}
-                            disabled={sessions.length === 0}
-                        >
-                            <option value="">-- Please select a session --</option>
-                            {sessions.map(session => (
-                                <option key={session} value={session}>
-                                    {session}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="custom-select" ref={sessionSelectRef}>
+                            <button
+                                id="sessionSelector"
+                                type="button"
+                                className={`custom-select-toggle ${sessions.length === 0 ? 'disabled' : ''}`}
+                                onClick={() => toggleSelect('session')}
+                                disabled={sessions.length === 0}
+                            >
+                                <span className={!selectedSession ? 'placeholder' : ''}>
+                                    {selectedSession || '-- Please select a session --'}
+                                </span>
+                            </button>
+                            {openSelects['session'] && (
+                                <ul className="custom-select-options">
+                                     <li 
+                                        className={`custom-select-option placeholder ${selectedSession === '' ? 'selected' : ''}`}
+                                        onClick={() => handleSessionChange('')}
+                                    >
+                                        -- Please select a session --
+                                    </li>
+                                    {sessions.map(session => (
+                                        <li 
+                                            key={session} 
+                                            className={`custom-select-option ${selectedSession === session ? 'selected' : ''}`}
+                                            onClick={() => handleSessionChange(session)}
+                                        >
+                                            {session}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
                     </div>
                 )}
 
@@ -498,17 +562,39 @@ const HomePage = () => {
                                                 <div className="grid-2-cols">
                                                     <div className="form-group">
                                                         <label>Program Outcome (PO)</label>
-                                                <select 
-                                                    className="select-field" 
-                                                    name={`program_outcome_map_${obj.id}`}
-                                                    value={obj.programOutcome}
-                                                    onChange={(e) => handleObjectiveChange(obj.id, 'programOutcome', e.target.value)}
-                                                >
-                                                    <option value="">-- Select Program Outcome --</option>
-                                                    {BICE_PROGRAM_OUTCOMES.map((outcome, i) => (
-                                                        <option key={`po-${i}`} value={`PO${i + 1}`}>{outcome}</option>
-                                                    ))}
-                                                </select>
+                                                        <div className="custom-select">
+                                                        <button 
+                                                            type="button" 
+                                                                className="custom-select-toggle"
+                                                                onClick={() => toggleSelect(`po-${obj.id}`)}
+                                                            >
+                                                                <span className={!obj.programOutcome ? 'placeholder' : ''}>
+                                                                    {obj.programOutcome
+                                                                        ? BICE_PROGRAM_OUTCOMES.find((_, i) => `PO${i+1}` === obj.programOutcome) || '-- Select Program Outcome --'
+                                                                        : '-- Select Program Outcome --'
+                                                                    }
+                                                                </span>
+                                                            </button>
+                                                            {openSelects[`po-${obj.id}`] && (
+                                                                <ul className="custom-select-options">
+                                                                    <li
+                                                                        className={`custom-select-option placeholder ${obj.programOutcome === '' ? 'selected' : ''}`}
+                                                                        onClick={() => handleObjectiveChange(obj.id, 'programOutcome', '')}
+                                                                    >
+                                                                        -- Select Program Outcome --
+                                                                    </li>
+                                                                    {BICE_PROGRAM_OUTCOMES.map((outcome, i) => (
+                                                                        <li 
+                                                                            key={`po-${i}`} 
+                                                                            className={`custom-select-option ${obj.programOutcome === `PO${i + 1}` ? 'selected' : ''}`}
+                                                                            onClick={() => handleObjectiveChange(obj.id, 'programOutcome', `PO${i + 1}`)}
+                                                                        >
+                                                                            {outcome}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            )}
+                                                        </div>
                                                     </div>
 
                                                     <div className="form-group">

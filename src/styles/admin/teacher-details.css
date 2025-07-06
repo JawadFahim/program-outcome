@@ -249,26 +249,74 @@ body.admin-teacher-details {
 .modal-footer {
     display: flex;
     justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 2rem;
+    margin-top: 1.5rem;
     padding-top: 1rem;
     border-top: 1px solid var(--admin-border-color);
 }
-.btn-submit {
+.courses-section {
+    border: 1px solid var(--admin-border-color);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+}
+.courses-section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+.course-entry {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr auto;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+.remove-course-btn {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    line-height: 1; /* For better vertical alignment of X */
+}
+.add-course-btn {
+    background-color: transparent;
+    color: var(--admin-primary);
+    border: 1px solid var(--admin-primary);
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    margin-top: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.add-course-btn:hover {
+    background-color: var(--admin-primary);
+    color: white;
+}
+.submit-btn {
     background-color: var(--admin-primary);
     color: white;
     border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
+    transition: background-color 0.2s;
 }
-.btn-submit:disabled {
-    background-color: #a7f3d0;
+.submit-btn:disabled {
+    background-color: #6ee7b7;
     cursor: not-allowed;
 }
+.submit-btn:hover:not(:disabled) {
+    background-color: var(--admin-primary-hover);
+}
 .submit-error {
-    color: #b91c1c;
-    text-align: center;
+    color: var(--admin-error);
     margin-top: 1rem;
+    text-align: right;
 } 

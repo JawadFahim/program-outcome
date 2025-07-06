@@ -48,6 +48,7 @@ const ScoreSummaryPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingSessions, setIsLoadingSessions] = useState(false);
     const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
+    const [openSelects, setOpenSelects] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         if (!teacherId) {
@@ -69,10 +70,28 @@ const ScoreSummaryPage = () => {
         };
 
         fetchInitialData();
+
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            if (!target.closest('.custom-select')) {
+                setOpenSelects({});
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, [teacherId, router]);
 
-    const handleCourseChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const courseId = e.target.value;
+    const toggleSelect = (id: string) => {
+        setOpenSelects(prev => ({
+            ...Object.keys(prev).reduce((acc, key) => ({ ...acc, [key]: false }), {}),
+            [id]: !prev[id],
+        }));
+    };
+
+    const handleCourseChange = async (courseId: string) => {
         setSelectedCourse(courseId);
         // Reset everything downstream
         setSessions([]);
@@ -93,10 +112,10 @@ const ScoreSummaryPage = () => {
                 setIsLoadingSessions(false);
             }
         }
+        setOpenSelects({});
     };
     
-    const handleSessionChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const session = e.target.value;
+    const handleSessionChange = async (session: string) => {
         setSelectedSession(session);
         setSummaryData(null); // Clear previous summary
 
@@ -113,6 +132,7 @@ const ScoreSummaryPage = () => {
                 setIsLoading(false);
             }
         }
+        setOpenSelects({});
     };
 
     const handleLogout = () => {
@@ -199,35 +219,60 @@ const ScoreSummaryPage = () => {
             <main className="container mx-auto px-4 sm:px-6 md:px-8">
                 <div className="card">
                     <label htmlFor="courseSelector" className="block text-lg font-medium text-gray-700 mb-2">Select Course:</label>
-                    <select id="courseSelector" className="select-field text-base" value={selectedCourse} onChange={handleCourseChange} disabled={courses.length === 0}>
-                        <option value="">{courses.length > 0 ? "-- Please select a course --" : "No courses available"}</option>
-                        {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => (
-                             <option key={course.course_id} value={course.course_id}>
-                                {course.courseName} ({course.course_id})
-                             </option>
-                        ))}
-                    </select>
+                    <div className="custom-select">
+                        <button
+                            id="courseSelector"
+                            type="button"
+                            className={`custom-select-toggle text-base ${courses.length === 0 ? 'disabled' : ''}`}
+                            onClick={() => toggleSelect('course')}
+                            disabled={courses.length === 0}
+                        >
+                            <span className={!selectedCourse ? 'placeholder' : ''}>
+                                {selectedCourse
+                                    ? courses.find(c => c.course_id === selectedCourse)?.courseName + ` (${selectedCourse})`
+                                    : courses.length > 0 ? "-- Please select a course --" : "No courses available"
+                                }
+                            </span>
+                        </button>
+                        {openSelects['course'] && (
+                            <ul className="custom-select-options">
+                                {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => (
+                                     <li key={course.course_id} className={`custom-select-option ${selectedCourse === course.course_id ? 'selected' : ''}`} onClick={() => handleCourseChange(course.course_id)}>
+                                        {course.courseName} ({course.course_id})
+                                     </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
                 </div>
 
                 <div className="card">
                     <label htmlFor="sessionSelector" className="block text-lg font-medium text-gray-700 mb-2">Select Session:</label>
-                    <select 
-                        id="sessionSelector" 
-                        className="select-field text-base" 
-                        value={selectedSession} 
-                        onChange={handleSessionChange} 
-                        disabled={!selectedCourse || isLoadingSessions || sessions.length === 0}
-                    >
-                        <option value="">
-                            {isLoadingSessions ? "Loading sessions..." : 
-                            !selectedCourse ? "Select a course first" : 
-                            sessions.length > 0 ? "-- Please select a session --" : 
-                            "No sessions found"}
-                        </option>
-                        {sessions.map(session => (
-                            <option key={session} value={session}>{session}</option>
-                        ))}
-                    </select>
+                    <div className="custom-select">
+                        <button
+                            id="sessionSelector"
+                            type="button"
+                            className={`custom-select-toggle text-base ${!selectedCourse || isLoadingSessions || sessions.length === 0 ? 'disabled' : ''}`}
+                            onClick={() => toggleSelect('session')}
+                            disabled={!selectedCourse || isLoadingSessions || sessions.length === 0}
+                        >
+                            <span className={!selectedSession ? 'placeholder' : ''}>
+                                {selectedSession ? selectedSession :
+                                    isLoadingSessions ? "Loading sessions..." : 
+                                    !selectedCourse ? "Select a course first" : 
+                                    sessions.length > 0 ? "-- Please select a session --" : 
+                                    "No sessions found"
+                                }
+                            </span>
+                        </button>
+                        {openSelects['session'] && (
+                            <ul className="custom-select-options">
+                                {sessions.map(session => (
+                                    <li key={session} className={`custom-select-option ${selectedSession === session ? 'selected' : ''}`} onClick={() => handleSessionChange(session)}>{session}</li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
                 </div>
 
                 {isLoading && <div className="loading-spinner"></div>}

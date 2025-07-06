@@ -73,6 +73,7 @@ const AssessmentScorePage = () => {
     const [isToastVisible, setIsToastVisible] = useState<boolean>(false);
     const [toastMessage, setToastMessage] = useState<string>('');
     const [toastType, setToastType] = useState<'success' | 'error' | 'warning'>('success');
+    const [openSelects, setOpenSelects] = useState<Record<string, boolean>>({});
     
     // --- Data Fetching Effects ---
 
@@ -84,6 +85,19 @@ const AssessmentScorePage = () => {
         } else {
             router.replace('/login');
         }
+
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+             // Close all custom selects if clicked outside
+            if (!target.closest('.custom-select')) {
+                setOpenSelects({});
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, [router]);
 
     useEffect(() => {
@@ -238,8 +252,14 @@ const AssessmentScorePage = () => {
     // const closeModal = () => setIsModalOpen(false);
 
     // --- Event Handlers ---
-    const handleCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newCourseValue = e.target.value;
+    const toggleSelect = (id: string) => {
+        setOpenSelects(prev => ({
+            ...Object.keys(prev).reduce((acc, key) => ({ ...acc, [key]: false }), {}),
+            [id]: !prev[id],
+        }));
+    };
+
+    const handleCourseChange = (newCourseValue: string) => {
         setSelectedCourse(newCourseValue);
         // Reset downstream state
         setSelectedSession('');
@@ -255,14 +275,21 @@ const AssessmentScorePage = () => {
                 .filter((session, index, self) => self.indexOf(session) === index);
             setSessions(courseSessions);
         }
+        setOpenSelects({});
     };
     
-    const handleSessionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedSession(e.target.value);
+    const handleSessionChange = (newSession: string) => {
+        setSelectedSession(newSession);
         // Reset fields that depend on session
         setCourseObjectives([]);
         setSelectedObjective('');
         setAssessmentEntries([]);
+        setOpenSelects({});
+    };
+
+    const handleObjectiveChange = (newObjective: string) => {
+        setSelectedObjective(newObjective);
+        setOpenSelects({});
     };
     
     const handleScoreChange = (entryId: string, studentId: string, value: string) => {
@@ -286,6 +313,9 @@ const AssessmentScorePage = () => {
         setAssessmentEntries(prev => prev.map(entry => 
             entry.id === entryId ? { ...entry, [field]: value } : entry
         ));
+        if (field === 'assessmentType') {
+            setOpenSelects({});
+        }
     };
     
     const handleEditToggle = (entryId: string) => {
@@ -407,27 +437,56 @@ const AssessmentScorePage = () => {
                 <main>
                     <div className="card">
                         <label htmlFor="courseSelector" className="form-label">1. Select Course</label>
-                        <select id="courseSelector" className="select-field" value={selectedCourse} onChange={handleCourseChange} disabled={isLoadingCourses || courses.length === 0}>
-                            <option value="">{isLoadingCourses ? "Loading courses..." : "-- Please select a course --"}</option>
-                            {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => ( <option key={course.course_id} value={course.course_id}> {course.courseName} ({course.course_id}) </option> ))}
-                        </select>
+                        <div className="custom-select">
+                            <button
+                                id="courseSelector"
+                                type="button"
+                                className={`custom-select-toggle ${isLoadingCourses || courses.length === 0 ? 'disabled' : ''}`}
+                                onClick={() => toggleSelect('course')}
+                                disabled={isLoadingCourses || courses.length === 0}
+                            >
+                                <span className={!selectedCourse ? 'placeholder' : ''}>
+                                    {isLoadingCourses ? "Loading courses..." :
+                                     selectedCourse ? (courses.find(c => c.course_id === selectedCourse)?.courseName + ` (${selectedCourse})`)
+                                     : "-- Please select a course --"}
+                                </span>
+                            </button>
+                            {openSelects['course'] && (
+                                <ul className="custom-select-options">
+                                    {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => ( 
+                                        <li key={course.course_id} className={`custom-select-option ${selectedCourse === course.course_id ? 'selected' : ''}`} onClick={() => handleCourseChange(course.course_id)}> 
+                                            {course.courseName} ({course.course_id}) 
+                                        </li> 
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
                     </div>
 
                     {selectedCourse && (
                          <div className="card">
                             <label htmlFor="sessionSelector" className="form-label">2. Select Session</label>
-                            <select 
-                                id="sessionSelector" 
-                                className="select-field" 
-                                value={selectedSession} 
-                                onChange={handleSessionChange} 
-                                disabled={sessions.length === 0}
-                            >
-                                <option value="">-- Select a session --</option>
-                                {sessions.map(session => (
-                                    <option key={session} value={session}>{session}</option>
-                                ))}
-                            </select>
+                            <div className="custom-select">
+                                <button
+                                    id="sessionSelector"
+                                    type="button"
+                                    className={`custom-select-toggle ${sessions.length === 0 ? 'disabled' : ''}`}
+                                    onClick={() => toggleSelect('session')}
+                                    disabled={sessions.length === 0}
+                                >
+                                    <span className={!selectedSession ? 'placeholder' : ''}>
+                                        {selectedSession || '-- Select a session --'}
+                                    </span>
+                                </button>
+                                {openSelects['session'] && (
+                                    <ul className="custom-select-options">
+                                        <li className={`custom-select-option placeholder ${selectedSession === '' ? 'selected' : ''}`} onClick={() => handleSessionChange('')}>-- Select a session --</li>
+                                        {sessions.map(session => (
+                                            <li key={session} className={`custom-select-option ${selectedSession === session ? 'selected' : ''}`} onClick={() => handleSessionChange(session)}>{session}</li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
                         </div>
                     )}
 
@@ -435,11 +494,33 @@ const AssessmentScorePage = () => {
                         <div id="assessmentDetailsSection">
                             <div className="card">
                                 <label htmlFor="courseObjectiveSelector" className="form-label">3. Course Objective</label>
-                                        <select id="courseObjectiveSelector" className="select-field" value={selectedObjective} onChange={(e) => setSelectedObjective(e.target.value)} disabled={isLoadingObjectives || courseObjectives.length === 0}>
-                                            <option value="">{isLoadingObjectives ? "Loading..." : "-- Select an objective --"}</option>
-                                            {courseObjectives.map(obj => ( <option key={obj.co_no} value={obj.co_no}> {obj.co_no}: {obj.courseObjective} </option> ))}
-                                        </select>
-                                    </div>
+                                <div className="custom-select">
+                                    <button
+                                        id="courseObjectiveSelector"
+                                        type="button"
+                                        className={`custom-select-toggle ${isLoadingObjectives || courseObjectives.length === 0 ? 'disabled' : ''}`}
+                                        onClick={() => toggleSelect('objective')}
+                                        disabled={isLoadingObjectives || courseObjectives.length === 0}
+                                    >
+                                        <span className={!selectedObjective ? 'placeholder' : ''}>
+                                            {isLoadingObjectives ? "Loading..." :
+                                                selectedObjective ? courseObjectives.find(obj => obj.co_no === selectedObjective)?.courseObjective
+                                                : "-- Select an objective --"
+                                            }
+                                        </span>
+                                    </button>
+                                    {openSelects['objective'] && (
+                                        <ul className="custom-select-options">
+                                             <li className={`custom-select-option placeholder ${selectedObjective === '' ? 'selected' : ''}`} onClick={() => handleObjectiveChange('')}>-- Select an objective --</li>
+                                            {courseObjectives.map(obj => ( 
+                                                <li key={obj.co_no} className={`custom-select-option ${selectedObjective === obj.co_no ? 'selected' : ''}`} onClick={() => handleObjectiveChange(obj.co_no)}>
+                                                    {obj.co_no}: {obj.courseObjective}
+                                                </li> 
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            </div>
 
                             {isLoadingStudents ? (
                                 <div className="card text-center p-8">Loading assessment data...</div>
@@ -454,25 +535,35 @@ const AssessmentScorePage = () => {
 
                                     return (
                                         <div key={entry.id} className="card">
-                                            <div className="assessment-details-grid">
+                                <div className="assessment-details-grid">
                                     <div>
                                                     <label htmlFor={`assessmentTypeSelector-${entry.id}`} className="form-label">4. Assessment Type</label>
                                                     {entry.isSavedInDb ? (
                                                         <p className="font-bold text-lg pt-2">{entry.assessmentType.charAt(0).toUpperCase() + entry.assessmentType.slice(1)}</p>
                                                     ) : (
-                                                        <select 
-                                                            id={`assessmentTypeSelector-${entry.id}`} 
-                                                            className="select-field" 
-                                                            value={entry.assessmentType} 
-                                                            onChange={(e) => handleFieldChange(entry.id, 'assessmentType', e.target.value)} 
-                                                            disabled={isLocked}
-                                                        >
-                                            <option value="">-- Select type --</option>
-                                                            {/* For new entries, show only available types. For existing but being edited, show its own type. */}
-                                                            {availableAssessmentTypes.map(type => (
-                                                                <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
-                                                            ))}
-                                        </select>
+                                                        <div className="custom-select">
+                                                            <button
+                                                                id={`assessmentTypeSelector-${entry.id}`}
+                                                                type="button"
+                                                                className={`custom-select-toggle ${isLocked ? 'disabled' : ''}`}
+                                                                onClick={() => toggleSelect(`assessment-${entry.id}`)}
+                                                                disabled={isLocked}
+                                                            >
+                                                                <span className={!entry.assessmentType ? 'placeholder' : ''}>
+                                                                    {entry.assessmentType ? entry.assessmentType.charAt(0).toUpperCase() + entry.assessmentType.slice(1) : '-- Select type --'}
+                                                                </span>
+                                                            </button>
+                                                            {openSelects[`assessment-${entry.id}`] && (
+                                                                <ul className="custom-select-options">
+                                                                    <li className={`custom-select-option placeholder ${entry.assessmentType === '' ? 'selected' : ''}`} onClick={() => handleFieldChange(entry.id, 'assessmentType', '')}>-- Select type --</li>
+                                                                    {availableAssessmentTypes.map(type => (
+                                                                        <li key={type} className={`custom-select-option ${entry.assessmentType === type ? 'selected' : ''}`} onClick={() => handleFieldChange(entry.id, 'assessmentType', type)}>
+                                                                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            )}
+                                    </div>
                                                     )}
                                     </div>
                                     <div>
