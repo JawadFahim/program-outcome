@@ -741,19 +741,6 @@ const HomePage = () => {
                                     </svg>
                                     Add Objective
                                 </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div id="noCourseSelectedMessage" className="card no-course-message">
-                            {courses.length > 0 ?
-                            <p>Please select a course and session to begin defining objectives.</p> :
-                                <p>No courses are assigned to this teacher, or they are still loading.</p>
-                            }
-                        </div>
-                    )}
-
-                {selectedCourse && selectedSession && (
-                         <div id="overallActionButtons" className="action-buttons">
                     <button
                                 type="button" 
                                 className="btn btn-primary" 
@@ -777,6 +764,14 @@ const HomePage = () => {
                                     </>
                                 )}
                             </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div id="noCourseSelectedMessage" className="card no-course-message">
+                            {courses.length > 0 ?
+                            <p>Please select a course and session to begin defining objectives.</p> :
+                                <p>No courses are assigned to this teacher, or they are still loading.</p>
+                            }
                         </div>
                     )}
             </div>

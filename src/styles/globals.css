@@ -295,10 +295,18 @@ body {
     color: var(--text-secondary);
     font-weight: 500;
     transition: color 0.2s ease-in-out;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid transparent;
 }
 
 .navbar-link:hover {
     color: var(--primary-color);
+}
+
+.navbar-link.active {
+    color: var(--primary-color);
+    font-weight: 600;
+    border-bottom-color: var(--primary-color);
 }
 
 .input-field:disabled, .select-field:disabled {
@@ -468,6 +476,12 @@ input[type=number] {
 .stat-ratio {
     color: var(--text-secondary);
     margin: 0;
+}
+
+.chart-container {
+    height: 250px;
+    margin-top: 1rem;
+    position: relative;
 }
 
 .summary-header {

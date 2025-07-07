@@ -5,6 +5,7 @@ import { getTeacherIdFromAuth, removeAuthTokenCookie } from '../lib/jwt';
 import Layout from '../components/Layout';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import PieChart from '../components/PieChart';
 
 interface jsPDFWithAutoTable extends jsPDF {
     lastAutoTable?: {
@@ -307,7 +308,11 @@ const ScoreSummaryPage = () => {
                                             {summaryData.courseObjectives.map(co => (
                                                 <td key={co} className="text-center">
                                                     <span className={`score-badge ${student.finalCoStatus[co]?.toLowerCase()}`}>
-                                                        {student.scores[co] !== undefined ? student.scores[co] : 'N/A'}
+                                                        {student.finalCoStatus[co] === 'Absent'
+                                                            ? 'Absent'
+                                                            : student.scores[co] !== undefined
+                                                                ? student.scores[co]
+                                                                : 'N/A'}
                                                     </span>
                                                 </td>
                                             ))}
@@ -322,7 +327,14 @@ const ScoreSummaryPage = () => {
                             <div className="summary-stats-grid">
                                             {summaryData.courseObjectives.map(co => {
                                                 const stats = summaryData.summary[co];
-                                    if (!stats) return null;
+                                                if (!stats) return null;
+
+                                                const absentCount = summaryData.studentData.filter(
+                                                    student => student.finalCoStatus[co] === 'Absent'
+                                                ).length;
+
+                                                const failedCount = stats.total - stats.passed - absentCount;
+                                                
                                                 return (
                                         <div key={co} className="stat-card">
                                             <h4 className="stat-title">{co}</h4>
@@ -333,6 +345,7 @@ const ScoreSummaryPage = () => {
                                                 <br></br>
                                                 <span>Pass Mark: {stats.finalPassMark}</span>
                                             </div>
+                                            <PieChart passed={stats.passed} failed={failedCount} absent={absentCount} />
                                         </div>
                                     )
                                 })}
