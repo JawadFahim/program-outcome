@@ -12,6 +12,14 @@
     display: flex;
     align-items: center;
     gap: 1.5rem;
+    flex-grow: 1;
+}
+
+.nav-links-container {
+    display: flex;
+    justify-content: center;
+    flex-grow: 1;
+    gap: 1.5rem;
 }
 
 .header-title {
@@ -43,9 +51,10 @@
     background-color: #ef4444;
     color: white;
     border: none;
-    padding: 0.6rem 1.2rem;
+    padding: 0.75rem 1.5rem;
     border-radius: 0.5rem;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 1rem;
     cursor: pointer;
     transition: background-color 0.2s;
 }

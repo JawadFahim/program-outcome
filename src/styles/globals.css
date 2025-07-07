@@ -138,6 +138,16 @@ body {
 .btn-outline { background-color: transparent; color: var(--primary-color); border-color: var(--primary-color); }
 .btn-outline:hover { background-color: rgba(79, 70, 229, 0.05); }
 
+.btn-primary-outline {
+    background-color: transparent;
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+.btn-primary-outline:hover {
+    background-color: rgba(79, 70, 229, 0.1);
+    color: var(--primary-hover);
+}
+
 .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: translateY(0); box-shadow: none; }
 .btn .animate-spin { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -261,6 +271,19 @@ body {
     text-decoration: none;
 }
 
+.navbar-links-centered {
+    display: flex;
+    justify-content: center;
+    flex-grow: 1;
+    gap: 2rem;
+}
+
+.navbar-user-section {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
 .navbar-links {
     display: flex;
     align-items: center;
@@ -352,6 +375,11 @@ body {
     border-radius: 0.25rem;
     border: 1px solid var(--border-color);
     cursor: pointer;
+}
+.assessment-actions {
+    display: flex;
+    align-items: flex-end;
+    height: 100%;
 }
 .actions-footer {
     margin-top: 2rem;

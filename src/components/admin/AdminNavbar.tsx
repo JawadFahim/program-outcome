@@ -29,19 +29,19 @@ const AdminNavbar = ({ page }: AdminNavbarProps) => {
         <header className="admin-header">
             <div className="header-nav">
                 <h1 className="header-title">{getTitle()}</h1>
-                
-                <Link href="/admin/homepage" className={`nav-link ${page === 'dashboard' ? 'active' : ''}`}>
-                    Dashboard
-                </Link>
-                
-                <Link href="/admin/teacher-details" className={`nav-link ${page === 'teachers' ? 'active' : ''}`}>
-                    Teacher Management
-                </Link>
+                <nav className="nav-links-container">
+                    <Link href="/admin/homepage" className={`nav-link ${page === 'dashboard' ? 'active' : ''}`}>
+                        Dashboard
+                    </Link>
+                    
+                    <Link href="/admin/teacher-details" className={`nav-link ${page === 'teachers' ? 'active' : ''}`}>
+                        Teacher Management
+                    </Link>
 
-                <Link href="/admin/student" className={`nav-link ${page === 'student' ? 'active' : ''}`}>
-                    Student Info
-                </Link>
-                
+                    <Link href="/admin/student" className={`nav-link ${page === 'student' ? 'active' : ''}`}>
+                        Student Info
+                    </Link>
+                </nav>
             </div>
             <button onClick={handleLogout} className="logout-btn">Logout</button>
         </header>

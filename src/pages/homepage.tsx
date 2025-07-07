@@ -442,7 +442,7 @@ const HomePage = () => {
     };
 
     return (
-        <Layout teacherName={teacherName} onLogout={handleLogout} page="homepage" title="Course Outcome">
+        <Layout teacherName={teacherName} onLogout={handleLogout} page="homepage" title="Outcome Mapper">
             <Head>
                 <title>Course Objective Management</title>
             </Head>

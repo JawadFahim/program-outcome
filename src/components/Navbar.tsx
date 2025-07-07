@@ -11,20 +11,21 @@ const Navbar = ({ teacherName, onLogout, page, title }: NavbarProps) => {
     return (
         <nav className="navbar">
             <div className="navbar-container">
-                <Link href="/" legacyBehavior>
-                    <a className="navbar-brand">{title}</a>
-                </Link>
-                <div className="navbar-links">
-                    {page !== 'homepage' && (
-                        <Link href="/homepage" legacyBehavior><a className="navbar-link">Course Objective</a></Link>
-                    )}
-                    {page !== 'assessment' && (
-                        <Link href="/assessment_score" legacyBehavior><a className="navbar-link">Assessment Score</a></Link>
-                    )}
-                    {page !== 'summary' && (
-                        <Link href="/score_summary" legacyBehavior><a className="navbar-link">View Summaries</a></Link>
-                    )}
-
+                <div className="navbar-brand">
+                    {title}
+                </div>
+                <div className="navbar-links-centered">
+                    <Link href="/homepage" className={`navbar-link ${page === 'homepage' ? 'active' : ''}`}>
+                        Outcome Mapper
+                    </Link>
+                    <Link href="/assessment_score" className={`navbar-link ${page === 'assessment' ? 'active' : ''}`}>
+                        Assessment Score
+                    </Link>
+                    <Link href="/score_summary" className={`navbar-link ${page === 'summary' ? 'active' : ''}`}>
+                        View Summaries
+                    </Link>
+                </div>
+                <div className="navbar-user-section">
                     <div className="teacher-info">
                         Teacher: <span>{teacherName}</span>
                     </div>
