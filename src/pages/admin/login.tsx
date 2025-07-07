@@ -4,6 +4,8 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { setAdminAuthTokenCookie } from '../../lib/jwt';
 import '../../styles/admin/login.css';
+import bupImage from '../../assets/bup.jpg';
+import bupLogo from '../../assets/bup_logo.png';
 
 const AdminLoginPage = () => {
     const [username, setUsername] = useState('');
@@ -53,9 +55,10 @@ const AdminLoginPage = () => {
             <Head>
                 <title>BICE Course Outcome - Admin Login</title>
             </Head>
-            <div className="login-container">
+            <div className="login-container" style={{ backgroundImage: `url(${bupImage.src})` }}>
                 <div className="login-card">
                     <div>
+                        <img src={bupLogo.src} alt="BUP Logo" className="login-logo" />
                         <h1 className="login-title">BICE Course Outcome</h1>
                         <p className="login-subtitle">Admin Login</p>
                     </div>

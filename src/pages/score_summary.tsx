@@ -238,9 +238,9 @@ const ScoreSummaryPage = () => {
                             <ul className="custom-select-options">
                                 {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => (
                                      <li key={course.course_id} className={`custom-select-option ${selectedCourse === course.course_id ? 'selected' : ''}`} onClick={() => handleCourseChange(course.course_id)}>
-                                        {course.courseName} ({course.course_id})
+                                {course.courseName} ({course.course_id})
                                      </li>
-                                ))}
+                        ))}
                             </ul>
                         )}
                     </div>
@@ -250,26 +250,26 @@ const ScoreSummaryPage = () => {
                     <label htmlFor="sessionSelector" className="block text-lg font-medium text-gray-700 mb-2">Select Session:</label>
                     <div className="custom-select">
                         <button
-                            id="sessionSelector"
+                        id="sessionSelector" 
                             type="button"
                             className={`custom-select-toggle text-base ${!selectedCourse || isLoadingSessions || sessions.length === 0 ? 'disabled' : ''}`}
                             onClick={() => toggleSelect('session')}
-                            disabled={!selectedCourse || isLoadingSessions || sessions.length === 0}
-                        >
+                        disabled={!selectedCourse || isLoadingSessions || sessions.length === 0}
+                    >
                             <span className={!selectedSession ? 'placeholder' : ''}>
                                 {selectedSession ? selectedSession :
                                     isLoadingSessions ? "Loading sessions..." : 
-                                    !selectedCourse ? "Select a course first" : 
-                                    sessions.length > 0 ? "-- Please select a session --" : 
+                            !selectedCourse ? "Select a course first" : 
+                            sessions.length > 0 ? "-- Please select a session --" : 
                                     "No sessions found"
                                 }
                             </span>
                         </button>
                         {openSelects['session'] && (
                             <ul className="custom-select-options">
-                                {sessions.map(session => (
+                        {sessions.map(session => (
                                     <li key={session} className={`custom-select-option ${selectedSession === session ? 'selected' : ''}`} onClick={() => handleSessionChange(session)}>{session}</li>
-                                ))}
+                        ))}
                             </ul>
                         )}
                     </div>
@@ -279,7 +279,15 @@ const ScoreSummaryPage = () => {
 
                 {summaryData && !isLoading && (
                     <div id="scoresDisplaySection">
-                         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Scores for <span className="text-blue-600">{courseDisplayName}</span></h2>
+                         <div className="summary-header">
+                            <h2 className="summary-title">Scores for <span>{courseDisplayName}</span></h2>
+                            <button onClick={generatePdf} className="btn btn-primary" disabled={!summaryData || summaryData.studentData.length === 0}>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm6 10a.75.75 0 01-.75-.75V8.707l-1.72 1.72a.75.75 0 01-1.06-1.06l3-3a.75.75 0 011.06 0l3 3a.75.75 0 11-1.06 1.06l-1.72-1.72V11.25A.75.75 0 0110 12z" clipRule="evenodd" />
+                                </svg>
+                                Generate PDF
+                            </button>
+                        </div>
                         <div className="card table-container">
                              <table className="score-table">
                                 <thead>
@@ -312,10 +320,10 @@ const ScoreSummaryPage = () => {
                         <div className="card mt-6">
                             <h3 className="text-xl font-semibold text-gray-700 mb-3">Course Objective Pass Percentages</h3>
                             <div className="summary-stats-grid">
-                                {summaryData.courseObjectives.map(co => {
-                                    const stats = summaryData.summary[co];
+                                            {summaryData.courseObjectives.map(co => {
+                                                const stats = summaryData.summary[co];
                                     if (!stats) return null;
-                                    return (
+                                                return (
                                         <div key={co} className="stat-card">
                                             <h4 className="stat-title">{co}</h4>
                                             <p className="stat-percentage">{stats.percentage.toFixed(2)}%</p>
@@ -329,12 +337,6 @@ const ScoreSummaryPage = () => {
                                     )
                                 })}
                             </div>
-                        </div>
-
-                        <div className="text-center mt-8 mb-4">
-                            <button onClick={generatePdf} className="btn-primary" disabled={!summaryData || summaryData.studentData.length === 0}>
-                                Generate PDF
-                            </button>
                         </div>
                     </div>
                 )}

@@ -16,22 +16,48 @@ body.admin-login-page {
     margin: 0;
 }
 
+.admin-login-page {
+    --primary-color: #004d40; /* Dark Teal */
+    --primary-hover: #00382e;
+    --bg-main: #e0f2f1; /* Light Teal */
+}
+
 .login-container {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 1rem;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.login-container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(5px);
+    z-index: 1;
 }
 
 .login-card {
-    background-color: var(--bg-card);
+    background-color: white;
     padding: 2.5rem;
     border-radius: 1.5rem;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     width: 100%;
     max-width: 28rem;
     border: 1px solid #e5e7eb;
+    position: relative;
+    z-index: 2;
+}
+
+.login-logo {
+    display: block;
+    margin: 0 auto 1.5rem;
+    height: 100px;
 }
 
 .login-title {

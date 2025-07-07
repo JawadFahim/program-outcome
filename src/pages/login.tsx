@@ -3,6 +3,8 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/router';
 import { setAuthTokenCookie } from '../lib/jwt';
 import Link from 'next/link';
+import bupImage from '../assets/bup.jpg';
+import bupLogo from '../assets/bup_logo.png';
 
 const LoginPage = () => {
     const [teacherId, setTeacherId] = useState('');
@@ -75,6 +77,18 @@ const LoginPage = () => {
                     align-items: center;
                     justify-content: center;
                     padding: 1rem;
+                    background-size: cover;
+                    background-position: center;
+                    position: relative;
+                }
+
+                .login-container::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background-color: rgba(0, 0, 0, 0.3);
+                    backdrop-filter: blur(5px);
+                    z-index: 1;
                 }
 
                 .login-card {
@@ -85,8 +99,16 @@ const LoginPage = () => {
                     width: 100%;
                     max-width: 28rem;
                     border: 1px solid #e5e7eb;
+                    position: relative;
+                    z-index: 2;
                 }
                 
+                .login-logo {
+                    display: block;
+                    margin: 0 auto 1.5rem;
+                    height: 100px;
+                }
+
                 .login-title {
                     font-size: 2rem;
                     font-weight: 700;
@@ -231,10 +253,11 @@ const LoginPage = () => {
                     text-align: right;
                 }
             `}</style>
-            <div className="login-container">
+            <div className="login-container" style={{ backgroundImage: `url(${bupImage.src})` }}>
                 <div className="login-card">
                     <div>
-                        <h1 className="login-title">BICE Course Outcome</h1>
+                        <img src={bupLogo.src} alt="BUP Logo" className="login-logo" />
+                        <h1 className="login-title">Program Outcome Mapper</h1>
                         <p className="login-subtitle">Teacher Login</p>
                     </div>
 
