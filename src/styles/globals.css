@@ -33,6 +33,21 @@ body {
     box-sizing: border-box;
 }
 
+.selection-container {
+    margin-bottom: 2rem;
+}
+
+.selection-row {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.selection-row .card {
+    flex: 1;
+    min-width: 0;
+}
+
 .page-header {
     background-color: var(--bg-card);
     box-shadow: var(--shadow-lg);

@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import clientPromise from '../../lib/mongodb';
+import connectToDatabase from '../../lib/mongodb';
 import { Db } from 'mongodb';
 
 interface ScoreDoc {
@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-        const client = await clientPromise;
+        const client = await connectToDatabase();
         const db: Db = client.db("BICE_course_map");
 
         const scoreDocs = await db.collection<ScoreDoc>('scores').find({

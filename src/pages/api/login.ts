@@ -3,7 +3,7 @@
 // DO NOT USE THIS IN PRODUCTION OR WITH SENSITIVE DATA.
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import clientPromise from '../../lib/mongodb';
+import connectToDatabase from '../../lib/mongodb';
 import { SignJWT } from 'jose';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'a-secure-and-long-secret-key-for-testing');
@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({ message: 'Teacher ID and password are required.' });
         }
 
-        const client = await clientPromise;
+        const client = await connectToDatabase();
         const db = client.db("BICE_course_map");
         const teacher = await db.collection('teachers').findOne({ teacherId: teacherId });
         

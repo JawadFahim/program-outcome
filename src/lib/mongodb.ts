@@ -1,42 +1,39 @@
-import { MongoClient, ServerApiVersion } from 'mongodb';
+import { MongoClient } from 'mongodb';
 
 const MONGODB_URI = "mongodb+srv://root:root@bice.l5pnh7p.mongodb.net/?retryWrites=true&w=majority&appName=BICE";
-// const MONGODB_DB = process.env.MONGODB_DB; // Optional: if you want to specify the DB in the URI or here
 
 if (!MONGODB_URI) {
     throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
 }
 
-// Global is used here to maintain a cached connection across hot reloads
-// in development. This prevents connections from growing exponentially
-// during API Route usage.
+/**
+ * Global is used here to maintain a cached connection across hot reloads
+ * in development. This prevents connections from growing exponentially
+ * during API Route usage.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let cached: { client: MongoClient | null; promise: Promise<MongoClient> | null } = (global as any).mongo;
 
-let cachedClient: MongoClient | null = null;
-
-async function connectToDatabase() {
-    if (cachedClient) {
-        return cachedClient;
-    }
-
-    const client = new MongoClient(MONGODB_URI!, {
-        serverApi: {
-            version: ServerApiVersion.v1,
-            strict: true,
-            deprecationErrors: true,
-        }
-    });
-
-    try {
-        await client.connect();
-        console.log("Connected to MongoDB successfully with Server API options!");
-        cachedClient = client;
-        return client;
-    } catch (error) {
-        console.error("Failed to connect to MongoDB (with Server API options):", error);
-        throw error;
-    }
+if (!cached) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    cached = (global as any).mongo = { client: null, promise: null };
 }
 
-const clientPromise: Promise<MongoClient> = connectToDatabase();
+async function connectToDatabase() {
+    if (cached.client) {
+        return cached.client;
+    }
 
-export default clientPromise; 
+    if (!cached.promise) {
+        const opts = {
+            serverSelectionTimeoutMS: 5000,
+        };
+        cached.promise = MongoClient.connect(MONGODB_URI, opts).then((client) => {
+            return client;
+        });
+    }
+    cached.client = await cached.promise;
+    return cached.client;
+}
+
+export default connectToDatabase; 

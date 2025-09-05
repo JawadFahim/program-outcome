@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import clientPromise from '../../../lib/mongodb';
+import { connectToDatabase } from '../../../lib/mongodb';
 // import bcrypt from 'bcryptjs'; // Temporarily disabled for testing
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -8,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-        const client = await clientPromise;
+        const client = await connectToDatabase();
         const db = client.db("BICE_course_map");
         const { teacherId, email, name, password, courses } = req.body;
 

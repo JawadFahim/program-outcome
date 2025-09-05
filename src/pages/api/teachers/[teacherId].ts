@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import clientPromise from '../../../lib/mongodb';
+import connectToDatabase from '../../../lib/mongodb';
 
 interface CourseTaught {
     course_id: string;
@@ -27,7 +27,7 @@ export default async function handler(
     }
 
     try {
-        const client = await clientPromise;
+        const client = await connectToDatabase();
         const db = client.db("BICE_course_map"); // Ensure this is your correct database name
 
         console.log(`API /api/teachers: Attempting to find teacher with teacherId: "${teacherId}"`);

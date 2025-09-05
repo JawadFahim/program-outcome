@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import clientPromise from '../../lib/mongodb';
+import connectToDatabase from '../../lib/mongodb';
 import { otpStore } from '../../lib/otpStore';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-        const client = await clientPromise;
+        const client = await connectToDatabase();
         const db = client.db("BICE_course_map");
         const teachersCollection = db.collection('teachers');
 

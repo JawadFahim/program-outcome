@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import clientPromise from '../../lib/mongodb';
+import connectToDatabase from '../../lib/mongodb';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'POST') {
@@ -10,7 +10,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
                 return res.status(400).json({ message: 'Missing or invalid parameters' });
             }
 
-            const client = await clientPromise;
+            const client = await connectToDatabase();
             const db = client.db("BICE_course_map");
             const coursesCollection = db.collection('courses');
 

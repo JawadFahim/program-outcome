@@ -448,76 +448,80 @@ const HomePage = () => {
             </Head>
 
             <div className="container">
-                    <div className="card">
-                        <label htmlFor="courseSelector" className="form-label">Select Course:</label>
-                        <div className="custom-select" ref={courseSelectRef}>
-                            <button 
-                            id="courseSelector" 
-                                type="button"
-                                className={`custom-select-toggle ${courses.length === 0 ? 'disabled' : ''}`}
-                                onClick={() => toggleSelect('course')}
-                            disabled={courses.length === 0}
-                        >
-                                <span className={!selectedCourse ? 'placeholder' : ''}>
-                                    {selectedCourse 
-                                        ? courses.find(c => c.course_id === selectedCourse)?.courseName + ` (${selectedCourse})`
-                                        : '-- Please select a course --'
-                                    }
-                                </span>
-                            </button>
-                            {openSelects['course'] && (
-                                <ul className="custom-select-options">
-                                    {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => (
-                                        <li 
-                                            key={course.course_id} 
-                                            className={`custom-select-option ${selectedCourse === course.course_id ? 'selected' : ''}`}
-                                            onClick={() => handleCourseSelectionChange(course.course_id)}
-                                        >
-                                    {course.courseName} ({course.course_id})
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                </div>
+                    <div className="selection-container">
+                        <div className="selection-row">
+                            <div className="card">
+                                <label htmlFor="courseSelector" className="form-label">Select Course:</label>
+                                <div className="custom-select" ref={courseSelectRef}>
+                                    <button 
+                                    id="courseSelector" 
+                                        type="button"
+                                        className={`custom-select-toggle ${courses.length === 0 ? 'disabled' : ''}`}
+                                        onClick={() => toggleSelect('course')}
+                                    disabled={courses.length === 0}
+                                >
+                                        <span className={!selectedCourse ? 'placeholder' : ''}>
+                                            {selectedCourse 
+                                                ? courses.find(c => c.course_id === selectedCourse)?.courseName + ` (${selectedCourse})`
+                                                : '-- Please select a course --'
+                                            }
+                                        </span>
+                                    </button>
+                                    {openSelects['course'] && (
+                                        <ul className="custom-select-options">
+                                            {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => (
+                                                <li 
+                                                    key={course.course_id} 
+                                                    className={`custom-select-option ${selectedCourse === course.course_id ? 'selected' : ''}`}
+                                                    onClick={() => handleCourseSelectionChange(course.course_id)}
+                                                >
+                                            {course.courseName} ({course.course_id})
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            </div>
 
-                {selectedCourse && (
-                    <div className="card">
-                        <label htmlFor="sessionSelector" className="form-label">Select Session:</label>
-                        <div className="custom-select" ref={sessionSelectRef}>
-                            <button
-                                id="sessionSelector"
-                                type="button"
-                                className={`custom-select-toggle ${sessions.length === 0 ? 'disabled' : ''}`}
-                                onClick={() => toggleSelect('session')}
-                                disabled={sessions.length === 0}
-                            >
-                                <span className={!selectedSession ? 'placeholder' : ''}>
-                                    {selectedSession || '-- Please select a session --'}
-                                </span>
-                            </button>
-                            {openSelects['session'] && (
-                                <ul className="custom-select-options">
-                                     <li 
-                                        className={`custom-select-option placeholder ${selectedSession === '' ? 'selected' : ''}`}
-                                        onClick={() => handleSessionChange('')}
+                            <div className="card">
+                                <label htmlFor="sessionSelector" className="form-label">Select Session:</label>
+                                <div className="custom-select" ref={sessionSelectRef}>
+                                    <button
+                                        id="sessionSelector"
+                                        type="button"
+                                        className={`custom-select-toggle ${!selectedCourse || sessions.length === 0 ? 'disabled' : ''}`}
+                                        onClick={() => toggleSelect('session')}
+                                        disabled={!selectedCourse || sessions.length === 0}
                                     >
-                                        -- Please select a session --
-                                    </li>
-                                    {sessions.map(session => (
-                                        <li 
-                                            key={session} 
-                                            className={`custom-select-option ${selectedSession === session ? 'selected' : ''}`}
-                                            onClick={() => handleSessionChange(session)}
-                                        >
-                                            {session}
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
+                                        <span className={!selectedSession ? 'placeholder' : ''}>
+                                            {selectedCourse ? 
+                                                (selectedSession || '-- Please select a session --') : 
+                                                '-- Select a course first --'}
+                                        </span>
+                                    </button>
+                                    {openSelects['session'] && selectedCourse && (
+                                        <ul className="custom-select-options">
+                                            <li 
+                                                className={`custom-select-option placeholder ${selectedSession === '' ? 'selected' : ''}`}
+                                                onClick={() => handleSessionChange('')}
+                                            >
+                                                -- Please select a session --
+                                            </li>
+                                            {sessions.map(session => (
+                                                <li 
+                                                    key={session} 
+                                                    className={`custom-select-option ${selectedSession === session ? 'selected' : ''}`}
+                                                    onClick={() => handleSessionChange(session)}
+                                                >
+                                                    {session}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                )}
 
                 {selectedCourse && selectedSession ? (
                         <div id="courseObjectivesSection">
