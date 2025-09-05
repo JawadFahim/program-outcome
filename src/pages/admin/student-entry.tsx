@@ -137,7 +137,7 @@ const StudentEntryPage = () => {
             const workbook = XLSX.read(data, { type: 'array' });
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
-            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as unknown[][];
 
             // Heuristic to find header row and student data
             let studentIdCol = -1;
@@ -265,7 +265,7 @@ const StudentEntryPage = () => {
 
                     <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''} ${(!session || !program) ? 'disabled' : ''}`}>
                         <input {...getInputProps()} />
-                        {isDragActive ? <p>Drop the files here ...</p> : <p>Drag 'n' drop an Excel file here, or click to select files</p>}
+                        {isDragActive ? <p>Drop the files here ...</p> : <p>Drag &apos;n&apos; drop an Excel file here, or click to select files</p>}
                     </div>
                 </div>
             </main>
