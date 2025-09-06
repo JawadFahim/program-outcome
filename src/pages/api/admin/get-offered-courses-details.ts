@@ -2,6 +2,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../../lib/mongodb';
 
+interface CourseInfo {
+    courseCode: string;
+    versionCode: string;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'GET') {
         return res.status(405).json({ message: 'Method Not Allowed' });
@@ -36,8 +41,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // 3. Filter the course tree to get details of only the offered courses
-        const offeredCoursesDetails = courseTreeDoc.courses.filter((course: any) => {
-            return offeredCourseObjects.some((offered: any) => 
+        const offeredCoursesDetails = courseTreeDoc.courses.filter((course: CourseInfo) => {
+            return offeredCourseObjects.some((offered: CourseInfo) =>
                 offered.courseCode === course.courseCode && offered.versionCode === course.versionCode
             );
         });

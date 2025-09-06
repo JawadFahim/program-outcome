@@ -182,7 +182,6 @@ const TeacherDetailsPage = () => {
         }
     };
 
-    const sessionOptions = Array.from({ length: 10 }, (_, i) => `${2021 + i}-${(2022 + i).toString().slice(2)}`);
 
     return (
         <>
