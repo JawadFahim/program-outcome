@@ -4,7 +4,7 @@ import { removeAdminAuthTokenCookie } from '../../lib/jwt';
 import '../../styles/admin/AdminNavbar.css';
 
 interface AdminNavbarProps {
-    page: 'dashboard' | 'teachers' | 'student' | 'student-entry';
+    page: 'dashboard' | 'teachers' | 'student' | 'student-entry' | 'course-offer';
 }
 
 const AdminNavbar = ({ page }: AdminNavbarProps) => {
@@ -24,6 +24,9 @@ const AdminNavbar = ({ page }: AdminNavbarProps) => {
         }
         if (page === 'student-entry') {
             return 'Student Entry';
+        }
+        if (page === 'course-offer') {
+            return 'Course Offer';
         }
         return 'Admin Dashboard';
     };
@@ -47,6 +50,10 @@ const AdminNavbar = ({ page }: AdminNavbarProps) => {
 
                     <Link href="/admin/student-entry" className={`nav-link ${page === 'student-entry' ? 'active' : ''}`}>
                         Student Entry
+                    </Link>
+
+                    <Link href="/admin/course-offer" className={`nav-link ${page === 'course-offer' ? 'active' : ''}`}>
+                        Course Offer
                     </Link>
                 </nav>
             </div>

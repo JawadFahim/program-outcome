@@ -17,6 +17,13 @@ interface Course {
     courseObjectives: CourseObjective[];
 }
 
+interface OfferedCourse {
+    courseCode: string;
+    courseTitle: string;
+    credit: number;
+    versionCode: string;
+}
+
 interface Teacher {
     _id: string;
     teacherId: string;
@@ -34,10 +41,19 @@ const TeacherDetailsPage = () => {
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
 
+    // Form state
     const [teacherId, setTeacherIdState] = useState('');
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
-    const [courses, setCourses] = useState([{ courseId: '', courseName: '', session: '2021-22' }]);
+    
+    // New state for dynamic course selection
+    const [sessions, setSessions] = useState<string[]>([]);
+    const [programs, setPrograms] = useState<string[]>([]);
+    const [selectedSession, setSelectedSession] = useState('');
+    const [selectedProgram, setSelectedProgram] = useState('');
+    const [offeredCourses, setOfferedCourses] = useState<OfferedCourse[]>([]);
+    const [selectedCourses, setSelectedCourses] = useState<OfferedCourse[]>([]);
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
     useEffect(() => {
         document.body.classList.add('admin-teacher-details');
@@ -64,30 +80,65 @@ const TeacherDetailsPage = () => {
         fetchTeachers();
     }, []);
 
+    useEffect(() => {
+        const fetchProgramInfo = async () => {
+            try {
+                const res = await fetch('/api/admin/get-program-info');
+                const data = await res.json();
+                setSessions(data.sessions || []);
+                setPrograms(data.programs || []);
+            } catch (err) {
+                console.error("Failed to fetch program info", err);
+            }
+        };
+
+        if (isModalOpen) {
+            fetchProgramInfo();
+        }
+    }, [isModalOpen]);
+
+    useEffect(() => {
+        const fetchOfferedCourses = async () => {
+            if (selectedSession && selectedProgram) {
+                try {
+                    const res = await fetch(`/api/admin/get-offered-courses-details?session=${selectedSession}&program=${selectedProgram}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        setOfferedCourses(data.courses || []);
+                    } else {
+                        setOfferedCourses([]);
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch offered courses", err);
+                    setOfferedCourses([]);
+                }
+            } else {
+                setOfferedCourses([]);
+            }
+        };
+        fetchOfferedCourses();
+    }, [selectedSession, selectedProgram]);
+
     const toggleCourse = (courseId: string) => {
         setOpenCourseId(openCourseId === courseId ? null : courseId);
     };
 
-    const handleAddCourse = () => {
-        setCourses([...courses, { courseId: '', courseName: '', session: '2021-22' }]);
-    };
-
-    const handleCourseChange = (index: number, field: string, value: string) => {
-        const newCourses = [...courses];
-        newCourses[index] = { ...newCourses[index], [field]: value };
-        setCourses(newCourses);
-    };
-
-    const handleRemoveCourse = (index: number) => {
-        const newCourses = courses.filter((_, i) => i !== index);
-        setCourses(newCourses);
+    const handleCourseSelection = (course: OfferedCourse, isSelected: boolean) => {
+        if (isSelected) {
+            setSelectedCourses(prev => [...prev, course]);
+        } else {
+            setSelectedCourses(prev => prev.filter(c => !(c.courseCode === course.courseCode && c.versionCode === course.versionCode)));
+        }
     };
 
     const resetForm = () => {
         setTeacherIdState('');
         setName('');
         setEmail('');
-        setCourses([{ courseId: '', courseName: '', session: '2021-22' }]);
+        setSelectedSession('');
+        setSelectedProgram('');
+        setOfferedCourses([]);
+        setSelectedCourses([]);
         setSubmitError('');
     };
 
@@ -100,8 +151,12 @@ const TeacherDetailsPage = () => {
             teacherId,
             email,
             name,
-            password: 'test',
-            courses,
+            password: 'test', // Default password
+            courses: selectedCourses.map(c => ({
+                courseId: c.courseCode,
+                courseName: c.courseTitle,
+                session: selectedSession,
+            })),
         };
 
         try {
@@ -117,6 +172,7 @@ const TeacherDetailsPage = () => {
             }
 
             setIsModalOpen(false);
+            setIsPreviewModalOpen(false);
             resetForm();
             await fetchTeachers(); // Refresh teacher list
         } catch (err) {
@@ -236,44 +292,88 @@ const TeacherDetailsPage = () => {
 
                             <div className="courses-section">
                                 <h3 className="courses-section-title">Courses Taught</h3>
-                                {courses.map((course, index) => (
-                                    <div key={index} className="course-entry">
-                                        <div>
-                                            <label className="form-label" style={{fontSize: '0.875rem'}}>Course ID</label>
-                                            <input type="text" value={course.courseId} onChange={(e) => handleCourseChange(index, 'courseId', e.target.value)} required className="form-input" placeholder="e.g. CS101" />
-                                        </div>
-                                        <div>
-                                            <label className="form-label" style={{fontSize: '0.875rem'}}>Course Name</label>
-                                            <input type="text" value={course.courseName} onChange={(e) => handleCourseChange(index, 'courseName', e.target.value)} required className="form-input" placeholder="e.g. Intro to Programming" />
-                                        </div>
-                                        <div>
-                                            <label className="form-label" style={{fontSize: '0.875rem'}}>Session</label>
-                                            <select value={course.session} onChange={(e) => handleCourseChange(index, 'session', e.target.value)} required className="form-input">
-                                                {sessionOptions.map(s => <option key={s} value={s}>{s}</option>)}
-                                            </select>
-                                        </div>
-                                        <div style={{ alignSelf: 'flex-end' }}>
-                                            {courses.length > 1 && (
-                                                <button type="button" onClick={() => handleRemoveCourse(index)} className="remove-course-btn">
-                                                    &times;
-                                                </button>
-                                            )}
-                                        </div>
+                                <div className="session-program-selection">
+                                    <div className="form-group">
+                                        <label className="form-label">Session</label>
+                                        <select value={selectedSession} onChange={e => setSelectedSession(e.target.value)} required className="form-input">
+                                            <option value="">Select Session</option>
+                                            {sessions.map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
                                     </div>
-                                ))}
-                                <button type="button" onClick={handleAddCourse} className="add-course-btn">
-                                    + Add Another Course
-                                </button>
+                                    <div className="form-group">
+                                        <label className="form-label">Program</label>
+                                        <select value={selectedProgram} onChange={e => setSelectedProgram(e.target.value)} required className="form-input">
+                                            <option value="">Select Program</option>
+                                            {programs.map(p => <option key={p} value={p}>{p}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                {offeredCourses.length > 0 && (
+                                    <div className="offered-courses-list">
+                                        <h4>Select Offered Courses</h4>
+                                        <table className="score-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Course Code</th>
+                                                    <th>Course Title</th>
+                                                    <th>Select</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {offeredCourses.map((course, index) => (
+                                                    <tr key={`${course.courseCode}-${course.versionCode}-${index}`}>
+                                                        <td>{course.courseCode}</td>
+                                                        <td>{course.courseTitle}</td>
+                                                        <td>
+                                                            <input
+                                                                type="checkbox"
+                                                                id={`course-${course.courseCode}-${index}`}
+                                                                checked={selectedCourses.some(c => c.courseCode === course.courseCode && c.versionCode === course.versionCode)}
+                                                                onChange={(e) => handleCourseSelection(course, e.target.checked)}
+                                                            />
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
                             
                             {submitError && <p className="submit-error">{submitError}</p>}
 
                             <div className="modal-footer">
-                                <button type="submit" className="submit-btn" disabled={submitting}>
-                                    {submitting ? 'Submitting...' : 'Save Teacher'}
+                                <button type="button" onClick={() => setIsPreviewModalOpen(true)} className="submit-btn" disabled={selectedCourses.length === 0}>
+                                    Preview
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {isPreviewModalOpen && (
+                <div className="modal-backdrop" onClick={() => setIsPreviewModalOpen(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">Preview Teacher Details</h2>
+                            <button onClick={() => setIsPreviewModalOpen(false)} className="close-btn">&times;</button>
+                        </div>
+                        <div className="preview-details">
+                            <p><strong>Name:</strong> {name}</p>
+                            <p><strong>Teacher ID:</strong> {teacherId}</p>
+                            <p><strong>Email:</strong> {email}</p>
+                            <p><strong>Session:</strong> {selectedSession}</p>
+                            <h4>Selected Courses:</h4>
+                            <ul>
+                                {selectedCourses.map((c, index) => <li key={`${c.courseCode}-${c.versionCode}-${index}`}>{c.courseTitle} ({c.courseCode})</li>)}
+                            </ul>
+                        </div>
+                        <div className="modal-footer">
+                            <button onClick={handleSubmit} className="submit-btn" disabled={submitting}>
+                                {submitting ? 'Submitting...' : 'Apply'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
