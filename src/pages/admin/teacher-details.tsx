@@ -285,7 +285,7 @@ const TeacherDetailsPage = () => {
                                 </div>
                             ) : (
                                 <div className="no-results-message">
-                                    <p>No teachers found matching "{searchQuery}"</p>
+                                    <p>No teachers found matching &quot;{searchQuery}&quot;</p>
                                 </div>
                             )}
                         </>

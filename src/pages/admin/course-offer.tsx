@@ -198,7 +198,7 @@ const CourseOfferPage = () => {
                     </div>
                 ) : courses.length > 0 && searchQuery ? (
                     <div className="no-results">
-                        <p>No courses found matching "{searchQuery}"</p>
+                        <p>No courses found matching &quot;{searchQuery}&quot;</p>
                     </div>
                 ) : courses.length === 0 && selectedProgram ? (
                     <div className="no-results">
