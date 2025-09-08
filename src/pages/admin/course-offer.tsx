@@ -18,6 +18,7 @@ const CourseOfferPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [sessions, setSessions] = useState<string[]>([]);
     const [selectedSession, setSelectedSession] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         const fetchPrograms = async () => {
@@ -81,6 +82,16 @@ const CourseOfferPage = () => {
         }
     };
 
+    const filteredCourses = courses.filter(course => {
+        const query = searchQuery.toLowerCase().trim();
+        if (!query) return true;
+        
+        const codeMatch = course.courseCode.toLowerCase().includes(query);
+        const titleMatch = course.courseTitle.toLowerCase().includes(query);
+        
+        return codeMatch || titleMatch;
+    });
+
     const handleOfferCourses = async () => {
         try {
             const response = await fetch('/api/admin/offer-courses', {
@@ -113,61 +124,87 @@ const CourseOfferPage = () => {
         <div className="admin-container">
             <AdminNavbar page="course-offer" />
             <main>
-                <div className="results-header">
-                    <h1 className="po-title">Offer Courses</h1>
-                </div>
-
-                <div className="card">
-                    <div className="filters">
-                        <div className="select-group">
-                            <label className="select-label">Program</label>
-                            <select value={selectedProgram} onChange={(e) => setSelectedProgram(e.target.value)} className="select-dropdown">
-                                <option value="">Select Program</option>
-                                {programs.map(p => <option key={p} value={p}>{p}</option>)}
-                            </select>
-                        </div>
+                <div className="course-offer-controls">
+                    <div className="control-group">
+                        <label className="control-label">Program:</label>
+                        <select value={selectedProgram} onChange={(e) => setSelectedProgram(e.target.value)} className="control-select">
+                            <option value="">Select Program</option>
+                            {programs.map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
                     </div>
-
+                    
                     {courses.length > 0 && (
-                        <div className="table-container" style={{ marginTop: '2rem' }}>
-                            <table className="score-table">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Select</th>
-                                        <th>Course Code</th>
-                                        <th>Version Code</th>
-                                        <th>Course Title</th>
-                                        <th>Credit</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {courses.map((course, index) => (
-                                        <tr key={`${course.courseCode}-${index}`}>
-                                            <td>{index + 1}</td>
-                                            <td>
-                                                <input
-                                                    type="checkbox"
-                                                    onChange={(e) => handleCourseSelection(course, e.target.checked)}
-                                                />
-                                            </td>
-                                            <td>{course.courseCode}</td>
-                                            <td>{course.versionCode}</td>
-                                            <td>{course.courseTitle}</td>
-                                            <td>{course.credit}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <p style={{ color: '#6b7280', fontSize: '0.9rem', margin: 0 }}>Total Courses: {courses.length}</p>
-                                <button onClick={() => setIsModalOpen(true)} className="btn-fetch" disabled={selectedCourses.length === 0}>
-                                    Preview
-                                </button>
+                        <>
+                            <div className="control-group">
+                                <input
+                                    type="text"
+                                    placeholder="Search by course code or title..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="control-search"
+                                />
                             </div>
-                        </div>
+                            
+                            <button 
+                                onClick={() => setIsModalOpen(true)} 
+                                className="btn-preview" 
+                                disabled={selectedCourses.length === 0}
+                            >
+                                Preview ({selectedCourses.length})
+                            </button>
+                        </>
                     )}
                 </div>
+
+                {filteredCourses.length > 0 ? (
+                    <div className="courses-table-wrapper">
+                        <table className="courses-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Select</th>
+                                    <th>Course Code</th>
+                                    <th>Version Code</th>
+                                    <th>Course Title</th>
+                                    <th>Credit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredCourses.map((course, index) => (
+                                    <tr key={`${course.courseCode}-${index}`}>
+                                        <td>{index + 1}</td>
+                                        <td>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedCourses.some(c => c.courseCode === course.courseCode)}
+                                                onChange={(e) => handleCourseSelection(course, e.target.checked)}
+                                            />
+                                        </td>
+                                        <td>{course.courseCode}</td>
+                                        <td>{course.versionCode}</td>
+                                        <td>{course.courseTitle}</td>
+                                        <td>{course.credit}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        
+                        <div className="table-footer">
+                            <p className="course-count">
+                                Showing {filteredCourses.length} of {courses.length} courses
+                                {selectedCourses.length > 0 && ` • ${selectedCourses.length} selected`}
+                            </p>
+                        </div>
+                    </div>
+                ) : courses.length > 0 && searchQuery ? (
+                    <div className="no-results">
+                        <p>No courses found matching "{searchQuery}"</p>
+                    </div>
+                ) : courses.length === 0 && selectedProgram ? (
+                    <div className="no-results">
+                        <p>No courses available for the selected program.</p>
+                    </div>
+                ) : null}
             </main>
 
             {isModalOpen && (

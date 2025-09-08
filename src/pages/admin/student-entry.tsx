@@ -205,11 +205,7 @@ const StudentEntryPage = () => {
         <div className="admin-container">
             <AdminNavbar page="student-entry" />
             <main>
-                <div className="results-header">
-                    <h1 className="po-title">Manage Student Lists</h1>
-                </div>
-
-                <div className="card">
+                <div className="student-entry-card">
                     <h2>Load Existing Student List</h2>
                     <div className="filters">
                         <div className="select-group">
@@ -252,8 +248,8 @@ const StudentEntryPage = () => {
                     )}
                 </div>
 
-                <div className="card">
-                    <h2 style={{ marginTop: 0 }}>Upload New Student List</h2>
+                <div className="student-entry-card">
+                    <h2>Upload New Student List</h2>
                     <div className="form-group">
                         <label>Session</label>
                         <input type="text" value={session} onChange={(e) => setSession(e.target.value)} placeholder="e.g., 2021-2022" />

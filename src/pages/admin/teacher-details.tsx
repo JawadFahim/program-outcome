@@ -40,6 +40,10 @@ const TeacherDetailsPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
+    const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+    const [isTeacherDetailModalOpen, setIsTeacherDetailModalOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isAddCoursesModalOpen, setIsAddCoursesModalOpen] = useState(false);
 
     // Form state
     const [teacherId, setTeacherIdState] = useState('');
@@ -92,10 +96,10 @@ const TeacherDetailsPage = () => {
             }
         };
 
-        if (isModalOpen) {
+        if (isModalOpen || isAddCoursesModalOpen) {
             fetchProgramInfo();
         }
-    }, [isModalOpen]);
+    }, [isModalOpen, isAddCoursesModalOpen]);
 
     useEffect(() => {
         const fetchOfferedCourses = async () => {
@@ -122,6 +126,22 @@ const TeacherDetailsPage = () => {
     const toggleCourse = (courseId: string) => {
         setOpenCourseId(openCourseId === courseId ? null : courseId);
     };
+
+    const handleTeacherCardClick = (teacher: Teacher) => {
+        setSelectedTeacher(teacher);
+        setIsTeacherDetailModalOpen(true);
+        setOpenCourseId(null); // Reset course accordion state
+    };
+
+    const filteredTeachers = teachers.filter(teacher => {
+        const query = searchQuery.toLowerCase().trim();
+        if (!query) return true;
+        
+        const nameMatch = teacher.name.toLowerCase().includes(query);
+        const idMatch = teacher.teacherId.toLowerCase().includes(query);
+        
+        return nameMatch || idMatch;
+    });
 
     const handleCourseSelection = (course: OfferedCourse, isSelected: boolean) => {
         if (isSelected) {
@@ -182,6 +202,33 @@ const TeacherDetailsPage = () => {
         }
     };
 
+    const handleUpdateTeacher = async () => {
+        if (!selectedTeacher) return;
+        setSubmitting(true);
+        try {
+            const res = await fetch('/api/admin/add-courses-to-teacher', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    teacherId: selectedTeacher._id,
+                    newCourses: selectedCourses.map(c => ({
+                        courseId: c.courseCode,
+                        courseName: c.courseTitle,
+                        session: selectedSession,
+                    })),
+                }),
+            });
+            if (!res.ok) throw new Error('Failed to add courses');
+            setIsAddCoursesModalOpen(false);
+            setIsPreviewModalOpen(false);
+            await fetchTeachers();
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
 
     return (
         <>
@@ -192,79 +239,56 @@ const TeacherDetailsPage = () => {
             <div className="container">
                 <div className="page-header">
                     <h1 className="page-title">Teacher Management</h1>
-                    <button onClick={() => { setIsModalOpen(true); resetForm(); }} className="btn-add-teacher">
-                                + Add Teacher
-                            </button>
+                    <div className="header-actions">
+                        <div className="search-container">
+                            <input
+                                type="text"
+                                placeholder="Search by name or teacher ID..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="search-input"
+                            />
+                        </div>
+                        <button onClick={() => { setIsModalOpen(true); resetForm(); }} className="btn-add-teacher">
+                            + Add Teacher
+                        </button>
                     </div>
+                </div>
                 <main>
                     {loading && <p className="message">Loading teacher data...</p>}
                     {error && <p className="message" style={{color: '#ef4444'}}>{error}</p>}
                     {!loading && !error && (
-                        <div className="teacher-list">
-                            {teachers.map(teacher => (
-                                <div key={teacher._id} className="teacher-card">
-                                    <div className="card-header">
-                                        <span className="teacher-id-badge">{teacher.teacherId}</span>
-                                        <div>
-                                            <h2 className="teacher-name">{teacher.name}</h2>
-                                            <p className="teacher-email">{teacher.email}</p>
-                                        </div>
-                                    </div>
-                                    <div className="card-body">
-                                        <h3 className="section-title">Courses & Objectives</h3>
-                                        {teacher.courses.length > 0 ? (
-                                            teacher.courses.map(course => (
-                                                <div key={course._id} className="course-accordion">
-                                                    <div className="course-header" onClick={() => toggleCourse(course._id)}>
-                                                        <div>
-                                                            <span className="course-title">
-                                                                <strong>{course.courseName}</strong> ({course.courseId})
+                        <>
+                            {filteredTeachers.length > 0 ? (
+                                <div className="teacher-cards-grid">
+                                    {filteredTeachers.map(teacher => (
+                                        <div key={teacher._id} className="teacher-card-compact" onClick={() => handleTeacherCardClick(teacher)}>
+                                            <div className="card-header-compact">
+                                                <span className="teacher-id-badge-compact">{teacher.teacherId}</span>
+                                                <h3 className="teacher-name-compact">{teacher.name}</h3>
+                                            </div>
+                                            <div className="card-body-compact">
+                                                <div className="course-codes">
+                                                    {teacher.courses.length > 0 ? (
+                                                        teacher.courses.map(course => (
+                                                            <span key={course._id} className="course-code-chip">
+                                                                {course.courseId}
                                                             </span>
-                                                        </div>
-                                                        <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-                                                            <span className="course-session">{course.session}</span>
-                                                            <span className={`arrow-icon ${openCourseId === course._id ? 'open' : ''}`}>&#9656;</span>
-                                                        </div>
-                                                    </div>
-                                                    {openCourseId === course._id && (
-                                                        <div className="objectives-container">
-                                                            <table className="objectives-table">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th>CO No.</th>
-                                                                        <th>Description</th>
-                                                                        <th>Mapped PO</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {course.courseObjectives && course.courseObjectives.length > 0 ? (
-                                                                        course.courseObjectives.map(obj => (
-                                                                            <tr key={obj.co_no}>
-                                                                                <td>{obj.co_no}</td>
-                                                                                <td>{obj.courseObjective}</td>
-                                                                                <td>{obj.mappedProgramOutcome}</td>
-                                                                            </tr>
-                                                                        ))
-                                                                    ) : (
-                                                                        <tr>
-                                                                            <td colSpan={3} style={{ textAlign: 'center', color: '#6b7280', padding: '1rem' }}>
-                                                                                No objectives have been defined for this course.
-                                                                            </td>
-                                                                        </tr>
-                                                                    )}
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
+                                                        ))
+                                                    ) : (
+                                                        <span className="no-courses-text">No courses</span>
                                                     )}
                                                 </div>
-                                            ))
-                                        ) : (
-                                            <p>No courses found for this teacher.</p>
-                                        )}
-                                    </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
+                            ) : (
+                                <div className="no-results-message">
+                                    <p>No teachers found matching "{searchQuery}"</p>
+                                </div>
+                            )}
+                        </>
                     )}
                 </main>
             </div>
@@ -278,15 +302,15 @@ const TeacherDetailsPage = () => {
                         <form onSubmit={handleSubmit}>
                             <div className="form-group">
                                 <label className="form-label" htmlFor="teacherName">Full Name</label>
-                                <input id="teacherName" type="text" value={name} onChange={e => setName(e.target.value)} required className="form-input" placeholder="e.g. John Doe" />
+                                <input id="teacherName" type="text" value={name} onChange={e => setName(e.target.value)} required className="form-input" placeholder="e.g. Sazzadul Islam Prottasha" />
                             </div>
                             <div className="form-group">
                                 <label className="form-label" htmlFor="teacherId">Teacher ID</label>
-                                <input id="teacherId" type="text" value={teacherId} onChange={e => setTeacherIdState(e.target.value)} required className="form-input" placeholder="e.g. T-123" />
+                                <input id="teacherId" type="text" value={teacherId} onChange={e => setTeacherIdState(e.target.value)} required className="form-input" placeholder="e.g. SIP" />
                             </div>
                             <div className="form-group">
                                 <label className="form-label" htmlFor="email">Email Address</label>
-                                <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required className="form-input" placeholder="e.g. john.doe@example.com" />
+                                <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required className="form-input" placeholder="e.g. sazzadul@bup.com" />
                             </div>
 
                             <div className="courses-section">
@@ -369,8 +393,146 @@ const TeacherDetailsPage = () => {
                             </ul>
                         </div>
                         <div className="modal-footer">
-                            <button onClick={handleSubmit} className="submit-btn" disabled={submitting}>
+                            <button onClick={handleUpdateTeacher} className="submit-btn" disabled={submitting}>
                                 {submitting ? 'Submitting...' : 'Apply'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isTeacherDetailModalOpen && selectedTeacher && (
+                <div className="modal-backdrop" onClick={() => setIsTeacherDetailModalOpen(false)}>
+                    <div className="modal-content modal-content-large" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">Teacher Details</h2>
+                            <button onClick={() => setIsTeacherDetailModalOpen(false)} className="close-btn">&times;</button>
+                        </div>
+                        <div className="teacher-detail-content">
+                            <div className="teacher-info-header">
+                                <span className="teacher-id-badge">{selectedTeacher.teacherId}</span>
+                                <div>
+                                    <h3 className="teacher-name">{selectedTeacher.name}</h3>
+                                    <p className="teacher-email">{selectedTeacher.email}</p>
+                                </div>
+                                <button onClick={() => setIsAddCoursesModalOpen(true)} className="btn-edit-teacher">Edit</button>
+                            </div>
+                            
+                            <div className="courses-detail-section">
+                                <h3 className="section-title">Courses & Objectives</h3>
+                                {selectedTeacher.courses.length > 0 ? (
+                                    selectedTeacher.courses.map(course => (
+                                        <div key={course._id} className="course-accordion">
+                                            <div className="course-header" onClick={() => toggleCourse(course._id)}>
+                                                <div>
+                                                    <span className="course-title">
+                                                        <strong>{course.courseName}</strong> ({course.courseId})
+                                                    </span>
+                                                </div>
+                                                <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                                                    <span className="course-session">{course.session}</span>
+                                                    <span className={`arrow-icon ${openCourseId === course._id ? 'open' : ''}`}>&#9656;</span>
+                                                </div>
+                                            </div>
+                                            {openCourseId === course._id && (
+                                                <div className="objectives-container">
+                                                    <table className="objectives-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>CO No.</th>
+                                                                <th>Description</th>
+                                                                <th>Mapped PO</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {course.courseObjectives && course.courseObjectives.length > 0 ? (
+                                                                course.courseObjectives.map(obj => (
+                                                                    <tr key={obj.co_no}>
+                                                                        <td>{obj.co_no}</td>
+                                                                        <td>{obj.courseObjective}</td>
+                                                                        <td>{obj.mappedProgramOutcome}</td>
+                                                                    </tr>
+                                                                ))
+                                                            ) : (
+                                                                <tr>
+                                                                    <td colSpan={3} style={{ textAlign: 'center', color: '#6b7280', padding: '1rem' }}>
+                                                                        No objectives have been defined for this course.
+                                                                    </td>
+                                                                </tr>
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p>No courses found for this teacher.</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isAddCoursesModalOpen && (
+                <div className="modal-backdrop" onClick={() => setIsAddCoursesModalOpen(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">Add Courses for {selectedTeacher?.name}</h2>
+                            <button onClick={() => setIsAddCoursesModalOpen(false)} className="close-btn">&times;</button>
+                        </div>
+                        <div className="courses-section">
+                            <div className="session-program-selection">
+                                <div className="form-group">
+                                    <label className="form-label">Session</label>
+                                    <select value={selectedSession} onChange={e => setSelectedSession(e.target.value)} required className="form-input">
+                                        <option value="">Select Session</option>
+                                        {sessions.map(s => <option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Program</label>
+                                    <select value={selectedProgram} onChange={e => setSelectedProgram(e.target.value)} required className="form-input">
+                                        <option value="">Select Program</option>
+                                        {programs.map(p => <option key={p} value={p}>{p}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                            {offeredCourses.length > 0 && (
+                                <div className="offered-courses-list">
+                                    <h4>Select Offered Courses</h4>
+                                    <table className="score-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Course Code</th>
+                                                <th>Course Title</th>
+                                                <th>Select</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {offeredCourses.map((course, index) => (
+                                                <tr key={`${course.courseCode}-${course.versionCode}-${index}`}>
+                                                    <td>{course.courseCode}</td>
+                                                    <td>{course.courseTitle}</td>
+                                                    <td>
+                                                        <input
+                                                            type="checkbox"
+                                                            id={`add-course-${course.courseCode}-${index}`}
+                                                            checked={selectedCourses.some(c => c.courseCode === course.courseCode && c.versionCode === course.versionCode)}
+                                                            onChange={(e) => handleCourseSelection(course, e.target.checked)}
+                                                        />
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" onClick={() => setIsPreviewModalOpen(true)} className="submit-btn" disabled={selectedCourses.length === 0}>
+                                Preview
                             </button>
                         </div>
                     </div>
