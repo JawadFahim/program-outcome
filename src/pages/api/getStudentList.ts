@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../lib/mongodb';
+import { DB_NAME } from '../../lib/constants';
 
 interface Student {
     studentId: string;
@@ -24,34 +25,39 @@ export default async function handler(
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
-    const { teacherId, courseId, session } = req.query;
+    const { courseId, session } = req.query; // teacherId is no longer used
 
-    if (!teacherId || !courseId || !session || typeof teacherId !== 'string' || typeof courseId !== 'string' || typeof session !== 'string') {
-        return res.status(400).json({ message: 'teacherId, courseId, and session are required query parameters.' });
+    if (!courseId || !session || typeof courseId !== 'string' || typeof session !== 'string') {
+        return res.status(400).json({ message: 'courseId and session are required query parameters.' });
     }
 
     try {
         const client = await connectToDatabase();
-        const db = client.db("BICE_course_map");
-        const studentsCollection = db.collection('students');
+        const db = client.db(DB_NAME);
+        const programStudentsCollection = db.collection('program_students');
 
-        console.log(`--- GET STUDENT LIST API HIT ---`);
-        console.log(`Searching for teacherId: "${teacherId}", courseId: "${courseId}", and session: "${session}" in 'students' collection.`);
+        console.log(`--- GET STUDENT LIST API HIT (New Logic) ---`);
+        console.log(`Searching for courseId: "${courseId}" and session: "${session}" in 'program_students' collection.`);
 
-        const studentDocument = await studentsCollection.findOne({ 
-            teacherId: teacherId, 
-            courseId: courseId,
-            session: session
+        const programDocument = await programStudentsCollection.findOne({
+            session: session,
+            'offeredCourses.courseCode': courseId
         });
 
-        if (studentDocument && Array.isArray(studentDocument.studentList)) {
-            console.log(`Found document. Returning ${studentDocument.studentList.length} students for session ${studentDocument.session}.`);
+        if (programDocument && Array.isArray(programDocument.students)) {
+            console.log(`Found document. Returning ${programDocument.students.length} students for session ${programDocument.session}.`);
+
+            const studentList = programDocument.students.map((student: { id: string, name: string }) => ({
+                studentId: student.id,
+                name: student.name
+            }));
+
             res.status(200).json({
-                studentList: studentDocument.studentList,
-                session: studentDocument.session || null
+                studentList: studentList,
+                session: programDocument.session || null
             });
         } else {
-            console.log(`No student list found for this teacher/course combination. Returning empty.`);
+            console.log(`No student list found for this course/session combination in program_students. Returning empty.`);
             res.status(200).json({ studentList: [], session: null });
         }
 

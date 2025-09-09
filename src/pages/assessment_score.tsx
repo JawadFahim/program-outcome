@@ -357,6 +357,12 @@ const AssessmentScorePage = () => {
             return;
         }
 
+        const objective = courseObjectives.find(co => co.co_no === selectedObjective);
+        if (!objective || !objective.mappedProgramOutcome) {
+            showToast("Could not find the Program Outcome for the selected objective. Please check course setup.", "error");
+            return;
+        }
+
         const studentNameMap = new Map(students.map(s => [s.studentId, s.name]));
 
         let allValid = true;
@@ -386,6 +392,7 @@ const AssessmentScorePage = () => {
                     teacherId,
                     courseId: selectedCourse,
                     co_no: selectedObjective,
+                    po_no: objective.mappedProgramOutcome,
                     assessmentType: entry.assessmentType,
                     passMark: entry.passMark,
                     session,

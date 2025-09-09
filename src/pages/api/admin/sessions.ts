@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../../lib/mongodb';
+import { DB_NAME } from '../../../lib/constants';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'GET') {
@@ -8,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         const client = await connectToDatabase();
-        const db = client.db("BICE_course_map");
+        const db = client.db(DB_NAME);
         
         // Use aggregation pipeline to get distinct, sorted sessions
         const pipeline = [

@@ -5,6 +5,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../lib/mongodb';
 import { SignJWT } from 'jose';
+import { DB_NAME } from '../../lib/constants';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'a-secure-and-long-secret-key-for-testing');
 
@@ -21,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         const client = await connectToDatabase();
-        const db = client.db("BICE_course_map");
+        const db = client.db(DB_NAME);
         const teacher = await db.collection('teachers').findOne({ teacherId: teacherId });
         
         if (!teacher || teacher.password !== password) {

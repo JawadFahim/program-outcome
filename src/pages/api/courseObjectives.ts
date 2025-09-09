@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../lib/mongodb';
+import { DB_NAME } from '../../lib/constants';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'POST') {
@@ -11,7 +12,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             }
 
             const client = await connectToDatabase();
-            const db = client.db("BICE_course_map");
+            const db = client.db(DB_NAME);
             const coursesCollection = db.collection('courses');
 
             // The frontend now sends the full objective structure

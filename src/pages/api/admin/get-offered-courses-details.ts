@@ -1,6 +1,7 @@
 // src/pages/api/admin/get-offered-courses-details.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../../lib/mongodb';
+import { DB_NAME } from '../../../lib/constants';
 
 interface CourseInfo {
     courseCode: string;
@@ -20,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         const client = await connectToDatabase();
-        const db = client.db("BICE_course_map");
+        const db = client.db(DB_NAME);
 
         // 1. Get the list of offered course codes from program_students
         const programStudentsCollection = db.collection('program_students');

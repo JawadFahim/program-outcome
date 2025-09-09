@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../lib/mongodb';
+import { DB_NAME } from '../../lib/constants';
 
 interface Objective {
     co_no: string;
@@ -28,7 +29,7 @@ export default async function handler(
 
     try {
         const client = await connectToDatabase();
-        const db = client.db("BICE_course_map");
+        const db = client.db(DB_NAME);
         const coursesCollection = db.collection('courses');
 
         console.log(`--- GET OBJECTIVES API HIT ---`);

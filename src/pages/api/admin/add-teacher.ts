@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../../lib/mongodb';
+import { DB_NAME } from '../../../lib/constants';
 // import bcrypt from 'bcryptjs'; // Temporarily disabled for testing
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -9,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         const client = await connectToDatabase();
-        const db = client.db("BICE_course_map");
+        const db = client.db(DB_NAME);
         const { teacherId, email, name, password, courses } = req.body;
 
         // Basic validation

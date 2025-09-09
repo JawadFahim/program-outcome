@@ -19,6 +19,7 @@ const CourseOfferPage = () => {
     const [sessions, setSessions] = useState<string[]>([]);
     const [selectedSession, setSelectedSession] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
+    const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
 
     useEffect(() => {
         const fetchPrograms = async () => {
@@ -74,23 +75,28 @@ const CourseOfferPage = () => {
         }
     }, [selectedProgram]);
     
+    useEffect(() => {
+        const query = searchQuery.toLowerCase().trim();
+        if (!query) {
+            setFilteredCourses(courses);
+            return;
+        }
+
+        const searchTerms = query.split(/\s+/).filter(Boolean);
+        const results = courses.filter(course => {
+            const searchableText = `${course.courseCode} ${course.versionCode} ${course.courseTitle}`.toLowerCase();
+            return searchTerms.every(term => searchableText.includes(term));
+        });
+        setFilteredCourses(results);
+    }, [searchQuery, courses]);
+
     const handleCourseSelection = (course: Course, isSelected: boolean) => {
         if (isSelected) {
             setSelectedCourses([...selectedCourses, course]);
         } else {
-            setSelectedCourses(selectedCourses.filter(c => c.courseCode !== course.courseCode));
+            setSelectedCourses(selectedCourses.filter(c => c.courseCode !== course.courseCode || c.versionCode !== course.versionCode));
         }
     };
-
-    const filteredCourses = courses.filter(course => {
-        const query = searchQuery.toLowerCase().trim();
-        if (!query) return true;
-        
-        const codeMatch = course.courseCode.toLowerCase().includes(query);
-        const titleMatch = course.courseTitle.toLowerCase().includes(query);
-        
-        return codeMatch || titleMatch;
-    });
 
     const handleOfferCourses = async () => {
         try {
@@ -102,7 +108,9 @@ const CourseOfferPage = () => {
                     program: selectedProgram,
                     offeredCourses: selectedCourses.map(c => ({
                         courseCode: c.courseCode,
-                        versionCode: c.versionCode
+                        versionCode: c.versionCode,
+                        courseTitle: c.courseTitle,
+                        credit: c.credit
                     })),
                 }),
             });
@@ -171,12 +179,12 @@ const CourseOfferPage = () => {
                             </thead>
                             <tbody>
                                 {filteredCourses.map((course, index) => (
-                                    <tr key={`${course.courseCode}-${index}`}>
+                                    <tr key={`${course.courseCode}-${course.versionCode}`}>
                                         <td>{index + 1}</td>
                                         <td>
                                             <input
                                                 type="checkbox"
-                                                checked={selectedCourses.some(c => c.courseCode === course.courseCode)}
+                                                checked={selectedCourses.some(c => c.courseCode === course.courseCode && c.versionCode === course.versionCode)}
                                                 onChange={(e) => handleCourseSelection(course, e.target.checked)}
                                             />
                                         </td>

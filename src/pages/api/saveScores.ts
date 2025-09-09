@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../lib/mongodb';
+import { DB_NAME } from '../../lib/constants';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'POST') {
@@ -11,6 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             teacherId,
             courseId,
             co_no,
+            po_no,
             assessmentType,
             passMark,
             session,
@@ -18,18 +20,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         } = req.body;
 
         // Basic validation
-        if (!teacherId || !courseId || !co_no || !assessmentType || !passMark || !session || !scores) {
+        if (!teacherId || !courseId || !co_no || !po_no || !assessmentType || !passMark || !session || !scores) {
             return res.status(400).json({ message: 'Missing required fields.' });
         }
 
         const client = await connectToDatabase();
-        const db = client.db("BICE_course_map");
+        const db = client.db(DB_NAME);
         const scoresCollection = db.collection('scores');
         
         const newScoreEntry = {
             teacherId,
             courseId,
             co_no,
+            po_no,
             assessmentType,
             passMark: Number(passMark),
             session,

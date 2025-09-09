@@ -162,8 +162,8 @@ const TeacherDetailsPage = () => {
         setSubmitError('');
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         setSubmitting(true);
         setSubmitError('');
 
@@ -393,7 +393,7 @@ const TeacherDetailsPage = () => {
                             </ul>
                         </div>
                         <div className="modal-footer">
-                            <button onClick={handleUpdateTeacher} className="submit-btn" disabled={submitting}>
+                            <button onClick={handleSubmit} className="submit-btn" disabled={submitting}>
                                 {submitting ? 'Submitting...' : 'Apply'}
                             </button>
                         </div>
@@ -531,8 +531,8 @@ const TeacherDetailsPage = () => {
                             )}
                         </div>
                         <div className="modal-footer">
-                            <button type="button" onClick={() => setIsPreviewModalOpen(true)} className="submit-btn" disabled={selectedCourses.length === 0}>
-                                Preview
+                            <button onClick={handleUpdateTeacher} className="submit-btn" disabled={submitting || selectedCourses.length === 0}>
+                                {submitting ? 'Submitting...' : 'Apply'}
                             </button>
                         </div>
                     </div>

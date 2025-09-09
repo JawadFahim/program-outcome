@@ -11,4 +11,6 @@ export const PROGRAM_OUTCOMES = [
     { no: 'PO10', name: 'Communication' },
     { no: 'PO11', name: 'Project management and finance' },
     { no: 'PO12', name: 'Life-long learning' },
-]; 
+];
+
+export const DB_NAME = "BUP_obe"; 

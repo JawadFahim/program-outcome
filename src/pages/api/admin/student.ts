@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { DB_NAME } from '../../../lib/constants';
 
 interface Score {
     studentId: string;
@@ -35,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         const client = await connectToDatabase();
-        const db = client.db("BICE_course_map");
+        const db = client.db(DB_NAME);
         const scoresCollection = db.collection<ScoreDoc>('scores');
 
         // Find all documents where the student's ID is in the scores array
