@@ -4,6 +4,12 @@ import connectToDatabase from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { DB_NAME } from '../../../lib/constants';
 
+interface NewCourse {
+    courseId: string;
+    courseName: string;
+    session: string;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method Not Allowed' });
@@ -27,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // 1. Add courses to the `coursesTaught` array in the teacher's document.
-        const coursesForTaughtArray = newCourses.map((course: any) => ({
+        const coursesForTaughtArray = newCourses.map((course: NewCourse) => ({
             course_id: course.courseId,
             courseName: course.courseName,
             session: course.session,
@@ -41,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // 2. Insert the new courses into the main `courses` collection.
         // This is what the UI's $lookup uses to display the courses.
         if (newCourses.length > 0) {
-            const coursesToInsert = newCourses.map((course: any) => ({
+            const coursesToInsert = newCourses.map((course: NewCourse) => ({
                 courseId: course.courseId,
                 courseName: course.courseName,
                 session: course.session,
