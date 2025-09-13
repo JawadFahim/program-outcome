@@ -600,7 +600,7 @@ const HomePage = () => {
 
                                                 <div className="objective-taxonomy-grid">
                                                     <div className="taxonomy-item">
-                                                        <label className="label-compact">Bloom's</label>
+                                                        <label className="label-compact">Bloom&apos;s</label>
                                                         <div className="multiselect-dropdown compact">
                                                             <button type="button" className="multiselect-toggle compact" onClick={() => toggleDropdown(`${obj.id}-blooms`)}>
                                                                 <span className={!obj.bloomsTaxonomy || obj.bloomsTaxonomy.length === 0 ? 'placeholder' : ''}>

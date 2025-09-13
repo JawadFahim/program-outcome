@@ -17,6 +17,7 @@ interface jsPDFWithAutoTable extends jsPDF {
 interface CourseTaught {
     course_id: string;
     courseName: string;
+    session: string;
 }
 interface AggregatedStudentData {
     id: string;
@@ -47,7 +48,7 @@ const ScoreSummaryPage = () => {
     const [sessions, setSessions] = useState<string[]>([]);
     const [selectedSession, setSelectedSession] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+    
     const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
     const [openSelects, setOpenSelects] = useState<Record<string, boolean>>({});
 
