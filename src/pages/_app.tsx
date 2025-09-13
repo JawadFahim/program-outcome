@@ -15,11 +15,11 @@ function MyApp({ Component, pageProps }: AppProps) {
         const originalConsoleWarn = console.warn;
         const originalConsoleError = console.error;
 
-        const captureLog = (level: string, ...args: any[]) => {
+        const captureLog = (level: string, ...args: unknown[]) => {
             const message = args.map(arg => {
                 try {
                     return JSON.stringify(arg);
-                } catch (e) {
+                } catch {
                     return String(arg);
                 }
             }).join(' ');
