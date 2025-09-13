@@ -1,18 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../lib/mongodb';
-import nodemailer from 'nodemailer';
+import { sendMail } from '../../lib/mailer';
 import { otpStore } from '../../lib/otpStore';
 import { DB_NAME } from '../../lib/constants';
-
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, 
-  auth: {
-    user: "rupontibup@gmail.com",
-    pass: "qjlouenwnysssjik",
-  },
-});
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'POST') {
@@ -55,9 +45,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             html: `<b>Your OTP for password reset is: ${otp}</b>. It will expire in 10 minutes.`,
         };
 
-        await transporter.sendMail(mailOptions);
+        const mailResult = await sendMail(mailOptions);
 
-        res.status(200).json({ message: 'OTP sent successfully to your email.' });
+        if (mailResult.success) {
+            res.status(200).json({ message: 'OTP sent successfully to your email.' });
+        } else {
+            throw new Error('Failed to send email.');
+        }
 
     } catch (error) {
         console.error('Request OTP error:', error);
