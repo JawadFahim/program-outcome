@@ -64,6 +64,12 @@ const ScoreSummaryPage = () => {
                 const data = await response.json();
                 setTeacherName(data.name || 'Teacher Not Found');
                 setCourses(data.coursesTaught || []);
+                
+                // Pre-load all unique sessions from all courses
+                const allSessions = data.coursesTaught?.map((c: CourseTaught) => c.session) || [];
+                const uniqueSessions = [...new Set(allSessions)] as string[];
+                uniqueSessions.sort((a, b) => b.localeCompare(a));
+                setSessions(uniqueSessions);
             } catch (error) {
                 console.error(error);
                 setTeacherName('Error fetching data');
@@ -94,25 +100,9 @@ const ScoreSummaryPage = () => {
 
     const handleCourseChange = async (courseId: string) => {
         setSelectedCourse(courseId);
-        // Reset everything downstream
-        setSessions([]);
+        // Reset downstream state but keep sessions loaded
         setSelectedSession('');
         setSummaryData(null);
-
-        if (courseId && teacherId) {
-            setIsLoadingSessions(true);
-            try {
-                const response = await fetch(`/api/get_sessions?teacherId=${teacherId}&courseId=${courseId}`);
-                if (!response.ok) throw new Error('Failed to fetch sessions');
-                const data = await response.json();
-                setSessions(data);
-            } catch (error) {
-                console.error("Failed to load sessions:", error);
-                setSessions([]); // Clear on error
-            } finally {
-                setIsLoadingSessions(false);
-            }
-        }
         setOpenSelects({});
     };
     
@@ -217,62 +207,69 @@ const ScoreSummaryPage = () => {
                 <title>Final Score Summary</title>
             </Head>
 
-            <main className="container mx-auto px-4 sm:px-6 md:px-8">
+            <main className="container">
                 <div className="card">
-                    <label htmlFor="courseSelector" className="block text-lg font-medium text-gray-700 mb-2">Select Course:</label>
-                    <div className="custom-select">
-                        <button
-                            id="courseSelector"
-                            type="button"
-                            className={`custom-select-toggle text-base ${courses.length === 0 ? 'disabled' : ''}`}
-                            onClick={() => toggleSelect('course')}
-                            disabled={courses.length === 0}
-                        >
-                            <span className={!selectedCourse ? 'placeholder' : ''}>
-                                {selectedCourse
-                                    ? courses.find(c => c.course_id === selectedCourse)?.courseName + ` (${selectedCourse})`
-                                    : courses.length > 0 ? "-- Please select a course --" : "No courses available"
-                                }
-                            </span>
-                        </button>
-                        {openSelects['course'] && (
-                            <ul className="custom-select-options">
-                                {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => (
-                                     <li key={course.course_id} className={`custom-select-option ${selectedCourse === course.course_id ? 'selected' : ''}`} onClick={() => handleCourseChange(course.course_id)}>
-                                {course.courseName} ({course.course_id})
-                                     </li>
-                        ))}
-                            </ul>
-                        )}
-                    </div>
-                </div>
+                    <div className="dropdown-grid">
+                        <div className="dropdown-item">
+                            <label htmlFor="courseSelector" className="form-label">1. Select Course</label>
+                            <div className="custom-select">
+                                <button
+                                    id="courseSelector"
+                                    type="button"
+                                    className={`custom-select-toggle ${courses.length === 0 ? 'disabled' : ''}`}
+                                    onClick={() => toggleSelect('course')}
+                                    disabled={courses.length === 0}
+                                >
+                                    <span className={!selectedCourse ? 'placeholder' : ''}>
+                                        {selectedCourse
+                                            ? courses.find(c => c.course_id === selectedCourse)?.courseName + ` (${selectedCourse})`
+                                            : courses.length > 0 ? "-- Please select a course --" : "No courses available"
+                                        }
+                                    </span>
+                                </button>
+                                {openSelects['course'] && (
+                                    <ul className="custom-select-options">
+                                        {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => (
+                                             <li key={course.course_id} className={`custom-select-option ${selectedCourse === course.course_id ? 'selected' : ''}`} onClick={() => handleCourseChange(course.course_id)}>
+                                        {course.courseName} ({course.course_id})
+                                             </li>
+                                ))}
+                                    </ul>
+                                )}
+                            </div>
+                        </div>
 
-                <div className="card">
-                    <label htmlFor="sessionSelector" className="block text-lg font-medium text-gray-700 mb-2">Select Session:</label>
-                    <div className="custom-select">
-                        <button
-                        id="sessionSelector" 
-                            type="button"
-                            className={`custom-select-toggle text-base ${!selectedCourse || isLoadingSessions || sessions.length === 0 ? 'disabled' : ''}`}
-                            onClick={() => toggleSelect('session')}
-                        disabled={!selectedCourse || isLoadingSessions || sessions.length === 0}
-                    >
-                            <span className={!selectedSession ? 'placeholder' : ''}>
-                                {selectedSession ? selectedSession :
-                                    isLoadingSessions ? "Loading sessions..." : 
-                            !selectedCourse ? "Select a course first" : 
-                            sessions.length > 0 ? "-- Please select a session --" : 
-                                    "No sessions found"
-                                }
-                            </span>
-                        </button>
-                        {openSelects['session'] && (
-                            <ul className="custom-select-options">
-                        {sessions.map(session => (
-                                    <li key={session} className={`custom-select-option ${selectedSession === session ? 'selected' : ''}`} onClick={() => handleSessionChange(session)}>{session}</li>
-                        ))}
-                            </ul>
-                        )}
+                        <div className="dropdown-item">
+                            <label htmlFor="sessionSelector" className="form-label">2. Select Session</label>
+                            <div className="custom-select">
+                                <button
+                                id="sessionSelector" 
+                                    type="button"
+                                    className={`custom-select-toggle ${!selectedCourse || sessions.length === 0 ? 'disabled' : ''}`}
+                                    onClick={() => toggleSelect('session')}
+                                disabled={!selectedCourse || sessions.length === 0}
+                            >
+                                    <span className={!selectedSession ? 'placeholder' : ''}>
+                                        {!selectedCourse ? "Select course first" : 
+                                            selectedSession ? selectedSession :
+                                            sessions.filter(session => 
+                                                courses.some(c => c.course_id === selectedCourse && c.session === session)
+                                            ).length > 0 ? "-- Select a session --" : 
+                                            "No sessions found"
+                                        }
+                                    </span>
+                                </button>
+                                {openSelects['session'] && selectedCourse && (
+                                    <ul className="custom-select-options">
+                                        {sessions.filter(session => 
+                                            courses.some(c => c.course_id === selectedCourse && c.session === session)
+                                        ).map(session => (
+                                            <li key={session} className={`custom-select-option ${selectedSession === session ? 'selected' : ''}`} onClick={() => handleSessionChange(session)}>{session}</li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -322,8 +319,8 @@ const ScoreSummaryPage = () => {
                             </table>
                         </div>
 
-                        <div className="card mt-6">
-                            <h3 className="text-xl font-semibold text-gray-700 mb-3">Course Objective Pass Percentages</h3>
+                        <div className="card">
+                            <h3 className="text-lg font-semibold text-gray-700 mb-2">Course Objective Pass Percentages</h3>
                             <div className="summary-stats-grid">
                                             {summaryData.courseObjectives.map(co => {
                                                 const stats = summaryData.summary[co];

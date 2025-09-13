@@ -74,6 +74,7 @@ const AssessmentScorePage = () => {
     const [toastMessage, setToastMessage] = useState<string>('');
     const [toastType, setToastType] = useState<'success' | 'error' | 'warning'>('success');
     const [openSelects, setOpenSelects] = useState<Record<string, boolean>>({});
+    const [collapsedAssessments, setCollapsedAssessments] = useState<Record<string, boolean>>({});
     
     // --- Data Fetching Effects ---
 
@@ -111,6 +112,12 @@ const AssessmentScorePage = () => {
                 const data = await response.json();
                 setTeacherName(data.name || 'Teacher Not Found');
                 setCourses(data.coursesTaught || []);
+                
+                // Pre-load all unique sessions from all courses
+                const allSessions = data.coursesTaught?.map((c: CourseTaught) => c.session) || [];
+                const uniqueSessions = [...new Set(allSessions)] as string[];
+                uniqueSessions.sort((a, b) => b.localeCompare(a));
+                setSessions(uniqueSessions);
             } catch (error) {
                 console.error(error);
                 setTeacherName('Error fetching data');
@@ -261,20 +268,11 @@ const AssessmentScorePage = () => {
 
     const handleCourseChange = (newCourseValue: string) => {
         setSelectedCourse(newCourseValue);
-        // Reset downstream state
+        // Reset downstream state but keep sessions loaded
         setSelectedSession('');
-        setSessions([]);
         setCourseObjectives([]);
         setSelectedObjective('');
         setAssessmentEntries([]);
-
-        if (newCourseValue) {
-            const courseSessions = courses
-                .filter(c => c.course_id === newCourseValue)
-                .map(c => c.session)
-                .filter((session, index, self) => self.indexOf(session) === index);
-            setSessions(courseSessions);
-        }
         setOpenSelects({});
     };
     
@@ -290,6 +288,13 @@ const AssessmentScorePage = () => {
     const handleObjectiveChange = (newObjective: string) => {
         setSelectedObjective(newObjective);
         setOpenSelects({});
+    };
+
+    const toggleAssessmentCollapse = (entryId: string) => {
+        setCollapsedAssessments(prev => ({
+            ...prev,
+            [entryId]: !prev[entryId]
+        }));
     };
     
     const handleScoreChange = (entryId: string, studentId: string, value: string) => {
@@ -443,80 +448,81 @@ const AssessmentScorePage = () => {
             <div className="container">
                 <main>
                     <div className="card">
-                        <label htmlFor="courseSelector" className="form-label">1. Select Course</label>
-                        <div className="custom-select">
-                            <button
-                                id="courseSelector"
-                                type="button"
-                                className={`custom-select-toggle ${isLoadingCourses || courses.length === 0 ? 'disabled' : ''}`}
-                                onClick={() => toggleSelect('course')}
-                                disabled={isLoadingCourses || courses.length === 0}
-                            >
-                                <span className={!selectedCourse ? 'placeholder' : ''}>
-                                    {isLoadingCourses ? "Loading courses..." :
-                                     selectedCourse ? (courses.find(c => c.course_id === selectedCourse)?.courseName + ` (${selectedCourse})`)
-                                     : "-- Please select a course --"}
-                                </span>
-                            </button>
-                            {openSelects['course'] && (
-                                <ul className="custom-select-options">
-                                    {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => ( 
-                                        <li key={course.course_id} className={`custom-select-option ${selectedCourse === course.course_id ? 'selected' : ''}`} onClick={() => handleCourseChange(course.course_id)}> 
-                                            {course.courseName} ({course.course_id}) 
-                                        </li> 
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                    </div>
-
-                    {selectedCourse && (
-                         <div className="card">
-                            <label htmlFor="sessionSelector" className="form-label">2. Select Session</label>
-                            <div className="custom-select">
-                                <button
-                                    id="sessionSelector"
-                                    type="button"
-                                    className={`custom-select-toggle ${sessions.length === 0 ? 'disabled' : ''}`}
-                                    onClick={() => toggleSelect('session')}
-                                    disabled={sessions.length === 0}
-                                >
-                                    <span className={!selectedSession ? 'placeholder' : ''}>
-                                        {selectedSession || '-- Select a session --'}
-                                    </span>
-                                </button>
-                                {openSelects['session'] && (
-                                    <ul className="custom-select-options">
-                                        <li className={`custom-select-option placeholder ${selectedSession === '' ? 'selected' : ''}`} onClick={() => handleSessionChange('')}>-- Select a session --</li>
-                                        {sessions.map(session => (
-                                            <li key={session} className={`custom-select-option ${selectedSession === session ? 'selected' : ''}`} onClick={() => handleSessionChange(session)}>{session}</li>
-                                        ))}
-                                    </ul>
-                                )}
+                        <div className="dropdown-grid">
+                            <div className="dropdown-item">
+                                <label htmlFor="courseSelector" className="form-label">1. Select Course</label>
+                                <div className="custom-select">
+                                    <button
+                                        id="courseSelector"
+                                        type="button"
+                                        className={`custom-select-toggle ${isLoadingCourses || courses.length === 0 ? 'disabled' : ''}`}
+                                        onClick={() => toggleSelect('course')}
+                                        disabled={isLoadingCourses || courses.length === 0}
+                                    >
+                                        <span className={!selectedCourse ? 'placeholder' : ''}>
+                                            {isLoadingCourses ? "Loading courses..." :
+                                             selectedCourse ? (courses.find(c => c.course_id === selectedCourse)?.courseName + ` (${selectedCourse})`)
+                                             : "-- Please select a course --"}
+                                        </span>
+                                    </button>
+                                    {openSelects['course'] && (
+                                        <ul className="custom-select-options">
+                                            {Array.from(new Map(courses.map(course => [course.course_id, course])).values()).map(course => ( 
+                                                <li key={course.course_id} className={`custom-select-option ${selectedCourse === course.course_id ? 'selected' : ''}`} onClick={() => handleCourseChange(course.course_id)}> 
+                                                    {course.courseName} ({course.course_id}) 
+                                                </li> 
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    )}
 
-                    {selectedCourse && selectedSession ? (
-                        <div id="assessmentDetailsSection">
-                            <div className="card">
+                            <div className="dropdown-item">
+                                <label htmlFor="sessionSelector" className="form-label">2. Select Session</label>
+                                <div className="custom-select">
+                                    <button
+                                        id="sessionSelector"
+                                        type="button"
+                                        className={`custom-select-toggle ${!selectedCourse || sessions.length === 0 ? 'disabled' : ''}`}
+                                        onClick={() => toggleSelect('session')}
+                                        disabled={!selectedCourse || sessions.length === 0}
+                                    >
+                                        <span className={!selectedSession ? 'placeholder' : ''}>
+                                            {!selectedCourse ? "Select course first" : (selectedSession || '-- Select a session --')}
+                                        </span>
+                                    </button>
+                                    {openSelects['session'] && selectedCourse && (
+                                        <ul className="custom-select-options">
+                                            <li className={`custom-select-option placeholder ${selectedSession === '' ? 'selected' : ''}`} onClick={() => handleSessionChange('')}>-- Select a session --</li>
+                                            {sessions.filter(session => 
+                                                courses.some(c => c.course_id === selectedCourse && c.session === session)
+                                            ).map(session => (
+                                                <li key={session} className={`custom-select-option ${selectedSession === session ? 'selected' : ''}`} onClick={() => handleSessionChange(session)}>{session}</li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="dropdown-item">
                                 <label htmlFor="courseObjectiveSelector" className="form-label">3. Course Objective</label>
                                 <div className="custom-select">
                                     <button
                                         id="courseObjectiveSelector"
                                         type="button"
-                                        className={`custom-select-toggle ${isLoadingObjectives || courseObjectives.length === 0 ? 'disabled' : ''}`}
+                                        className={`custom-select-toggle ${!selectedCourse || !selectedSession || isLoadingObjectives || courseObjectives.length === 0 ? 'disabled' : ''}`}
                                         onClick={() => toggleSelect('objective')}
-                                        disabled={isLoadingObjectives || courseObjectives.length === 0}
+                                        disabled={!selectedCourse || !selectedSession || isLoadingObjectives || courseObjectives.length === 0}
                                     >
                                         <span className={!selectedObjective ? 'placeholder' : ''}>
-                                            {isLoadingObjectives ? "Loading..." :
+                                            {!selectedCourse || !selectedSession ? "Select course & session first" :
+                                                isLoadingObjectives ? "Loading..." :
                                                 selectedObjective ? courseObjectives.find(obj => obj.co_no === selectedObjective)?.courseObjective
                                                 : "-- Select an objective --"
                                             }
                                         </span>
                                     </button>
-                                    {openSelects['objective'] && (
+                                    {openSelects['objective'] && selectedCourse && selectedSession && (
                                         <ul className="custom-select-options">
                                              <li className={`custom-select-option placeholder ${selectedObjective === '' ? 'selected' : ''}`} onClick={() => handleObjectiveChange('')}>-- Select an objective --</li>
                                             {courseObjectives.map(obj => ( 
@@ -528,6 +534,11 @@ const AssessmentScorePage = () => {
                                     )}
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {selectedCourse && selectedSession && selectedObjective ? (
+                        <div id="assessmentDetailsSection">
 
                             {isLoadingStudents ? (
                                 <div className="card text-center p-8">Loading assessment data...</div>
@@ -588,52 +599,72 @@ const AssessmentScorePage = () => {
 
                                             <div className="student-scores-header mt-6">
                                                 <h3>Scores for <span>{selectedObjectiveText}</span></h3>
+                                                <button 
+                                                    type="button" 
+                                                    className="collapse-toggle"
+                                                    onClick={() => toggleAssessmentCollapse(entry.id)}
+                                                    aria-label={collapsedAssessments[entry.id] ? "Expand student scores" : "Collapse student scores"}
+                                                >
+                                                    <svg 
+                                                        className={`collapse-arrow ${collapsedAssessments[entry.id] ? 'collapsed' : ''}`}
+                                                        width="20" 
+                                                        height="20" 
+                                                        viewBox="0 0 24 24" 
+                                                        fill="none" 
+                                                        stroke="currentColor" 
+                                                        strokeWidth="2"
+                                                    >
+                                                        <path d="M6 9l6 6 6-6"/>
+                                                    </svg>
+                                                </button>
                                     </div>
-                                    <div className="table-container">
-                                        <table className="student-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>#</th>
-                                                    <th>Student ID</th>
-                                                    <th>Student Name</th>
-                                                    <th>Obtained Mark</th>
-                                                    <th className="text-center">Absent</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                        {students.map((student, index) => (
-                                                        <tr key={student.studentId}>
-                                                            <td>{index + 1}</td>
-                                                            <td>{student.studentId}</td>
-                                                            <td>{student.name}</td>
-                                                            <td>
-                                                                <input 
-                                                                    type="number" 
-                                                                    className="input-field" 
-                                                                        value={entry.scores[student.studentId]?.mark || ''}
-                                                                        onChange={(e) => handleScoreChange(entry.id, student.studentId, e.target.value)}
-                                                                        disabled={isLocked || entry.scores[student.studentId]?.isAbsent}
-                                                                    min="0" max="100" placeholder="Mark" 
-                                                                    onWheel={(e) => e.currentTarget.blur()}
-                                                                />
-                                                            </td>
-                                                            <td className="text-center">
-                                                                <input 
-                                                                    type="checkbox" 
-                                                                        checked={entry.scores[student.studentId]?.isAbsent || false}
-                                                                        onChange={(e) => handleAbsentChange(entry.id, student.studentId, e.target.checked)}
-                                                                        disabled={isLocked}
-                                                                />
-                                                            </td>
-                                                        </tr>
-                                                        ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div className="actions-footer">
-                                                <button type="button" onClick={() => handleSaveScores(entry)} className="btn btn-primary" disabled={isSaving || isLocked}>
-                                                    {isSaving ? 'Saving...' : entry.isSavedInDb ? 'Update Scores' : 'Save Scores'}
-                                        </button>
+                                    <div className={`collapsible-content ${collapsedAssessments[entry.id] ? 'collapsed' : ''}`}>
+                                        <div className="table-container">
+                                            <table className="student-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>#</th>
+                                                        <th>Student ID</th>
+                                                        <th>Student Name</th>
+                                                        <th>Obtained Mark</th>
+                                                        <th className="text-center">Absent</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                            {students.map((student, index) => (
+                                                            <tr key={student.studentId}>
+                                                                <td>{index + 1}</td>
+                                                                <td>{student.studentId}</td>
+                                                                <td>{student.name}</td>
+                                                                <td>
+                                                                    <input 
+                                                                        type="number" 
+                                                                        className="input-field" 
+                                                                            value={entry.scores[student.studentId]?.mark || ''}
+                                                                            onChange={(e) => handleScoreChange(entry.id, student.studentId, e.target.value)}
+                                                                            disabled={isLocked || entry.scores[student.studentId]?.isAbsent}
+                                                                        min="0" max="100" placeholder="Mark" 
+                                                                        onWheel={(e) => e.currentTarget.blur()}
+                                                                    />
+                                                                </td>
+                                                                <td className="text-center">
+                                                                    <input 
+                                                                        type="checkbox" 
+                                                                            checked={entry.scores[student.studentId]?.isAbsent || false}
+                                                                            onChange={(e) => handleAbsentChange(entry.id, student.studentId, e.target.checked)}
+                                                                            disabled={isLocked}
+                                                                    />
+                                                                </td>
+                                                            </tr>
+                                                            ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div className="actions-footer">
+                                                    <button type="button" onClick={() => handleSaveScores(entry)} className="btn btn-primary" disabled={isSaving || isLocked}>
+                                                        {isSaving ? 'Saving...' : entry.isSavedInDb ? 'Update Scores' : 'Save Scores'}
+                                            </button>
+                                        </div>
                                     </div>
                                         </div>
                                     );
@@ -648,15 +679,10 @@ const AssessmentScorePage = () => {
                                 </div>
                             )}
 
-                            {!showStudentSection && selectedCourse && selectedSession && (
-                                <div id="selectObjectiveMessage" className="card message-card">
-                                    <p>Please select a Course Objective to view or enter scores.</p>
-                                </div>
-                            )}
                         </div>
                     ) : (
-                        <div id="noCourseSelectedMessage" className="card message-card">
-                            <p>Please select a course and session to proceed.</p>
+                        <div className="card message-card">
+                            <p>Please select course, session, and objective to view or enter scores.</p>
                         </div>
                     )}
                 </main>

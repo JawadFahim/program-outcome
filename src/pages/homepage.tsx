@@ -448,10 +448,10 @@ const HomePage = () => {
             </Head>
 
             <div className="container">
-                    <div className="selection-container">
-                        <div className="selection-row">
-                            <div className="card">
-                                <label htmlFor="courseSelector" className="form-label">Select Course:</label>
+                    <div className="card compact-header">
+                        <div className="dropdown-grid">
+                            <div className="dropdown-item">
+                                <label htmlFor="courseSelector" className="form-label">1. Select Course</label>
                                 <div className="custom-select" ref={courseSelectRef}>
                                     <button 
                                     id="courseSelector" 
@@ -483,8 +483,8 @@ const HomePage = () => {
                                 </div>
                             </div>
 
-                            <div className="card">
-                                <label htmlFor="sessionSelector" className="form-label">Select Session:</label>
+                            <div className="dropdown-item">
+                                <label htmlFor="sessionSelector" className="form-label">2. Select Session</label>
                                 <div className="custom-select" ref={sessionSelectRef}>
                                     <button
                                         id="sessionSelector"
@@ -525,9 +525,9 @@ const HomePage = () => {
 
                 {selectedCourse && selectedSession ? (
                         <div id="courseObjectivesSection">
-                            <div className="objectives-header">
-                            <h2>Define Course Objectives for <span>{getCourseLabel(selectedCourse)}</span> ({selectedSession})</h2>
-                                <p>For each course objective, select one primary BICE Program Outcome it aligns with.</p>
+                            <div className="objectives-header-compact">
+                                <h2 className="objectives-title">Define Course Objectives for <span>{getCourseLabel(selectedCourse)}</span> ({selectedSession})</h2>
+                                <p className="objectives-subtitle">For each course objective, select one primary BICE Program Outcome it aligns with.</p>
                             </div>
 
                             {isLoadingObjectives ? (
@@ -535,48 +535,44 @@ const HomePage = () => {
                             ) : (
                                 <div id="courseObjectivesContainer" className="objectives-container">
                                     {courseObjectives.map((obj) => (
-                                        <div key={obj.id} className="card objective-entry-item">
-                                            <div className="objective-entry-header">
-                                                <h4 className="objective-title">Course Objective {obj.displayNumber}</h4>
-                                                <div className="remove-btn-container">
-                                                    {courseObjectives.length > 1 && (
-                                                        <button 
-                                                            type="button" 
-                                                            className="btn btn-danger btn-sm"
-                                                            onClick={() => handleRemoveObjective(obj.id)}
-                                                        >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                                                            Remove
-                                                        </button>
-                                                    )}
-                                                </div>
+                                        <div key={obj.id} className="card objective-card-compact">
+                                            <div className="objective-header-compact">
+                                                <h4 className="objective-title-compact">CO{obj.displayNumber}</h4>
+                                                {courseObjectives.length > 1 && (
+                                                    <button 
+                                                        type="button" 
+                                                        className="btn btn-danger btn-sm"
+                                                        onClick={() => handleRemoveObjective(obj.id)}
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                                                        Remove
+                                                    </button>
+                                                )}
                                             </div>
-                                            <div className="course-objective-block">
-                                                <div className="form-group full-width">
-                                                    <label>Objective Description</label>
-                                                <textarea 
-                                                    className="textarea-field" 
-                                                    name={`course_objective_desc_${obj.id}`} 
-                                                    placeholder="Enter course objective description..."
-                                                    value={obj.description}
-                                                    onChange={(e) => handleObjectiveChange(obj.id, 'description', e.target.value)}
-                                                ></textarea>
-                                                </div>
-
-                                                <div className="grid-2-cols">
-                                                    <div className="form-group">
-                                                        <label>Program Outcome (PO)</label>
+                                            
+                                            <div className="objective-content-compact">
+                                                <div className="objective-main-row">
+                                                    <div className="objective-description">
+                                                        <label className="label-compact">Description</label>
+                                                        <textarea 
+                                                            className="textarea-compact" 
+                                                            name={`course_objective_desc_${obj.id}`} 
+                                                            placeholder="Enter course objective description..."
+                                                            value={obj.description}
+                                                            onChange={(e) => handleObjectiveChange(obj.id, 'description', e.target.value)}
+                                                            rows={2}
+                                                        ></textarea>
+                                                    </div>
+                                                    <div className="objective-po">
+                                                        <label className="label-compact">Program Outcome</label>
                                                         <div className="custom-select">
-                                                        <button 
-                                                            type="button" 
-                                                                className="custom-select-toggle"
+                                                            <button 
+                                                                type="button" 
+                                                                className="custom-select-toggle compact"
                                                                 onClick={() => toggleSelect(`po-${obj.id}`)}
                                                             >
                                                                 <span className={!obj.programOutcome ? 'placeholder' : ''}>
-                                                                    {obj.programOutcome
-                                                                        ? BICE_PROGRAM_OUTCOMES.find((_, i) => `PO${i+1}` === obj.programOutcome) || '-- Select Program Outcome --'
-                                                                        : '-- Select Program Outcome --'
-                                                                    }
+                                                                    {obj.programOutcome || '-- Select PO --'}
                                                                 </span>
                                                             </button>
                                                             {openSelects[`po-${obj.id}`] && (
@@ -585,7 +581,7 @@ const HomePage = () => {
                                                                         className={`custom-select-option placeholder ${obj.programOutcome === '' ? 'selected' : ''}`}
                                                                         onClick={() => handleObjectiveChange(obj.id, 'programOutcome', '')}
                                                                     >
-                                                                        -- Select Program Outcome --
+                                                                        -- Select PO --
                                                                     </li>
                                                                     {BICE_PROGRAM_OUTCOMES.map((outcome, i) => (
                                                                         <li 
@@ -600,34 +596,31 @@ const HomePage = () => {
                                                             )}
                                                         </div>
                                                     </div>
+                                                </div>
 
-                                                    <div className="form-group">
-                                                        <label>Bloom&apos;s Taxonomy</label>
-                                                        <div className="multiselect-dropdown">
-                                                            <button type="button" className="multiselect-toggle" onClick={() => toggleDropdown(`${obj.id}-blooms`)}>
+                                                <div className="objective-taxonomy-grid">
+                                                    <div className="taxonomy-item">
+                                                        <label className="label-compact">Bloom's</label>
+                                                        <div className="multiselect-dropdown compact">
+                                                            <button type="button" className="multiselect-toggle compact" onClick={() => toggleDropdown(`${obj.id}-blooms`)}>
                                                                 <span className={!obj.bloomsTaxonomy || obj.bloomsTaxonomy.length === 0 ? 'placeholder' : ''}>
-                                                                    {obj.bloomsTaxonomy.length > 0 
-                                                                        ? obj.bloomsTaxonomy.length > 2 
-                                                                            ? `${obj.bloomsTaxonomy.slice(0, 2).join(', ')}...` 
-                                                                            : obj.bloomsTaxonomy.join(', ')
-                                                                        : "-- Select --"
-                                                                    }
+                                                                    {obj.bloomsTaxonomy.length > 0 ? obj.bloomsTaxonomy.join(', ') : "Select"}
                                                                 </span>
-                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="20" width="20"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="16" width="16"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
                                                             </button>
                                                             {openDropdowns[`${obj.id}-blooms`] && (
-                                                                <div className="multiselect-options">
+                                                                <div className="multiselect-options compact">
                                                                     {Object.entries(BLOOMS_TAXONOMY).map(([domain, levels]) => (
-                                                                        <div key={domain}>
-                                                                            <strong>{domain}</strong>
+                                                                        <div key={domain} className="domain-group">
+                                                                            <div className="domain-header">{domain.split(' ')[0]}</div>
                                                                             {levels.map(level => (
-                                                                                <label key={level.code} className="multiselect-option">
+                                                                                <label key={level.code} className="multiselect-option compact">
                                                                                     <input
                                                                                         type="checkbox"
                                                                                         checked={obj.bloomsTaxonomy.includes(level.code)}
                                                                                         onChange={() => handleMultiSelectChange(obj.id, 'bloomsTaxonomy', level.code)}
                                                                                     />
-                                                                                    {level.code}: {level.text}
+                                                                                    {level.code}
                                                                                 </label>
                                                                             ))}
                                                                         </div>
@@ -636,33 +629,26 @@ const HomePage = () => {
                                                             )}
                                                         </div>
                                                     </div>
-                                                </div>
 
-                                                <div className="grid-3-cols">
-                                                    <div className="form-group">
-                                                        <label>Knowledge Profile (K)</label>
-                                                        <div className="multiselect-dropdown">
-                                                            <button type="button" className="multiselect-toggle" onClick={() => toggleDropdown(`${obj.id}-knowledge`)}>
+                                                    <div className="taxonomy-item">
+                                                        <label className="label-compact">Knowledge (K)</label>
+                                                        <div className="multiselect-dropdown compact">
+                                                            <button type="button" className="multiselect-toggle compact" onClick={() => toggleDropdown(`${obj.id}-knowledge`)}>
                                                                 <span className={!obj.knowledgeProfile || obj.knowledgeProfile.length === 0 ? 'placeholder' : ''}>
-                                                                    {obj.knowledgeProfile.length > 0 
-                                                                        ? obj.knowledgeProfile.length > 2
-                                                                            ? `${obj.knowledgeProfile.slice(0, 2).join(', ')}...`
-                                                                            : obj.knowledgeProfile.join(', ')
-                                                                        : "-- Select --"
-                                                                    }
+                                                                    {obj.knowledgeProfile.length > 0 ? obj.knowledgeProfile.join(', ') : "Select"}
                                                                 </span>
-                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="20" width="20"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="16" width="16"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
                                                             </button>
                                                             {openDropdowns[`${obj.id}-knowledge`] && (
-                                                                <div className="multiselect-options">
+                                                                <div className="multiselect-options compact">
                                                                     {KNOWLEDGE_PROFILE.map(k => (
-                                                                        <label key={k.code} className="multiselect-option" title={k.text}>
+                                                                        <label key={k.code} className="multiselect-option compact" title={k.text}>
                                                                             <input
                                                                                 type="checkbox"
                                                                                 checked={obj.knowledgeProfile.includes(k.code)}
                                                                                 onChange={() => handleMultiSelectChange(obj.id, 'knowledgeProfile', k.code)}
                                                                             />
-                                                                            {k.code}: {k.text.split(':')[0]}
+                                                                            {k.code}
                                                                         </label>
                                                                     ))}
                                                                 </div>
@@ -670,30 +656,25 @@ const HomePage = () => {
                                                         </div>
                                                     </div>
 
-                                                    <div className="form-group">
-                                                        <label>Complex Problem (P)</label>
-                                                        <div className="multiselect-dropdown">
-                                                            <button type="button" className="multiselect-toggle" onClick={() => toggleDropdown(`${obj.id}-problem`)}>
+                                                    <div className="taxonomy-item">
+                                                        <label className="label-compact">Problem (P)</label>
+                                                        <div className="multiselect-dropdown compact">
+                                                            <button type="button" className="multiselect-toggle compact" onClick={() => toggleDropdown(`${obj.id}-problem`)}>
                                                                 <span className={!obj.complexEngineeringProblem || obj.complexEngineeringProblem.length === 0 ? 'placeholder' : ''}>
-                                                                    {obj.complexEngineeringProblem.length > 0 
-                                                                        ? obj.complexEngineeringProblem.length > 2
-                                                                            ? `${obj.complexEngineeringProblem.slice(0, 2).join(', ')}...`
-                                                                            : obj.complexEngineeringProblem.join(', ')
-                                                                        : "-- Select --"
-                                                                    }
+                                                                    {obj.complexEngineeringProblem.length > 0 ? obj.complexEngineeringProblem.join(', ') : "Select"}
                                                                 </span>
-                                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="20" width="20"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="16" width="16"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
                                                             </button>
                                                             {openDropdowns[`${obj.id}-problem`] && (
-                                                                <div className="multiselect-options">
+                                                                <div className="multiselect-options compact">
                                                                     {COMPLEX_ENGINEERING_PROBLEM.map(p => (
-                                                                        <label key={p.code} className="multiselect-option" title={p.text}>
+                                                                        <label key={p.code} className="multiselect-option compact" title={p.text}>
                                                                             <input
                                                                                 type="checkbox"
                                                                                 checked={obj.complexEngineeringProblem.includes(p.code)}
                                                                                 onChange={() => handleMultiSelectChange(obj.id, 'complexEngineeringProblem', p.code)}
                                                                             />
-                                                                            {p.code}: {p.text.split(':')[0]}
+                                                                            {p.code}
                                                                         </label>
                                                                     ))}
                                                                 </div>
@@ -701,30 +682,25 @@ const HomePage = () => {
                                                         </div>
                                                     </div>
 
-                                                    <div className="form-group">
-                                                        <label>Complex Activity (A)</label>
-                                                        <div className="multiselect-dropdown">
-                                                            <button type="button" className="multiselect-toggle" onClick={() => toggleDropdown(`${obj.id}-activity`)}>
+                                                    <div className="taxonomy-item">
+                                                        <label className="label-compact">Activity (A)</label>
+                                                        <div className="multiselect-dropdown compact">
+                                                            <button type="button" className="multiselect-toggle compact" onClick={() => toggleDropdown(`${obj.id}-activity`)}>
                                                                 <span className={!obj.complexEngineeringActivity || obj.complexEngineeringActivity.length === 0 ? 'placeholder' : ''}>
-                                                                    {obj.complexEngineeringActivity.length > 0 
-                                                                        ? obj.complexEngineeringActivity.length > 2
-                                                                            ? `${obj.complexEngineeringActivity.slice(0, 2).join(', ')}...`
-                                                                            : obj.complexEngineeringActivity.join(', ')
-                                                                        : "-- Select --"
-                                                                    }
+                                                                    {obj.complexEngineeringActivity.length > 0 ? obj.complexEngineeringActivity.join(', ') : "Select"}
                                                                 </span>
-                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="20" width="20"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                                                        </button>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="16" width="16"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                                            </button>
                                                             {openDropdowns[`${obj.id}-activity`] && (
-                                                                <div className="multiselect-options">
+                                                                <div className="multiselect-options compact">
                                                                     {COMPLEX_ENGINEERING_ACTIVITY.map(a => (
-                                                                        <label key={a.code} className="multiselect-option" title={a.text}>
+                                                                        <label key={a.code} className="multiselect-option compact" title={a.text}>
                                                                             <input
                                                                                 type="checkbox"
                                                                                 checked={obj.complexEngineeringActivity.includes(a.code)}
                                                                                 onChange={() => handleMultiSelectChange(obj.id, 'complexEngineeringActivity', a.code)}
                                                                             />
-                                                                            {a.code}: {a.text.split(':')[0]}
+                                                                            {a.code}
                                                                         </label>
                                                                     ))}
                                                                 </div>
@@ -738,36 +714,36 @@ const HomePage = () => {
                                 </div>
                             )}
 
-                            <div className="action-buttons">
-                                <button type="button" className="btn btn-secondary" onClick={createObjectiveBlock}>
+                            <div className="action-buttons-compact">
+                                <button type="button" className="btn btn-secondary btn-compact" onClick={createObjectiveBlock}>
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                         <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                                     </svg>
                                     Add Objective
                                 </button>
-                    <button
-                                type="button" 
-                                className="btn btn-primary" 
-                                onClick={handleSaveAllObjectives}
-                                disabled={isSaving}
-                            >
-                                {isSaving ? (
-                                    <>
-                                        <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle style={{opacity: 0.25}} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path style={{opacity: 0.75}} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Saving...
-                                    </>
-                                ) : (
-                                    <>
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                                        </svg>
-                                        Save All Objectives
-                                    </>
-                                )}
-                            </button>
+                                <button
+                                    type="button" 
+                                    className="btn btn-primary btn-compact" 
+                                    onClick={handleSaveAllObjectives}
+                                    disabled={isSaving}
+                                >
+                                    {isSaving ? (
+                                        <>
+                                            <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle style={{opacity: 0.25}} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path style={{opacity: 0.75}} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Saving...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                            </svg>
+                                            Save All Objectives
+                                        </>
+                                    )}
+                                </button>
                             </div>
                         </div>
                     ) : (

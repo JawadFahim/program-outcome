@@ -1,4 +1,4 @@
-// src/pages/api/admin/add-courses-to-teacher.ts
+// src/pages/api/admin/add-courses-to-teacher.ts 
 import { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
