@@ -11,10 +11,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
         const client = await connectToDatabase();
         const db = client.db(DB_NAME);
-        const { teacherId, email, name, password, courses } = req.body;
+        const { teacherId, email, name, password, courses, program } = req.body;
 
         // Basic validation
-        if (!teacherId || !email || !name || !password || !Array.isArray(courses)) {
+        if (!teacherId || !email || !name || !password || !Array.isArray(courses) || !program) {
             return res.status(400).json({ message: 'Missing required fields.' });
         }
 
@@ -42,6 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             teacherId,
             email,
             name,
+            program,
             password: password, // Storing plaintext password
             coursesTaught: coursesTaught,
         });

@@ -29,6 +29,7 @@ interface Teacher {
     teacherId: string;
     email: string;
     name: string;
+    program: string;
     courses: Course[];
 }
 
@@ -171,6 +172,7 @@ const TeacherDetailsPage = () => {
             teacherId,
             email,
             name,
+            program: selectedProgram,
             password: 'test', // Default password
             courses: selectedCourses.map(c => ({
                 courseId: c.courseCode,
@@ -266,6 +268,7 @@ const TeacherDetailsPage = () => {
                                             <div className="card-header-compact">
                                                 <span className="teacher-id-badge-compact">{teacher.teacherId}</span>
                                                 <h3 className="teacher-name-compact">{teacher.name}</h3>
+                                                {teacher.program && <p className="teacher-program-compact">{teacher.program}</p>}
                                             </div>
                                             <div className="card-body-compact">
                                                 <div className="course-codes">
@@ -294,6 +297,7 @@ const TeacherDetailsPage = () => {
             </div>
             {isModalOpen && (
                 <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
+                    
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h2 className="modal-title">Add New Teacher</h2>
