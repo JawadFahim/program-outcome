@@ -14,13 +14,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             co_no,
             po_no,
             assessmentType,
+            totalScore,
             passMark,
             session,
             scores
         } = req.body;
 
         // Basic validation
-        if (!teacherId || !courseId || !co_no || !po_no || !assessmentType || !passMark || !session || !scores) {
+        if (!teacherId || !courseId || !co_no || !po_no || !assessmentType || !totalScore || !passMark || !session || !scores) {
             return res.status(400).json({ message: 'Missing required fields.' });
         }
 
@@ -34,6 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             co_no,
             po_no,
             assessmentType,
+            totalScore: Number(totalScore),
             passMark: Number(passMark),
             session,
             scores, // Array of { studentId, name, obtainedMark }

@@ -6,6 +6,7 @@ import { DB_NAME } from '../../lib/constants';
 // Define a type for the score data for better type-checking
 interface SavedScoreData {
     assessmentType: string;
+    totalScore: string;
     passMark: string;
     scores: {
         studentId: string;

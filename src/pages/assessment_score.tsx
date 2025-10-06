@@ -31,6 +31,7 @@ interface StudentScore {
 interface AssessmentEntry {
     id: string; // Unique ID for the panel (assessmentType for saved, generated for new)
     assessmentType: string;
+    totalScore: string;
     passMark: string;
     scores: Record<string, StudentScore>;
     isSavedInDb: boolean;
@@ -39,6 +40,7 @@ interface AssessmentEntry {
 
 interface SavedScoreData {
     assessmentType: string;
+    totalScore: string;
     passMark: string;
     scores: {
         studentId: string;
@@ -210,6 +212,7 @@ const AssessmentScorePage = () => {
                             return {
                                 id: data.assessmentType,
                                 assessmentType: data.assessmentType,
+                                totalScore: data.totalScore,
                                 passMark: data.passMark,
                                 scores: initialScores,
                                 isSavedInDb: true,
@@ -228,6 +231,7 @@ const AssessmentScorePage = () => {
                         const newEntry: AssessmentEntry = {
                             id: 'new-0',
                             assessmentType: '',
+                            totalScore: '',
                             passMark: '',
                             scores: initialScores,
                             isSavedInDb: false,
@@ -314,7 +318,7 @@ const AssessmentScorePage = () => {
         }));
     };
 
-    const handleFieldChange = (entryId: string, field: 'assessmentType' | 'passMark', value: string) => {
+    const handleFieldChange = (entryId: string, field: 'assessmentType' | 'passMark' | 'totalScore', value: string) => {
         setAssessmentEntries(prev => prev.map(entry => 
             entry.id === entryId ? { ...entry, [field]: value } : entry
         ));
@@ -341,6 +345,7 @@ const AssessmentScorePage = () => {
         const newEntry: AssessmentEntry = {
             id: `new-${Date.now()}`,
             assessmentType: '',
+            totalScore: '',
             passMark: '',
             scores: initialScores,
             isSavedInDb: false,
@@ -357,8 +362,8 @@ const AssessmentScorePage = () => {
         }
 
         // Validation
-        if (!selectedCourse || !selectedObjective || !entry.assessmentType || !entry.passMark) {
-            showToast("Please ensure all fields (Course, Objective, Type, Pass Mark) are filled.", "error");
+        if (!selectedCourse || !selectedObjective || !entry.assessmentType || !entry.passMark || !entry.totalScore) {
+            showToast("Please ensure all fields (Course, Objective, Type, Total Score, Pass Mark) are filled.", "error");
             return;
         }
 
@@ -399,6 +404,7 @@ const AssessmentScorePage = () => {
                     co_no: selectedObjective,
                     po_no: objective.mappedProgramOutcome,
                     assessmentType: entry.assessmentType,
+                    totalScore: entry.totalScore,
                     passMark: entry.passMark,
                     session,
                     scores: studentScores,
@@ -585,7 +591,11 @@ const AssessmentScorePage = () => {
                                                     )}
                                     </div>
                                     <div>
-                                                    <label htmlFor={`passMarkInput-${entry.id}`} className="form-label">5. Pass Mark</label>
+                                        <label htmlFor={`totalScoreInput-${entry.id}`} className="form-label">5. Total Score</label>
+                                        <input type="number" id={`totalScoreInput-${entry.id}`} className="input-field" placeholder="e.g., 100" min="0" max="100" value={entry.totalScore} onChange={(e) => handleFieldChange(entry.id, 'totalScore', e.target.value)} disabled={isLocked} onWheel={(e) => e.currentTarget.blur()} />
+                                    </div>
+                                    <div>
+                                                    <label htmlFor={`passMarkInput-${entry.id}`} className="form-label">6. Pass Mark</label>
                                                     <input type="number" id={`passMarkInput-${entry.id}`} className="input-field" placeholder="e.g., 40" min="0" max="100" value={entry.passMark} onChange={(e) => handleFieldChange(entry.id, 'passMark', e.target.value)} disabled={isLocked} onWheel={(e) => e.currentTarget.blur()} />
                                     </div>
                                                 <div className="assessment-actions">
