@@ -90,3 +90,5 @@ Here are some of the key API endpoints that power the application:
 -   `GET /api/score_summary`: Retrieves a comprehensive summary of student performance for a course.
 -   `POST /api/request-otp`: Sends an OTP for password reset.
 -   `POST /api/reset-password`: Resets a user's password using an OTP.
+
+test
