@@ -2,6 +2,10 @@ import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import '../../styles/admin/teacher-details.css';
 import AdminNavbar from '../../components/admin/AdminNavbar';
+import Pagination from '../../components/Pagination';
+import { SkeletonCard } from '../../components/Skeleton';
+
+const ITEMS_PER_PAGE = 12;
 
 interface CourseObjective {
     co_no: string;
@@ -44,6 +48,7 @@ const TeacherDetailsPage = () => {
     const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
     const [isTeacherDetailModalOpen, setIsTeacherDetailModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
     const [isAddCoursesModalOpen, setIsAddCoursesModalOpen] = useState(false);
 
     // Form state
@@ -137,12 +142,21 @@ const TeacherDetailsPage = () => {
     const filteredTeachers = teachers.filter(teacher => {
         const query = searchQuery.toLowerCase().trim();
         if (!query) return true;
-        
         const nameMatch = teacher.name.toLowerCase().includes(query);
         const idMatch = teacher.teacherId.toLowerCase().includes(query);
-        
         return nameMatch || idMatch;
     });
+
+    const totalPages = Math.ceil(filteredTeachers.length / ITEMS_PER_PAGE);
+    const paginatedTeachers = filteredTeachers.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
+    const handleSearchChange = (value: string) => {
+        setSearchQuery(value);
+        setCurrentPage(1);
+    };
 
     const handleCourseSelection = (course: OfferedCourse, isSelected: boolean) => {
         if (isSelected) {
@@ -247,7 +261,7 @@ const TeacherDetailsPage = () => {
                                 type="text"
                                 placeholder="Search by name or teacher ID..."
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(e) => handleSearchChange(e.target.value)}
                                 className="search-input"
                             />
                         </div>
@@ -257,13 +271,17 @@ const TeacherDetailsPage = () => {
                     </div>
                 </div>
                 <main>
-                    {loading && <p className="message">Loading teacher data...</p>}
+                    {loading && (
+                        <div className="teacher-cards-grid">
+                            {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+                        </div>
+                    )}
                     {error && <p className="message" style={{color: '#ef4444'}}>{error}</p>}
                     {!loading && !error && (
                         <>
                             {filteredTeachers.length > 0 ? (
                                 <div className="teacher-cards-grid">
-                                    {filteredTeachers.map(teacher => (
+                                    {paginatedTeachers.map(teacher => (
                                         <div key={teacher._id} className="teacher-card-compact" onClick={() => handleTeacherCardClick(teacher)}>
                                             <div className="card-header-compact">
                                                 <span className="teacher-id-badge-compact">{teacher.teacherId}</span>
@@ -286,6 +304,13 @@ const TeacherDetailsPage = () => {
                                         </div>
                                     ))}
                                 </div>
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={setCurrentPage}
+                                    itemsPerPage={ITEMS_PER_PAGE}
+                                    totalItems={filteredTeachers.length}
+                                />
                             ) : (
                                 <div className="no-results-message">
                                     <p>No teachers found matching &quot;{searchQuery}&quot;</p>

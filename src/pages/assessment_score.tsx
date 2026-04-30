@@ -1,8 +1,9 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getTeacherIdFromAuth, removeAuthTokenCookie } from '../lib/jwt';
 import Layout from '../components/Layout';
+import { SkeletonTable } from '../components/Skeleton';
 
 // --- Interfaces ---
 interface CourseTaught {
@@ -252,6 +253,101 @@ const AssessmentScorePage = () => {
     }, [selectedObjective, selectedCourse, selectedSession, teacherId]);
 
 
+    // --- Excel Upload/Download ---
+    const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+    const handleDownloadTemplate = async (entry: AssessmentEntry) => {
+        if (students.length === 0) {
+            showToast("No students loaded. Select a course, session, and objective first.", "error");
+            return;
+        }
+        const { default: ExcelJS } = await import('exceljs');
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('Scores');
+        sheet.columns = [
+            { header: 'Student ID', key: 'studentId', width: 16 },
+            { header: 'Student Name', key: 'name', width: 26 },
+            { header: 'Obtained Mark', key: 'mark', width: 16 },
+            { header: 'Absent (YES/NO)', key: 'absent', width: 18 },
+        ];
+        const headerRow = sheet.getRow(1);
+        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } };
+
+        students.forEach(student => {
+            sheet.addRow({
+                studentId: student.studentId,
+                name: student.name,
+                mark: entry.scores[student.studentId]?.mark || '',
+                absent: entry.scores[student.studentId]?.isAbsent ? 'YES' : '',
+            });
+        });
+
+        // Lock student ID and name columns
+        sheet.getColumn(1).protection = { locked: true };
+        sheet.getColumn(2).protection = { locked: true };
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${selectedCourse}_${selectedObjective}_${entry.assessmentType || 'scores'}_template.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>, entryId: string) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = ''; // reset so same file can be re-uploaded
+
+        try {
+            const { default: ExcelJS } = await import('exceljs');
+            const workbook = new ExcelJS.Workbook();
+            const buffer = await file.arrayBuffer();
+            await workbook.xlsx.load(buffer);
+
+            const sheet = workbook.getWorksheet('Scores') || workbook.worksheets[0];
+            if (!sheet) {
+                showToast("Could not read the Excel file. Make sure you use the downloaded template.", "error");
+                return;
+            }
+
+            const updates: Record<string, StudentScore> = {};
+            sheet.eachRow((row, rowNumber) => {
+                if (rowNumber === 1) return;
+                const studentId = String(row.getCell(1).value ?? '').trim();
+                const mark = String(row.getCell(3).value ?? '').trim();
+                const absent = String(row.getCell(4).value ?? '').trim().toUpperCase();
+                if (studentId) {
+                    updates[studentId] = {
+                        mark: absent === 'YES' ? '' : mark,
+                        isAbsent: absent === 'YES',
+                    };
+                }
+            });
+
+            let matchCount = 0;
+            setAssessmentEntries(prev => prev.map(entry => {
+                if (entry.id !== entryId) return entry;
+                const newScores = { ...entry.scores };
+                Object.entries(updates).forEach(([studentId, scoreData]) => {
+                    if (newScores[studentId] !== undefined) {
+                        newScores[studentId] = scoreData;
+                        matchCount++;
+                    }
+                });
+                return { ...entry, scores: newScores };
+            }));
+
+            showToast(`Imported scores for ${matchCount} student(s) from Excel.`, 'success');
+        } catch (err) {
+            console.error('Excel upload error:', err);
+            showToast("Failed to parse the Excel file. Please use the downloaded template.", "error");
+        }
+    };
+
     // --- UI Helpers ---
     const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
         setToastMessage(message);
@@ -367,6 +463,24 @@ const AssessmentScorePage = () => {
             return;
         }
 
+        if (Number(entry.passMark) > Number(entry.totalScore)) {
+            showToast("Pass mark cannot exceed the total score.", "error");
+            return;
+        }
+
+        if (Number(entry.passMark) < 0 || Number(entry.totalScore) <= 0) {
+            showToast("Total score must be positive and pass mark must be non-negative.", "error");
+            return;
+        }
+
+        const scoreExceedsTotal = Object.values(entry.scores).some(
+            s => !s.isAbsent && s.mark !== '' && Number(s.mark) > Number(entry.totalScore)
+        );
+        if (scoreExceedsTotal) {
+            showToast("One or more scores exceed the total score. Please correct them first.", "error");
+            return;
+        }
+
         const objective = courseObjectives.find(co => co.co_no === selectedObjective);
         if (!objective || !objective.mappedProgramOutcome) {
             showToast("Could not find the Program Outcome for the selected objective. Please check course setup.", "error");
@@ -416,8 +530,24 @@ const AssessmentScorePage = () => {
 
             showToast(result.message || "Scores saved successfully!", "success");
 
-            // After saving, refresh the state to reflect the changes
-            // A simple way is to re-trigger the data fetch for the current objective
+            // Audit trail (fire-and-forget)
+            fetch('/api/audit-log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    teacherId,
+                    action: entry.isSavedInDb ? 'update_scores' : 'save_scores',
+                    details: {
+                        courseId: selectedCourse,
+                        co_no: selectedObjective,
+                        assessmentType: entry.assessmentType,
+                        session,
+                        studentCount: studentScores.length,
+                    },
+                }),
+            }).catch(() => {});
+
+            // Refresh the state by re-triggering the data fetch for the current objective
             const currentObjective = selectedObjective;
             setSelectedObjective(''); 
             setTimeout(() => setSelectedObjective(currentObjective), 100);
@@ -547,7 +677,9 @@ const AssessmentScorePage = () => {
                         <div id="assessmentDetailsSection">
 
                             {isLoadingStudents ? (
-                                <div className="card text-center p-8">Loading assessment data...</div>
+                                <div className="card" style={{ padding: '1.25rem' }}>
+                                    <SkeletonTable rows={6} cols={5} />
+                                </div>
                             ) : assessmentEntries.length === 0 && showStudentSection ? (
                                 <div className="card message-card">
                                     <p>No students found for this course, or no assessment data exists.</p>
@@ -592,11 +724,37 @@ const AssessmentScorePage = () => {
                                     </div>
                                     <div>
                                         <label htmlFor={`totalScoreInput-${entry.id}`} className="form-label">5. Total Score</label>
-                                        <input type="number" id={`totalScoreInput-${entry.id}`} className="input-field" placeholder="e.g., 100" min="0" max="100" value={entry.totalScore} onChange={(e) => handleFieldChange(entry.id, 'totalScore', e.target.value)} disabled={isLocked} onWheel={(e) => e.currentTarget.blur()} />
+                                        <input
+                                            type="number"
+                                            id={`totalScoreInput-${entry.id}`}
+                                            className="input-field"
+                                            placeholder="e.g., 100"
+                                            min="0"
+                                            value={entry.totalScore}
+                                            onChange={(e) => handleFieldChange(entry.id, 'totalScore', e.target.value)}
+                                            disabled={isLocked}
+                                            onWheel={(e) => e.currentTarget.blur()}
+                                        />
                                     </div>
                                     <div>
-                                                    <label htmlFor={`passMarkInput-${entry.id}`} className="form-label">6. Pass Mark</label>
-                                                    <input type="number" id={`passMarkInput-${entry.id}`} className="input-field" placeholder="e.g., 40" min="0" max="100" value={entry.passMark} onChange={(e) => handleFieldChange(entry.id, 'passMark', e.target.value)} disabled={isLocked} onWheel={(e) => e.currentTarget.blur()} />
+                                        <label htmlFor={`passMarkInput-${entry.id}`} className="form-label">6. Pass Mark</label>
+                                        <input
+                                            type="number"
+                                            id={`passMarkInput-${entry.id}`}
+                                            className={`input-field${
+                                                entry.passMark && entry.totalScore && Number(entry.passMark) > Number(entry.totalScore)
+                                                    ? ' input-error-border' : ''
+                                            }`}
+                                            placeholder="e.g., 40"
+                                            min="0"
+                                            value={entry.passMark}
+                                            onChange={(e) => handleFieldChange(entry.id, 'passMark', e.target.value)}
+                                            disabled={isLocked}
+                                            onWheel={(e) => e.currentTarget.blur()}
+                                        />
+                                        {entry.passMark && entry.totalScore && Number(entry.passMark) > Number(entry.totalScore) && (
+                                            <p className="field-error-msg">Pass mark cannot exceed total score ({entry.totalScore})</p>
+                                        )}
                                     </div>
                                                 <div className="assessment-actions">
                                                      {entry.isSavedInDb && (
@@ -609,13 +767,40 @@ const AssessmentScorePage = () => {
 
                                             <div className="student-scores-header mt-6">
                                                 <h3>Scores for <span>{selectedObjectiveText}</span></h3>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    {!isLocked && (
+                                                        <div className="score-upload-actions">
+                                                            <button
+                                                                type="button"
+                                                                className="btn-excel"
+                                                                onClick={() => handleDownloadTemplate(entry)}
+                                                                title="Download Excel template pre-filled with student list"
+                                                            >
+                                                                📥 Template
+                                                            </button>
+                                                            <label
+                                                                className="btn-excel"
+                                                                style={{ cursor: 'pointer' }}
+                                                                title="Upload filled Excel to bulk-import scores"
+                                                            >
+                                                                📤 Upload Excel
+                                                                <input
+                                                                    type="file"
+                                                                    accept=".xlsx,.xls"
+                                                                    style={{ display: 'none' }}
+                                                                    ref={(el) => { fileInputRefs.current[entry.id] = el; }}
+                                                                    onChange={(e) => handleExcelUpload(e, entry.id)}
+                                                                />
+                                                            </label>
+                                                        </div>
+                                                    )}
                                                 <button 
                                                     type="button" 
                                                     className="collapse-toggle"
                                                     onClick={() => toggleAssessmentCollapse(entry.id)}
                                                     aria-label={collapsedAssessments[entry.id] ? "Expand student scores" : "Collapse student scores"}
                                                 >
-                                                    <svg 
+                                                        <svg 
                                                         className={`collapse-arrow ${collapsedAssessments[entry.id] ? 'collapsed' : ''}`}
                                                         width="20" 
                                                         height="20" 
@@ -627,6 +812,7 @@ const AssessmentScorePage = () => {
                                                         <path d="M6 9l6 6 6-6"/>
                                                     </svg>
                                                 </button>
+                                                </div>
                                     </div>
                                     <div className={`collapsible-content ${collapsedAssessments[entry.id] ? 'collapsed' : ''}`}>
                                         <div className="table-container">
@@ -647,14 +833,26 @@ const AssessmentScorePage = () => {
                                                                 <td>{student.studentId}</td>
                                                                 <td>{student.name}</td>
                                                                 <td>
-                                                                    <input 
-                                                                        type="number" 
-                                                                        className="input-field" 
-                                                                            value={entry.scores[student.studentId]?.mark || ''}
-                                                                            onChange={(e) => handleScoreChange(entry.id, student.studentId, e.target.value)}
-                                                                            disabled={isLocked || entry.scores[student.studentId]?.isAbsent}
-                                                                        min="0" max="100" placeholder="Mark" 
+                                                                    <input
+                                                                        type="number"
+                                                                        className={`input-field${
+                                                                            entry.totalScore &&
+                                                                            entry.scores[student.studentId]?.mark &&
+                                                                            Number(entry.scores[student.studentId].mark) > Number(entry.totalScore)
+                                                                                ? ' input-error-border' : ''
+                                                                        }`}
+                                                                        value={entry.scores[student.studentId]?.mark || ''}
+                                                                        onChange={(e) => handleScoreChange(entry.id, student.studentId, e.target.value)}
+                                                                        disabled={isLocked || entry.scores[student.studentId]?.isAbsent}
+                                                                        min="0"
+                                                                        placeholder="Mark"
                                                                         onWheel={(e) => e.currentTarget.blur()}
+                                                                        title={
+                                                                            entry.totalScore &&
+                                                                            entry.scores[student.studentId]?.mark &&
+                                                                            Number(entry.scores[student.studentId].mark) > Number(entry.totalScore)
+                                                                                ? `Exceeds total score of ${entry.totalScore}` : undefined
+                                                                        }
                                                                     />
                                                                 </td>
                                                                 <td className="text-center">

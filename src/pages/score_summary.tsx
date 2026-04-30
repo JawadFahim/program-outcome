@@ -132,6 +132,72 @@ const ScoreSummaryPage = () => {
         router.push('/login');
     };
 
+    const generateExcel = async () => {
+        if (!summaryData) return;
+        const { default: ExcelJS } = await import('exceljs');
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'Program Outcome Tracker';
+        workbook.created = new Date();
+
+        // Sheet 1: Student Scores
+        const scoreSheet = workbook.addWorksheet('Student Scores');
+        scoreSheet.columns = [
+            { header: '#', key: 'no', width: 5 },
+            { header: 'Student ID', key: 'id', width: 16 },
+            { header: 'Student Name', key: 'name', width: 26 },
+            ...summaryData.courseObjectives.map(co => ({ header: co, key: co, width: 14 })),
+        ];
+        summaryData.studentData.forEach((student, index) => {
+            const row: Record<string, string | number> = { no: index + 1, id: student.id, name: student.name };
+            summaryData.courseObjectives.forEach(co => {
+                const status = student.finalCoStatus[co];
+                const score = student.scores[co];
+                row[co] = status === 'Absent' ? 'Absent' : score !== undefined ? `${score} (${status})` : 'N/A';
+            });
+            scoreSheet.addRow(row);
+        });
+        const headerRow1 = scoreSheet.getRow(1);
+        headerRow1.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRow1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2980B9' } };
+        headerRow1.alignment = { horizontal: 'center' };
+
+        // Sheet 2: CO Summary
+        const summarySheet = workbook.addWorksheet('CO Summary');
+        summarySheet.columns = [
+            { header: 'CO', key: 'co', width: 8 },
+            { header: 'Pass %', key: 'passPercent', width: 12 },
+            { header: 'Passed', key: 'passed', width: 10 },
+            { header: 'Total', key: 'total', width: 10 },
+            { header: 'Assessment Types', key: 'types', width: 28 },
+            { header: 'Pass Mark', key: 'passMark', width: 12 },
+        ];
+        summaryData.courseObjectives.forEach(co => {
+            const stats = summaryData.summary[co];
+            if (!stats) return;
+            summarySheet.addRow({
+                co,
+                passPercent: `${stats.percentage.toFixed(2)}%`,
+                passed: stats.passed,
+                total: stats.total,
+                types: stats.assessmentTypes.join(' + '),
+                passMark: stats.finalPassMark,
+            });
+        });
+        const headerRow2 = summarySheet.getRow(1);
+        headerRow2.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRow2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF16A085' } };
+        headerRow2.alignment = { horizontal: 'center' };
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${courseDisplayName.replace(/\s+/g, '_')}_${selectedSession}_Summary.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     const generatePdf = () => {
         if (!summaryData) return;
 
@@ -280,12 +346,17 @@ const ScoreSummaryPage = () => {
                     <div id="scoresDisplaySection">
                          <div className="summary-header">
                             <h2 className="summary-title">Scores for <span>{courseDisplayName}</span></h2>
-                            <button onClick={generatePdf} className="btn btn-primary" disabled={!summaryData || summaryData.studentData.length === 0}>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm6 10a.75.75 0 01-.75-.75V8.707l-1.72 1.72a.75.75 0 01-1.06-1.06l3-3a.75.75 0 011.06 0l3 3a.75.75 0 11-1.06 1.06l-1.72-1.72V11.25A.75.75 0 0110 12z" clipRule="evenodd" />
-                                </svg>
-                                Generate PDF
-                            </button>
+                            <div style={{ display: 'flex', gap: '0.625rem', flexWrap: 'wrap' }}>
+                                <button onClick={generatePdf} className="btn btn-primary" disabled={!summaryData || summaryData.studentData.length === 0}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm6 10a.75.75 0 01-.75-.75V8.707l-1.72 1.72a.75.75 0 01-1.06-1.06l3-3a.75.75 0 011.06 0l3 3a.75.75 0 11-1.06 1.06l-1.72-1.72V11.25A.75.75 0 0110 12z" clipRule="evenodd" />
+                                    </svg>
+                                    Export PDF
+                                </button>
+                                <button onClick={generateExcel} className="btn-excel" disabled={!summaryData || summaryData.studentData.length === 0}>
+                                    📊 Export Excel
+                                </button>
+                            </div>
                         </div>
                         <div className="card table-container">
                              <table className="score-table">

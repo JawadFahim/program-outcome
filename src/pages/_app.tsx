@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { IoIosWarning } from 'react-icons/io';
 import FeedbackPanel from '../components/FeedbackPanel';
+import ErrorBoundary from '../components/ErrorBoundary';
+import SessionTimeoutWarner from '../components/SessionTimeoutWarner';
 import '../styles/globals.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -51,7 +53,10 @@ function MyApp({ Component, pageProps }: AppProps) {
 
     return (
         <>
-            <Component {...pageProps} />
+            <SessionTimeoutWarner />
+            <ErrorBoundary>
+                <Component {...pageProps} />
+            </ErrorBoundary>
             {showFeedbackButton && (
                 <>
                     <button
@@ -74,7 +79,7 @@ function MyApp({ Component, pageProps }: AppProps) {
                     )}
                 </>
             )}
-        </>
+        </> 
     );
 }
 

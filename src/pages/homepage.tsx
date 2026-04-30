@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { getTeacherIdFromAuth, removeAuthTokenCookie } from '../lib/jwt';
 import Layout from '../components/Layout';
+import { SkeletonObjectiveCards } from '../components/Skeleton';
 
 interface CourseObjective {
     id: string;
@@ -60,6 +61,7 @@ const HomePage = () => {
     const [toastMessage, setToastMessage] = useState<string>('');
     const [toastType, setToastType] = useState<'success' | 'error' | 'warning'>('success');
     const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
+    const [validationAttempted, setValidationAttempted] = useState<boolean>(false);
     const [openSelects, setOpenSelects] = useState<Record<string, boolean>>({});
 
     const useOutsideAlerter = (ref: React.RefObject<HTMLElement | null>, close: () => void) => {
@@ -381,10 +383,12 @@ const HomePage = () => {
         });
 
         if (!allValid) {
-            showModal("Validation Error", "Please fill in all required fields for each course objective.", () => {}, 'OK', 'btn-primary', false);
+            setValidationAttempted(true);
+            showModal("Validation Error", "Please fill in the highlighted fields — each objective needs a description and a Program Outcome.", () => {}, 'OK', 'btn-primary', false);
             setIsSaving(false);
             return;
         }
+        setValidationAttempted(false);
 
         if (objectivesData.length === 0) {
             showToast("No course objectives to save.", "warning");
@@ -408,6 +412,16 @@ const HomePage = () => {
 
             if (response.ok) {
                 showToast(result.message || 'Objectives saved successfully!', 'success');
+                // Audit trail (fire-and-forget)
+                fetch('/api/audit-log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        teacherId,
+                        action: 'save_course_objectives',
+                        details: { courseId: selectedCourse, session: selectedSession, count: objectivesData.length },
+                    }),
+                }).catch(() => {});
             } else {
                 showToast(result.message || 'Failed to save objectives.', 'error');
             }
@@ -531,7 +545,7 @@ const HomePage = () => {
                             </div>
 
                             {isLoadingObjectives ? (
-                                <div className="loading-message">Loading objectives...</div>
+                                <SkeletonObjectiveCards count={3} />
                             ) : (
                                 <div id="courseObjectivesContainer" className="objectives-container">
                                     {courseObjectives.map((obj) => (
@@ -553,22 +567,36 @@ const HomePage = () => {
                                             <div className="objective-content-compact">
                                                 <div className="objective-main-row">
                                                     <div className="objective-description">
-                                                        <label className="label-compact">Description</label>
+                                                        <label className="label-compact">
+                                                            Description
+                                                            {validationAttempted && !obj.description.trim() && (
+                                                                <span className="field-error-msg" style={{ marginLeft: '0.5rem' }}>Required</span>
+                                                            )}
+                                                        </label>
                                                         <textarea 
-                                                            className="textarea-compact" 
+                                                            className={`textarea-compact${validationAttempted && !obj.description.trim() ? ' input-error-border' : ''}`}
                                                             name={`course_objective_desc_${obj.id}`} 
                                                             placeholder="Enter course objective description..."
                                                             value={obj.description}
                                                             onChange={(e) => handleObjectiveChange(obj.id, 'description', e.target.value)}
                                                             rows={2}
+                                                            maxLength={300}
                                                         ></textarea>
+                                                        <div className={`textarea-char-counter${obj.description.length > 260 ? ' near-limit' : ''}`}>
+                                                            {obj.description.length}/300
+                                                        </div>
                                                     </div>
                                                     <div className="objective-po">
-                                                        <label className="label-compact">Program Outcome</label>
+                                                        <label className="label-compact">
+                                                            Program Outcome
+                                                            {validationAttempted && !obj.programOutcome && (
+                                                                <span className="field-error-msg" style={{ marginLeft: '0.5rem' }}>Required</span>
+                                                            )}
+                                                        </label>
                                                         <div className="custom-select">
                                                             <button 
                                                                 type="button" 
-                                                                className="custom-select-toggle compact"
+                                                                className={`custom-select-toggle compact${validationAttempted && !obj.programOutcome ? ' input-error-border' : ''}`}
                                                                 onClick={() => toggleSelect(`po-${obj.id}`)}
                                                             >
                                                                 <span className={!obj.programOutcome ? 'placeholder' : ''}>
