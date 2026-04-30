@@ -280,6 +280,7 @@ const TeacherDetailsPage = () => {
                     {!loading && !error && (
                         <>
                             {filteredTeachers.length > 0 ? (
+                                <>
                                 <div className="teacher-cards-grid">
                                     {paginatedTeachers.map(teacher => (
                                         <div key={teacher._id} className="teacher-card-compact" onClick={() => handleTeacherCardClick(teacher)}>
@@ -311,6 +312,7 @@ const TeacherDetailsPage = () => {
                                     itemsPerPage={ITEMS_PER_PAGE}
                                     totalItems={filteredTeachers.length}
                                 />
+                                </>
                             ) : (
                                 <div className="no-results-message">
                                     <p>No teachers found matching &quot;{searchQuery}&quot;</p>
