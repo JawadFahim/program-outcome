@@ -644,6 +644,90 @@ body.admin-homepage {
     font-size: 1.1rem;
 }
 
+/* Add New Course button */
+.btn-add-course {
+    padding: 0.75rem 1.25rem;
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+}
+
+.btn-add-course:hover {
+    background-color: #dbeafe;
+    border-color: #93c5fd;
+}
+
+/* Add Course Modal – narrower variant */
+.modal-content--sm {
+    max-width: 520px;
+}
+
+/* Add course form layout */
+.add-course-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-top: 1.25rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 0.4rem;
+}
+
+.form-field--half {
+    max-width: 50%;
+}
+
+.form-field label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--admin-text-primary);
+}
+
+.form-field .required {
+    color: var(--admin-error);
+}
+
+.form-field input {
+    padding: 0.65rem 0.875rem;
+    border: 1px solid var(--admin-border-color);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-family: inherit;
+    background-color: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-field input:focus {
+    outline: none;
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.add-course-error {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--admin-error);
+    background-color: #fff1f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    padding: 0.6rem 0.875rem;
+}
+
 /* Student Entry Modal Specific Styles */
 .modal-content table button {
     padding: 0.375rem 0.75rem;

@@ -10,6 +10,15 @@ interface Course {
     credit: number;
 }
 
+interface NewCourseForm {
+    courseCode: string;
+    versionCode: string;
+    courseTitle: string;
+    credit: string;
+}
+
+const EMPTY_COURSE_FORM: NewCourseForm = { courseCode: '', versionCode: '', courseTitle: '', credit: '' };
+
 const CourseOfferPage = () => {
     const [programs, setPrograms] = useState<string[]>([]);
     const [selectedProgram, setSelectedProgram] = useState('');
@@ -20,6 +29,10 @@ const CourseOfferPage = () => {
     const [selectedSession, setSelectedSession] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
+    const [isAddCourseModalOpen, setIsAddCourseModalOpen] = useState(false);
+    const [newCourseForm, setNewCourseForm] = useState<NewCourseForm>(EMPTY_COURSE_FORM);
+    const [addCourseError, setAddCourseError] = useState('');
+    const [addCourseLoading, setAddCourseLoading] = useState(false);
 
     useEffect(() => {
         const fetchPrograms = async () => {
@@ -98,6 +111,48 @@ const CourseOfferPage = () => {
         }
     };
 
+    const handleAddCourse = async () => {
+        setAddCourseError('');
+        const { courseCode, versionCode, courseTitle, credit } = newCourseForm;
+        if (!courseCode.trim() || !versionCode.trim() || !courseTitle.trim() || !credit.trim()) {
+            setAddCourseError('All fields are required.');
+            return;
+        }
+        if (isNaN(Number(credit)) || Number(credit) <= 0) {
+            setAddCourseError('Credit must be a positive number.');
+            return;
+        }
+        setAddCourseLoading(true);
+        try {
+            const response = await fetch('/api/admin/add-course-to-program', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    program: selectedProgram,
+                    courseCode: courseCode.trim(),
+                    versionCode: versionCode.trim(),
+                    courseTitle: courseTitle.trim(),
+                    credit: Number(credit),
+                }),
+            });
+            const data = await response.json();
+            if (response.ok) {
+                // Refresh the course list for the selected program
+                const listResponse = await fetch(`/api/admin/get-courses-for-program?program=${selectedProgram}`);
+                const listData = await listResponse.json();
+                if (listResponse.ok) setCourses(listData.courses);
+                setNewCourseForm(EMPTY_COURSE_FORM);
+                setIsAddCourseModalOpen(false);
+            } else {
+                setAddCourseError(data.message || 'Failed to add course.');
+            }
+        } catch {
+            setAddCourseError('An error occurred. Please try again.');
+        } finally {
+            setAddCourseLoading(false);
+        }
+    };
+
     const handleOfferCourses = async () => {
         try {
             const response = await fetch('/api/admin/offer-courses', {
@@ -140,6 +195,15 @@ const CourseOfferPage = () => {
                             {programs.map(p => <option key={p} value={p}>{p}</option>)}
                         </select>
                     </div>
+
+                    {selectedProgram && (
+                        <button
+                            onClick={() => { setNewCourseForm(EMPTY_COURSE_FORM); setAddCourseError(''); setIsAddCourseModalOpen(true); }}
+                            className="btn-add-course"
+                        >
+                            + Add New Course
+                        </button>
+                    )}
                     
                     {courses.length > 0 && (
                         <>
@@ -214,6 +278,65 @@ const CourseOfferPage = () => {
                     </div>
                 ) : null}
             </main>
+
+            {isAddCourseModalOpen && (
+                <div className="modal-backdrop">
+                    <div className="modal-content modal-content--sm">
+                        <h3>Add New Course to <em>{selectedProgram}</em></h3>
+                        <div className="add-course-form">
+                            <div className="form-row">
+                                <div className="form-field">
+                                    <label>Course Code <span className="required">*</span></label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. CSE101"
+                                        value={newCourseForm.courseCode}
+                                        onChange={(e) => setNewCourseForm({ ...newCourseForm, courseCode: e.target.value })}
+                                    />
+                                </div>
+                                <div className="form-field">
+                                    <label>Version Code <span className="required">*</span></label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. 2024"
+                                        value={newCourseForm.versionCode}
+                                        onChange={(e) => setNewCourseForm({ ...newCourseForm, versionCode: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="form-field">
+                                <label>Course Title <span className="required">*</span></label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Introduction to Programming"
+                                    value={newCourseForm.courseTitle}
+                                    onChange={(e) => setNewCourseForm({ ...newCourseForm, courseTitle: e.target.value })}
+                                />
+                            </div>
+                            <div className="form-field form-field--half">
+                                <label>Credit Hours <span className="required">*</span></label>
+                                <input
+                                    type="number"
+                                    placeholder="e.g. 3"
+                                    min="0.5"
+                                    step="0.5"
+                                    value={newCourseForm.credit}
+                                    onChange={(e) => setNewCourseForm({ ...newCourseForm, credit: e.target.value })}
+                                />
+                            </div>
+                            {addCourseError && (
+                                <p className="add-course-error">{addCourseError}</p>
+                            )}
+                        </div>
+                        <div className="modal-footer">
+                            <button onClick={() => setIsAddCourseModalOpen(false)} disabled={addCourseLoading}>Cancel</button>
+                            <button onClick={handleAddCourse} disabled={addCourseLoading}>
+                                {addCourseLoading ? 'Saving...' : 'Save Course'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {isModalOpen && (
                 <div className="modal-backdrop">
