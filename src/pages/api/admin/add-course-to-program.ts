@@ -37,12 +37,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(409).json({ message: `A course with code "${courseCode}" and version "${versionCode}" already exists in this program.` });
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await collection.updateOne(
             { program },
             {
                 $push: {
                     courses: { courseCode, versionCode, courseTitle, credit: creditNum },
-                },
+                } as any,
             }
         );
 
