@@ -1,64 +1,90 @@
+/* ================================================================
+   Admin Navbar — Vercel design system
+   ================================================================ */
+
 .admin-header {
-    background-color: #fff;
-    padding: 1rem 2rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+  height: 56px;
+  background: #ffffff;
+  /* Shadow-as-border on the bottom edge */
+  box-shadow: rgba(0, 0, 0, 0.08) 0px -1px 0px inset;
 }
 
 .header-nav {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    flex-grow: 1;
-}
-
-.nav-links-container {
-    display: flex;
-    justify-content: center;
-    flex-grow: 1;
-    gap: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-grow: 1;
+  min-width: 0;
 }
 
 .header-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #1f2937;
+  font-family: 'Geist', 'Inter', Arial, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #171717;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nav-links-container {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-grow: 1;
+  justify-content: center;
 }
 
 .nav-link {
-    font-size: 1rem;
-    font-weight: 500;
-    color: #4b5563;
-    text-decoration: none;
-    transition: color 0.2s;
-    padding: 0.5rem 0;
-    border-bottom: 2px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: 'Geist', 'Inter', Arial, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #666666;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
 }
 
 .nav-link:hover {
-    color: #10b981;
+  background: #f5f5f5;
+  color: #171717;
 }
 
 .nav-link.active {
-    color: #10b981;
-    border-bottom-color: #10b981;
+  background: #171717;
+  color: #ffffff;
 }
 
+/* Logout: danger ghost button */
 .logout-btn {
-    background-color: #ef4444;
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  height: 32px;
+  background: #ffffff;
+  color: #e11d48;
+  box-shadow: rgba(225, 29, 72, 0.28) 0px 0px 0px 1px;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Geist', 'Inter', Arial, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s;
 }
 
-.logout-btn:hover {
-    background-color: #dc2626;
-} 
+.logout-btn:hover { background: #fff1f2; }

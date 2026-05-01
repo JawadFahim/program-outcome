@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
+import '../../styles/admin/homepage.css';
 import '../../styles/admin/teacher-details.css';
 import AdminNavbar from '../../components/admin/AdminNavbar';
 import Pagination from '../../components/Pagination';
@@ -285,9 +286,14 @@ const TeacherDetailsPage = () => {
                                     {paginatedTeachers.map(teacher => (
                                         <div key={teacher._id} className="teacher-card-compact" onClick={() => handleTeacherCardClick(teacher)}>
                                             <div className="card-header-compact">
-                                                <span className="teacher-id-badge-compact">{teacher.teacherId}</span>
+                                                <div className="teacher-avatar">
+                                                    {teacher.name.charAt(0).toUpperCase()}
+                                                </div>
                                                 <h3 className="teacher-name-compact">{teacher.name}</h3>
-                                                {teacher.program && <p className="teacher-program-compact">{teacher.program}</p>}
+                                                <div className="teacher-meta-compact">
+                                                    <span className="teacher-id-badge-compact">{teacher.teacherId}</span>
+                                                    {teacher.program && <span className="teacher-program-compact">{teacher.program}</span>}
+                                                </div>
                                             </div>
                                             <div className="card-body-compact">
                                                 <div className="course-codes">
@@ -298,7 +304,7 @@ const TeacherDetailsPage = () => {
                                                             </span>
                                                         ))
                                                     ) : (
-                                                        <span className="no-courses-text">No courses</span>
+                                                        <span className="no-courses-text">No courses assigned</span>
                                                     )}
                                                 </div>
                                             </div>
