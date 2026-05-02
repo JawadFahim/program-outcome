@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import ExcelJS from 'exceljs';
 import AdminNavbar from '../../components/admin/AdminNavbar';
+import CustomSelect from '../../components/admin/CustomSelect';
 import '../../styles/admin/homepage.css'; // Reusing styles for consistency
 
 interface Student {
@@ -224,17 +225,21 @@ const StudentEntryPage = () => {
                     <div className="filters">
                         <div className="select-group">
                             <label className="select-label">Session</label>
-                            <select value={selectedLoadSession} onChange={(e) => setSelectedLoadSession(e.target.value)} className="select-dropdown">
-                                <option value="">Select Session</option>
-                                {programInfo.sessions.map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
+                            <CustomSelect
+                                value={selectedLoadSession}
+                                onChange={setSelectedLoadSession}
+                                options={programInfo.sessions.map(s => ({ value: s, label: s }))}
+                                placeholder="Select Session"
+                            />
                         </div>
                         <div className="select-group">
                             <label className="select-label">Program</label>
-                            <select value={selectedLoadProgram} onChange={(e) => setSelectedLoadProgram(e.target.value)} className="select-dropdown">
-                                <option value="">Select Program</option>
-                                {programInfo.programs.map(p => <option key={p} value={p}>{p}</option>)}
-                            </select>
+                            <CustomSelect
+                                value={selectedLoadProgram}
+                                onChange={setSelectedLoadProgram}
+                                options={programInfo.programs.map(p => ({ value: p, label: p }))}
+                                placeholder="Select Program"
+                            />
                         </div>
                         <button onClick={handleLoadStudents} className="btn-fetch">Load Students</button>
                     </div>
@@ -329,14 +334,16 @@ const StudentEntryPage = () => {
                         <div className="filters">
                             <div className="select-group">
                                 <label className="select-label">From Session</label>
-                                <select value={sourceSession} onChange={(e) => setSourceSession(e.target.value)} className="select-dropdown">
-                                    <option value="">Select Session</option>
-                                    {programInfo.sessions.filter(s => s !== selectedLoadSession).map(s => <option key={s} value={s}>{s}</option>)}
-                                </select>
+                                <CustomSelect
+                                    value={sourceSession}
+                                    onChange={setSourceSession}
+                                    options={programInfo.sessions.filter(s => s !== selectedLoadSession).map(s => ({ value: s, label: s }))}
+                                    placeholder="Select Session"
+                                />
                             </div>
                             <div className="select-group">
                                 <label className="select-label">Program</label>
-                                <input type="text" value={selectedLoadProgram} disabled />
+                                <div className="custom-select-disabled-value">{selectedLoadProgram || '—'}</div>
                             </div>
                         </div>
 

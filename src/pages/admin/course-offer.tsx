@@ -1,6 +1,7 @@
 // src/pages/admin/course-offer.tsx
 import { useState, useEffect } from 'react';
 import AdminNavbar from '../../components/admin/AdminNavbar';
+import CustomSelect from '../../components/admin/CustomSelect';
 import '../../styles/admin/homepage.css';
 
 interface Course {
@@ -191,10 +192,13 @@ const CourseOfferPage = () => {
                 <div className="course-offer-controls">
                     <div className="control-group">
                         <label className="control-label">Program:</label>
-                        <select value={selectedProgram} onChange={(e) => setSelectedProgram(e.target.value)} className="control-select">
-                            <option value="">Select Program</option>
-                            {programs.map(p => <option key={p} value={p}>{p}</option>)}
-                        </select>
+                        <CustomSelect
+                            value={selectedProgram}
+                            onChange={setSelectedProgram}
+                            options={programs.map(p => ({ value: p, label: p }))}
+                            placeholder="Select Program"
+                            className="control-select-wrap"
+                        />
                     </div>
 
                     {selectedProgram && (
@@ -345,10 +349,12 @@ const CourseOfferPage = () => {
                         <h3>Confirm Course Offering</h3>
                         <div className="select-group">
                             <label className="select-label">Session</label>
-                            <select value={selectedSession} onChange={(e) => setSelectedSession(e.target.value)} className="select-dropdown">
-                                <option value="">Select Session</option>
-                                {sessions.map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
+                            <CustomSelect
+                                value={selectedSession}
+                                onChange={setSelectedSession}
+                                options={sessions.map(s => ({ value: s, label: s }))}
+                                placeholder="Select Session"
+                            />
                         </div>
                         <div className="table-container" style={{ marginTop: '1rem' }}>
                             <p>You are about to offer the following courses to <strong>{selectedProgram}</strong> for the <strong>{selectedSession}</strong> session:</p>

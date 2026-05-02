@@ -7,12 +7,15 @@
 
 /* ---- Tokens ---- */
 :root {
-  --vk: #171717;       /* Vercel Black — primary text + CTA */
+  --vk: #171717;       /* Vercel Black — primary text */
   --vw: #ffffff;       /* Pure White */
   --vbg: #fafafa;      /* Page background */
   --vt1: #171717;      /* Text primary */
   --vt2: #666666;      /* Text secondary */
   --vt3: #999999;      /* Text muted / placeholders */
+  --va: #059669;       /* Accent — emerald green CTA */
+  --va-hover: #047857; /* Accent hover */
+  --va-bg: #ecfdf5;    /* Accent light bg */
   --vring: rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
   --vcard: rgba(0,0,0,0.08) 0px 0px 0px 1px,
            rgba(0,0,0,0.04) 0px 2px 2px,
@@ -91,7 +94,7 @@ body.admin-homepage { background-color: var(--vbg); }
    BUTTONS
    ================================================================ */
 
-/* Primary — dark fill (main CTA) */
+/* Primary — emerald green fill (main CTA) */
 .btn-primary,
 .btn-fetch {
   display: inline-flex;
@@ -100,7 +103,7 @@ body.admin-homepage { background-color: var(--vbg); }
   gap: 6px;
   padding: 0 16px;
   height: 36px;
-  background: var(--vk);
+  background: var(--va);
   color: var(--vw);
   border: none;
   border-radius: var(--vr);
@@ -115,7 +118,7 @@ body.admin-homepage { background-color: var(--vbg); }
 }
 
 .btn-primary:hover:not(:disabled),
-.btn-fetch:hover:not(:disabled) { background: #2e2e2e; }
+.btn-fetch:hover:not(:disabled) { background: var(--va-hover); }
 
 .btn-primary:disabled,
 .btn-fetch:disabled { opacity: 0.38; cursor: not-allowed; }
@@ -148,13 +151,13 @@ body.admin-homepage { background-color: var(--vbg); }
 }
 
 .btn-preview:not(:disabled) {
-  background: var(--vk);
+  background: var(--va);
   color: var(--vw);
   box-shadow: none;
   cursor: pointer;
 }
 
-.btn-preview:not(:disabled):hover { background: #2e2e2e; }
+.btn-preview:not(:disabled):hover { background: var(--va-hover); }
 
 /* Secondary — ghost with light shadow border */
 .btn-secondary {
@@ -378,6 +381,24 @@ body.admin-homepage { background-color: var(--vbg); }
   background: #ebebeb;
 }
 
+/* Width override when CustomSelect replaces control-select */
+.custom-select.control-select-wrap { min-width: 200px; flex: 0 0 auto; }
+
+/* Read-only display value (replaces disabled input) */
+.custom-select-disabled-value {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
+  box-shadow: var(--vring);
+  border-radius: var(--vr);
+  background: var(--vbg);
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--vt2);
+  min-width: 0;
+}
+
 /* ================================================================
    TABLES
    ================================================================ */
@@ -419,7 +440,7 @@ body.admin-homepage { background-color: var(--vbg); }
   width: 1rem;
   height: 1rem;
   cursor: pointer;
-  accent-color: var(--vk);
+  accent-color: var(--va);
 }
 
 /* ================================================================
@@ -656,11 +677,11 @@ body.admin-homepage { background-color: var(--vbg); }
 .modal-footer button:first-child:hover:not(:disabled) { background: #f5f5f5; }
 
 .modal-footer button:last-child {
-  background: var(--vk);
+  background: var(--va);
   color: var(--vw);
 }
 
-.modal-footer button:last-child:hover:not(:disabled) { background: #2e2e2e; }
+.modal-footer button:last-child:hover:not(:disabled) { background: var(--va-hover); }
 .modal-footer button:disabled { opacity: 0.38; cursor: not-allowed; }
 
 /* ================================================================
@@ -794,7 +815,7 @@ body.admin-homepage { background-color: var(--vbg); }
 .btn-inside {
   position: absolute;
   right: 5px;
-  background: var(--vk);
+  background: var(--va);
   color: var(--vw);
   border: none;
   height: 30px;
@@ -808,7 +829,7 @@ body.admin-homepage { background-color: var(--vbg); }
   transition: background 0.15s;
 }
 
-.btn-inside:hover:not(:disabled) { background: #2e2e2e; }
+.btn-inside:hover:not(:disabled) { background: var(--va-hover); }
 .btn-inside:disabled { opacity: 0.38; cursor: not-allowed; }
 
 /* Student result detail block */
@@ -1038,7 +1059,7 @@ body.admin-homepage { background-color: var(--vbg); }
 
 .pagination-btn:hover:not(:disabled):not(.active) { background: var(--vbg); }
 .pagination-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.pagination-btn.active { background: var(--vk); color: var(--vw); box-shadow: none; }
+.pagination-btn.active { background: var(--va); color: var(--vw); box-shadow: none; }
 
 .pagination-ellipsis {
   width: 32px;
