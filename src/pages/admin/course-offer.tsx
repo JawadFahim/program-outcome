@@ -1,5 +1,5 @@
 // src/pages/admin/course-offer.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import AdminNavbar from '../../components/admin/AdminNavbar';
 import CustomSelect from '../../components/admin/CustomSelect';
 import '../../styles/admin/homepage.css';
@@ -29,7 +29,6 @@ const CourseOfferPage = () => {
     const [sessions, setSessions] = useState<string[]>([]);
     const [selectedSession, setSelectedSession] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
-    const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
     const [isAddCourseModalOpen, setIsAddCourseModalOpen] = useState(false);
     const [newCourseForm, setNewCourseForm] = useState<NewCourseForm>(EMPTY_COURSE_FORM);
     const [addCourseError, setAddCourseError] = useState('');
@@ -89,19 +88,13 @@ const CourseOfferPage = () => {
         }
     }, [selectedProgram]);
     
-    useEffect(() => {
+    const filteredCourses = useMemo(() => {
         const query = searchQuery.toLowerCase().trim();
-        if (!query) {
-            setFilteredCourses(courses);
-            return;
-        }
-
-        const searchTerms = query.split(/\s+/).filter(Boolean);
-        const results = courses.filter(course => {
-            const searchableText = `${course.courseCode} ${course.versionCode} ${course.courseTitle}`.toLowerCase();
-            return searchTerms.every(term => searchableText.includes(term));
+        if (!query) return courses;
+        return courses.filter(course => {
+            const text = `${course.courseCode} ${course.versionCode} ${course.courseTitle}`.toLowerCase();
+            return query.split(/\s+/).every(term => text.includes(term));
         });
-        setFilteredCourses(results);
     }, [searchQuery, courses]);
 
     const handleCourseSelection = (course: Course, isSelected: boolean) => {
@@ -189,49 +182,60 @@ const CourseOfferPage = () => {
         <AdminNavbar page="course-offer" />
         <div className="admin-container">
             <main>
-                <div className="course-offer-controls">
-                    <div className="control-group">
-                        <label className="control-label">Program:</label>
-                        <CustomSelect
-                            value={selectedProgram}
-                            onChange={setSelectedProgram}
-                            options={programs.map(p => ({ value: p, label: p }))}
-                            placeholder="Select Program"
-                            className="control-select-wrap"
-                        />
-                    </div>
-
-                    {selectedProgram && (
-                        <button
-                            onClick={() => { setNewCourseForm(EMPTY_COURSE_FORM); setAddCourseError(''); setIsAddCourseModalOpen(true); }}
-                            className="btn-add-course"
-                        >
-                            + Add New Course
-                        </button>
-                    )}
-                    
-                    {courses.length > 0 && (
-                        <>
-                            <div className="control-group">
-                                <input
-                                    type="text"
-                                    placeholder="Search by course code or title..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="control-search"
-                                />
-                            </div>
-                            
-                            <button 
-                                onClick={() => setIsModalOpen(true)} 
-                                className="btn-preview" 
-                                disabled={selectedCourses.length === 0}
+                {/* ── Toolbar row ── */}
+                <div className="course-offer-toolbar">
+                    <div className="toolbar-left">
+                        <div className="control-group">
+                            <label className="control-label">Program:</label>
+                            <CustomSelect
+                                value={selectedProgram}
+                                onChange={(v) => { setSelectedProgram(v); setSearchQuery(''); setSelectedCourses([]); }}
+                                options={programs.map(p => ({ value: p, label: p }))}
+                                placeholder="Select Program"
+                                className="control-select-wrap"
+                            />
+                        </div>
+                        {selectedProgram && (
+                            <button
+                                onClick={() => { setNewCourseForm(EMPTY_COURSE_FORM); setAddCourseError(''); setIsAddCourseModalOpen(true); }}
+                                className="btn-add-course"
                             >
-                                Preview ({selectedCourses.length})
+                                + New Course
                             </button>
-                        </>
-                    )}
+                        )}
+                    </div>
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="btn-preview"
+                        disabled={selectedCourses.length === 0}
+                    >
+                        Preview ({selectedCourses.length})
+                    </button>
                 </div>
+
+                {/* ── Search bar (shown once courses are loaded) ── */}
+                {courses.length > 0 && (
+                    <div className="course-offer-search">
+                        <svg className="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                            <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+                        </svg>
+                        <input
+                            type="text"
+                            className="course-search-input"
+                            placeholder="Search by course code, version, or title…"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            autoComplete="off"
+                        />
+                        {searchQuery && (
+                            <button className="search-clear-btn" onClick={() => setSearchQuery('')} aria-label="Clear search">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
+                                    <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+                )}
 
                 {filteredCourses.length > 0 ? (
                     <div className="courses-table-wrapper">
@@ -273,13 +277,17 @@ const CourseOfferPage = () => {
                             </p>
                         </div>
                     </div>
-                ) : courses.length > 0 && searchQuery ? (
+                ) : searchQuery && courses.length > 0 ? (
                     <div className="no-results">
-                        <p>No courses found matching &quot;{searchQuery}&quot;</p>
+                        <p>No courses match &ldquo;{searchQuery}&rdquo;</p>
                     </div>
-                ) : courses.length === 0 && selectedProgram ? (
+                ) : selectedProgram && courses.length === 0 ? (
                     <div className="no-results">
-                        <p>No courses available for the selected program.</p>
+                        <p>No courses available for <strong>{selectedProgram}</strong>.</p>
+                    </div>
+                ) : !selectedProgram ? (
+                    <div className="no-results">
+                        <p>Select a program to view its courses.</p>
                     </div>
                 ) : null}
             </main>
