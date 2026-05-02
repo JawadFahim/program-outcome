@@ -24,6 +24,7 @@ const StudentInfoPage = () => {
     const [studentName, setStudentName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [hasSearched, setHasSearched] = useState(false);
 
     useEffect(() => {
         document.body.classList.add('admin-homepage');
@@ -41,6 +42,7 @@ const StudentInfoPage = () => {
         setError('');
         setStudentData([]);
         setStudentName('');
+        setHasSearched(true);
 
         try {
             const res = await fetch(`/api/admin/student?studentId=${studentId}`, { cache: 'no-store' });
@@ -226,15 +228,15 @@ const StudentInfoPage = () => {
                         </div>
                     )}
 
-                    {!loading && studentData.length === 0 && !error && studentId.length > 0 && (
-                         <div className="card message">
-                            <p>No data found for the student ID: {studentId}</p>
+                    {!loading && hasSearched && studentData.length === 0 && !error && (
+                        <div className="card message">
+                            <p>No data found for student ID: <strong>{studentId}</strong></p>
                         </div>
                     )}
 
-                    {!loading && studentData.length === 0 && !error && studentId.length === 0 && (
+                    {!hasSearched && (
                         <div className="card message">
-                            <p>Enter a student ID to see their assessment results.</p>
+                            <p>Enter a student ID above and click <strong>Get Data</strong> to view their assessment results.</p>
                         </div>
                     )}
                 </main>

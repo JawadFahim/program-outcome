@@ -215,8 +215,9 @@ const StudentEntryPage = () => {
     };
 
     return (
+        <>
+        <AdminNavbar page="student-entry" />
         <div className="admin-container">
-            <AdminNavbar page="student-entry" />
             <main>
                 <div className="student-entry-card">
                     <h2>Load Existing Student List</h2>
@@ -391,6 +392,7 @@ const StudentEntryPage = () => {
                 </div>
             )}
         </div>
+        </>
     );
 };
 

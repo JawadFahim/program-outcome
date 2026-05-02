@@ -11,6 +11,7 @@ const AdminLoginPage = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -29,6 +30,7 @@ const AdminLoginPage = () => {
             return;
         }
 
+        setIsLoading(true);
         try {
             const response = await fetch('/api/admin/login', {
                 method: 'POST',
@@ -47,6 +49,8 @@ const AdminLoginPage = () => {
         } catch (err) {
             console.error('Admin login error:', err);
             setError('An unexpected error occurred. Please try again.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -95,7 +99,17 @@ const AdminLoginPage = () => {
                         {error && <p className="error-message">{error}</p>}
 
                         <div className="form-group">
-                            <button type="submit" className="btn-primary">Login</button>
+                            <button type="submit" className="btn-primary" disabled={isLoading}>
+                                {isLoading ? (
+                                    <>
+                                        <svg className="login-spinner" viewBox="0 0 24 24" fill="none">
+                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
+                                            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                                        </svg>
+                                        Verifying...
+                                    </>
+                                ) : 'Login'}
+                            </button>
                         </div>
 
                         <div className="teacher-login-link">

@@ -87,28 +87,31 @@ const AdminHomePage = () => {
         setOpenDropdown(null);
     };
 
-    const handleFetchData = async () => {
+    useEffect(() => {
         if (!selectedSession || !selectedPo) {
-            setError('Please select both a session and a Program Outcome.');
+            setDashboardData([]);
             return;
         }
-        setLoading(true);
-        setError('');
-        setDashboardData([]);
-        try {
-            const res = await fetch(`/api/admin/dashboard?session=${selectedSession}&po_no=${selectedPo}`);
-            if (!res.ok) {
+        const fetchData = async () => {
+            setLoading(true);
+            setError('');
+            setDashboardData([]);
+            try {
+                const res = await fetch(`/api/admin/dashboard?session=${selectedSession}&po_no=${selectedPo}`);
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.message || 'Failed to fetch dashboard data');
+                }
                 const data = await res.json();
-                throw new Error(data.message || 'Failed to fetch dashboard data');
+                setDashboardData(data);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+            } finally {
+                setLoading(false);
             }
-            const data = await res.json();
-            setDashboardData(data);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred.');
-        } finally {
-            setLoading(false);
-        }
-    };
+        };
+        fetchData();
+    }, [selectedSession, selectedPo]);
 
     const generatePdf = () => {
         if (!dashboardData.length || !selectedPo || !selectedSession) return;
@@ -217,9 +220,15 @@ const AdminHomePage = () => {
                                 )}
                             </div>
                         </div>
-                        <button onClick={handleFetchData} className="btn-fetch" disabled={loading}>
-                            {loading ? 'Loading...' : 'Get Data'}
-                        </button>
+                        {loading && (
+                            <div className="dashboard-loading">
+                                <svg className="dashboard-spinner" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.2" />
+                                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                                </svg>
+                                <span>Loading...</span>
+                            </div>
+                        )}
                     </div>
 
                     {error && <p className="message error-message">{error}</p>}
@@ -235,8 +244,6 @@ const AdminHomePage = () => {
                             </button>
                         </div>
                     )}
-
-                    {loading && <p className="message">Loading data...</p>}
 
                     {!loading && dashboardData.length > 0 && (
                     <div className="results-grid">

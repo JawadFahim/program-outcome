@@ -184,8 +184,9 @@ const CourseOfferPage = () => {
     };
 
     return (
+        <>
+        <AdminNavbar page="course-offer" />
         <div className="admin-container">
-            <AdminNavbar page="course-offer" />
             <main>
                 <div className="course-offer-controls">
                     <div className="control-group">
@@ -380,6 +381,7 @@ const CourseOfferPage = () => {
                 </div>
             )}
         </div>
+        </>
     );
 };
 

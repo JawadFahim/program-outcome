@@ -139,6 +139,18 @@ body.admin-login-page {
   border-radius: 6px;
 }
 
+/* Spinner inside login button */
+@keyframes _loginSpin {
+  to { transform: rotate(360deg); }
+}
+
+.login-spinner {
+  width: 16px;
+  height: 16px;
+  animation: _loginSpin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
 /* Link to teacher login */
 .teacher-login-link {
   text-align: center;

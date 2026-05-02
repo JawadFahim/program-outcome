@@ -93,8 +93,7 @@ body.admin-homepage { background-color: var(--vbg); }
 
 /* Primary — dark fill (main CTA) */
 .btn-primary,
-.btn-fetch,
-.btn-preview {
+.btn-fetch {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -116,19 +115,46 @@ body.admin-homepage { background-color: var(--vbg); }
 }
 
 .btn-primary:hover:not(:disabled),
-.btn-fetch:hover:not(:disabled),
-.btn-preview:hover:not(:disabled) { background: #2e2e2e; }
+.btn-fetch:hover:not(:disabled) { background: #2e2e2e; }
 
 .btn-primary:disabled,
-.btn-fetch:disabled,
-.btn-preview:disabled { opacity: 0.38; cursor: not-allowed; }
+.btn-fetch:disabled { opacity: 0.38; cursor: not-allowed; }
 
 .btn-primary:focus-visible,
-.btn-fetch:focus-visible,
-.btn-preview:focus-visible {
+.btn-fetch:focus-visible {
   outline: 2px solid var(--vfocus);
   outline-offset: 2px;
 }
+
+/* Preview button — secondary ghost style; goes dark when items selected */
+.btn-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
+  height: 36px;
+  background: var(--vw);
+  color: var(--vt2);
+  box-shadow: rgb(235, 235, 235) 0px 0px 0px 1px;
+  border: none;
+  border-radius: var(--vr);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: not-allowed;
+  white-space: nowrap;
+  transition: background 0.15s, box-shadow 0.15s, color 0.15s;
+}
+
+.btn-preview:not(:disabled) {
+  background: var(--vk);
+  color: var(--vw);
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.btn-preview:not(:disabled):hover { background: #2e2e2e; }
 
 /* Secondary — ghost with light shadow border */
 .btn-secondary {
@@ -191,13 +217,10 @@ body.admin-homepage { background-color: var(--vbg); }
   margin-bottom: 0.375rem;
 }
 
-/* Shared input / select baseline */
+/* Shared input baseline */
 .form-group input:not([type="checkbox"]),
-.form-group select,
 .form-input,
-.control-select,
-.control-search,
-.select-dropdown {
+.control-search {
   display: block;
   width: 100%;
   height: 36px;
@@ -213,12 +236,38 @@ body.admin-homepage { background-color: var(--vbg); }
   transition: box-shadow 0.15s, outline 0.15s;
 }
 
+/* Native select — styled to match custom dropdowns */
+.form-group select,
+.select-dropdown,
+.control-select {
+  display: block;
+  width: 100%;
+  height: 36px;
+  padding: 0 32px 0 12px;
+  box-shadow: var(--vring);
+  border: none;
+  border-radius: var(--vr);
+  background-color: var(--vw);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='%23666666'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--vt1);
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: box-shadow 0.15s, outline 0.15s;
+}
+
 .form-group input:not([type="checkbox"]):focus,
-.form-group select:focus,
 .form-input:focus,
-.control-select:focus,
 .control-search:focus,
-.select-dropdown:focus {
+.form-group select:focus,
+.select-dropdown:focus,
+.control-select:focus {
   outline: 2px solid var(--vfocus);
   outline-offset: 0;
   box-shadow: none;
@@ -226,6 +275,9 @@ body.admin-homepage { background-color: var(--vbg); }
 
 .form-group input::placeholder,
 .control-search::placeholder { color: var(--vt3); }
+
+/* Unset width override for control-select (has its own min-width) */
+.control-select { width: auto; }
 
 /* Select row helpers */
 .select-group {
@@ -993,6 +1045,28 @@ body.admin-homepage { background-color: var(--vbg); }
   text-align: center;
   font-size: 0.875rem;
   color: var(--vt3);
+}
+
+/* ================================================================
+   INLINE LOADING SPINNER (dashboard filter area)
+   ================================================================ */
+
+@keyframes _vSpin { to { transform: rotate(360deg); } }
+
+.dashboard-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--vt2);
+  margin-left: auto;
+}
+
+.dashboard-spinner {
+  width: 18px;
+  height: 18px;
+  animation: _vSpin 0.75s linear infinite;
+  flex-shrink: 0;
 }
 
 /* ================================================================
