@@ -1,5 +1,5 @@
 // src/pages/admin/course-offer.tsx
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import AdminNavbar from '../../components/admin/AdminNavbar';
 import CustomSelect from '../../components/admin/CustomSelect';
 import '../../styles/admin/homepage.css';
@@ -88,14 +88,15 @@ const CourseOfferPage = () => {
         }
     }, [selectedProgram]);
     
-    const filteredCourses = useMemo(() => {
-        const query = searchQuery.toLowerCase().trim();
-        if (!query) return courses;
-        return courses.filter(course => {
-            const text = `${course.courseCode} ${course.versionCode} ${course.courseTitle}`.toLowerCase();
-            return query.split(/\s+/).every(term => text.includes(term));
-        });
-    }, [searchQuery, courses]);
+    // Computed inline — no memoisation to avoid stale-closure issues with React 18.
+    const q = searchQuery.toLowerCase().trim();
+    const filteredCourses = q
+        ? courses.filter(c =>
+              `${c.courseCode ?? ''} ${c.versionCode ?? ''} ${c.courseTitle ?? ''}`
+                  .toLowerCase()
+                  .includes(q)
+          )
+        : courses;
 
     const handleCourseSelection = (course: Course, isSelected: boolean) => {
         if (isSelected) {
@@ -252,7 +253,7 @@ const CourseOfferPage = () => {
                             </thead>
                             <tbody>
                                 {filteredCourses.map((course, index) => (
-                                    <tr key={`${course.courseCode}-${course.versionCode}`}>
+                                    <tr key={`${course.courseCode}-${course.versionCode}-${index}`}>
                                         <td>{index + 1}</td>
                                         <td>
                                             <input
