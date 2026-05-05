@@ -2,7 +2,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getTeacherIdFromAuth, removeAuthTokenCookie } from '../lib/jwt';
-import Layout from '../components/Layout';
+import TeacherDashboardLayout from '../components/teacher/TeacherDashboardLayout';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PieChart from '../components/PieChart';
@@ -268,13 +268,30 @@ const ScoreSummaryPage = () => {
 
     const courseDisplayName = courses.find(c => c.course_id === selectedCourse)?.courseName || selectedCourse;
 
+    const breadcrumbs =
+        selectedCourse && selectedSession ? (
+            <>
+                <span className="font-semibold text-[#7928ca]">BUP OBE System</span>
+                <span className="mx-2 text-[#cbd5e1]" aria-hidden>/</span>
+                <span className="text-[#475569]">Course: {courseDisplayName}</span>
+                <span className="mx-2 text-[#cbd5e1]" aria-hidden>/</span>
+                <span className="text-[#475569]">Session: {selectedSession}</span>
+            </>
+        ) : (
+            <>
+                <span className="font-semibold text-[#7928ca]">BUP OBE System</span>
+                <span className="mx-2 text-[#cbd5e1]" aria-hidden>/</span>
+                <span className="text-[#475569]">Score summary</span>
+            </>
+        );
+
     return (
-        <Layout teacherName={teacherName} onLogout={handleLogout} page="summary" title="Score Summary">
+        <>
             <Head>
                 <title>Final Score Summary</title>
             </Head>
-
-            <main className="container">
+            <TeacherDashboardLayout teacherName={teacherName} onLogout={handleLogout} activePage="summary" breadcrumbs={breadcrumbs}>
+            <div className="container">
                 <div className="card">
                     <div className="dropdown-grid">
                         <div className="dropdown-item">
@@ -433,8 +450,9 @@ const ScoreSummaryPage = () => {
                          <p>No score data found for the selected course.</p>
                      </div>
                  )}
-            </main>
-        </Layout>
+            </div>
+            </TeacherDashboardLayout>
+        </>
     );
 };
 

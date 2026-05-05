@@ -2,7 +2,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react';
 import { getTeacherIdFromAuth, removeAuthTokenCookie } from '../lib/jwt';
-import Layout from '../components/Layout';
+import TeacherDashboardLayout from '../components/teacher/TeacherDashboardLayout';
 import { SkeletonTable } from '../components/Skeleton';
 
 // --- Interfaces ---
@@ -574,15 +574,38 @@ const AssessmentScorePage = () => {
     const allAssessmentTypes = ['quiz', 'midterm', 'assignment', 'final'];
     const canAddNew = savedAssessmentTypes.length > 0 && savedAssessmentTypes.length < allAssessmentTypes.length;
 
+    const breadcrumbs =
+        selectedCourse && selectedSession ? (
+            <>
+                <span className="font-semibold text-[#7928ca]">BUP OBE System</span>
+                <span className="mx-2 text-[#cbd5e1]" aria-hidden>
+                    /
+                </span>
+                <span className="text-[#475569]">
+                    Course: {courses.find((c) => c.course_id === selectedCourse)?.courseName ?? selectedCourse}
+                </span>
+                <span className="mx-2 text-[#cbd5e1]" aria-hidden>
+                    /
+                </span>
+                <span className="text-[#475569]">Session: {selectedSession}</span>
+            </>
+        ) : (
+            <>
+                <span className="font-semibold text-[#7928ca]">BUP OBE System</span>
+                <span className="mx-2 text-[#cbd5e1]" aria-hidden>
+                    /
+                </span>
+                <span className="text-[#475569]">Assessment scores</span>
+            </>
+        );
 
     return (
-        <Layout teacherName={teacherName} onLogout={handleLogout} page="assessment" title="Assessment Score">
+        <>
             <Head>
                 <title>Assessment Score Entry</title>
             </Head>
-            
-            <div className="container">
-                <main>
+            <TeacherDashboardLayout teacherName={teacherName} onLogout={handleLogout} activePage="assessment" breadcrumbs={breadcrumbs}>
+                <div className="container">
                     <div className="card">
                         <div className="dropdown-grid">
                             <div className="dropdown-item">
@@ -893,7 +916,7 @@ const AssessmentScorePage = () => {
                             <p>Please select course, session, and objective to view or enter scores.</p>
                         </div>
                     )}
-                </main>
+                </div>
 
                 <div 
                     id="notificationToast" 
@@ -904,8 +927,8 @@ const AssessmentScorePage = () => {
                 >
                     <p>{toastMessage}</p>
                 </div>
-            </div>
-        </Layout>
+            </TeacherDashboardLayout>
+        </>
     );
 };
 

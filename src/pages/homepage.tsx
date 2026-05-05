@@ -396,12 +396,12 @@ const HomePage = () => {
                         }));
                         setCourseObjectives(loadedObjectives);
                     } else {
-                        createObjectiveBlock();
+                        setCourseObjectives([]);
                     }
                 } catch (error) {
                     console.error('Failed to load course objectives:', error);
                     showToast('Could not load existing course objectives.', 'error');
-                    createObjectiveBlock();
+                    setCourseObjectives([]);
                 } finally {
                     setIsLoadingObjectives(false);
                 }
@@ -411,13 +411,7 @@ const HomePage = () => {
         };
 
         fetchObjectives();
-    }, [selectedCourse, selectedSession, teacherId, createObjectiveBlock]);
-
-    useEffect(() => {
-        if (selectedCourse && selectedSession && !isLoadingObjectives && courseObjectives.length === 0) {
-            createObjectiveBlock();
-        }
-    }, [selectedCourse, selectedSession, courseObjectives, isLoadingObjectives, createObjectiveBlock]);
+    }, [selectedCourse, selectedSession, teacherId]);
 
     const getCourseLabel = (value: string): string => {
         const course = courses.find((c) => c.course_id === value);
@@ -601,10 +595,6 @@ const HomePage = () => {
     };
 
     const handleRemoveObjective = (blockId: string) => {
-        if (courseObjectives.length <= 1) {
-            showToast('At least one course objective is required.', 'warning');
-            return;
-        }
         showModal(
             'Confirm Removal',
             'Are you sure you want to remove this course objective?',
@@ -688,7 +678,7 @@ const HomePage = () => {
                         {openSelects[`po-${obj.id}`] && (
                             <ul className="absolute z-[80] mt-1 max-h-56 w-full overflow-auto rounded-lg bg-white py-1 shadow-[0px_8px_24px_-8px_rgba(15,23,42,0.25),0px_0px_0px_1px_rgba(0,0,0,0.08)]">
                                 <li
-                                    className="cursor-pointer px-3 py-2 text-sm hover:bg-[#f8fafc]"
+                                    className="cursor-pointer px-3 py-2 text-sm transition-colors hover:bg-[#ede9fe] hover:text-[#5b21b6]"
                                     onClick={() => handleObjectiveChange(obj.id, 'programOutcome', '')}
                                 >
                                     -- Select PO --
@@ -696,7 +686,7 @@ const HomePage = () => {
                                 {BICE_PROGRAM_OUTCOMES.map((outcome, i) => (
                                     <li
                                         key={`po-${i}`}
-                                        className={`cursor-pointer px-3 py-2 text-sm hover:bg-[#f8fafc] ${
+                                        className={`cursor-pointer px-3 py-2 text-sm transition-colors hover:bg-[#ede9fe] hover:text-[#5b21b6] ${
                                             obj.programOutcome === `PO${i + 1}` ? 'bg-[#ede9fe] font-semibold text-[#5b21b6]' : ''
                                         }`}
                                         onClick={() => handleObjectiveChange(obj.id, 'programOutcome', `PO${i + 1}`)}
@@ -734,7 +724,7 @@ const HomePage = () => {
                                             {domain.split(' ')[0]}
                                         </div>
                                         {levels.map((level) => (
-                                            <label key={level.code} className="flex cursor-pointer items-center gap-2 px-2 py-1 text-sm hover:bg-[#f8fafc]">
+                                            <label key={level.code} className="flex cursor-pointer items-center gap-2 px-2 py-1 text-sm transition-colors hover:bg-[#ede9fe] hover:text-[#5b21b6]">
                                                 <input
                                                     type="checkbox"
                                                     checked={obj.bloomsTaxonomy.includes(level.code)}
@@ -770,7 +760,7 @@ const HomePage = () => {
                         {openDropdowns[`${obj.id}-knowledge`] && (
                             <div className="absolute left-0 right-0 z-[80] mt-1 max-h-56 overflow-auto rounded-lg bg-white p-2 shadow-[0px_8px_24px_-8px_rgba(15,23,42,0.25),0px_0px_0px_1px_rgba(0,0,0,0.08)]">
                                 {KNOWLEDGE_PROFILE.map((k) => (
-                                    <label key={k.code} className="flex cursor-pointer items-center gap-2 px-2 py-1 text-sm hover:bg-[#f8fafc]" title={k.text}>
+                                    <label key={k.code} className="flex cursor-pointer items-center gap-2 px-2 py-1 text-sm transition-colors hover:bg-[#ede9fe] hover:text-[#5b21b6]" title={k.text}>
                                         <input
                                             type="checkbox"
                                             checked={obj.knowledgeProfile.includes(k.code)}
@@ -802,7 +792,7 @@ const HomePage = () => {
                         {openDropdowns[`${obj.id}-problem`] && (
                             <div className="absolute left-0 right-0 z-[80] mt-1 max-h-56 overflow-auto rounded-lg bg-white p-2 shadow-[0px_8px_24px_-8px_rgba(15,23,42,0.25),0px_0px_0px_1px_rgba(0,0,0,0.08)]">
                                 {COMPLEX_ENGINEERING_PROBLEM.map((p) => (
-                                    <label key={p.code} className="flex cursor-pointer items-center gap-2 px-2 py-1 text-sm hover:bg-[#f8fafc]" title={p.text}>
+                                    <label key={p.code} className="flex cursor-pointer items-center gap-2 px-2 py-1 text-sm transition-colors hover:bg-[#ede9fe] hover:text-[#5b21b6]" title={p.text}>
                                         <input
                                             type="checkbox"
                                             checked={obj.complexEngineeringProblem.includes(p.code)}
@@ -834,7 +824,7 @@ const HomePage = () => {
                         {openDropdowns[`${obj.id}-activity`] && (
                             <div className="absolute left-0 right-0 z-[80] mt-1 max-h-56 overflow-auto rounded-lg bg-white p-2 shadow-[0px_8px_24px_-8px_rgba(15,23,42,0.25),0px_0px_0px_1px_rgba(0,0,0,0.08)]">
                                 {COMPLEX_ENGINEERING_ACTIVITY.map((a) => (
-                                    <label key={a.code} className="flex cursor-pointer items-center gap-2 px-2 py-1 text-sm hover:bg-[#f8fafc]" title={a.text}>
+                                    <label key={a.code} className="flex cursor-pointer items-center gap-2 px-2 py-1 text-sm transition-colors hover:bg-[#ede9fe] hover:text-[#5b21b6]" title={a.text}>
                                         <input
                                             type="checkbox"
                                             checked={obj.complexEngineeringActivity.includes(a.code)}
@@ -908,7 +898,7 @@ const HomePage = () => {
                                     <button
                                         id="courseSelector"
                                         type="button"
-                                        className={`flex w-full items-center justify-between rounded-lg bg-[#fafafa] px-3 py-2.5 text-left text-sm shadow-[0px_0px_0px_1px_rgba(0,0,0,0.08)] ${
+                                        className={`flex w-full items-center justify-between rounded-lg bg-[#fafafa] px-3 py-2.5 text-left text-sm shadow-[0px_0px_0px_1px_rgba(0,0,0,0.08)] transition-[box-shadow,border-color] hover:shadow-[0px_0px_0px_2px_rgba(121,40,202,0.35)] ${
                                             courses.length === 0 ? 'cursor-not-allowed opacity-60' : ''
                                         }`}
                                         onClick={() => courses.length && toggleSelect('course')}
@@ -928,8 +918,8 @@ const HomePage = () => {
                                             {Array.from(new Map(courses.map((course) => [course.course_id, course])).values()).map((course) => (
                                                 <li
                                                     key={course.course_id}
-                                                    className={`cursor-pointer px-3 py-2 text-sm hover:bg-[#f8fafc] ${
-                                                        selectedCourse === course.course_id ? 'bg-[#d1fae5] font-semibold text-[#065f46]' : ''
+                                                    className={`cursor-pointer px-3 py-2 text-sm transition-colors hover:bg-[#ede9fe] hover:text-[#5b21b6] ${
+                                                        selectedCourse === course.course_id ? 'bg-[#d1fae5] font-semibold text-[#065f46] hover:bg-[#a7f3d0] hover:text-[#065f46]' : ''
                                                     }`}
                                                     onClick={() => handleCourseSelectionChange(course.course_id)}
                                                 >
@@ -949,7 +939,7 @@ const HomePage = () => {
                                     <button
                                         id="sessionSelector"
                                         type="button"
-                                        className={`flex w-full items-center justify-between rounded-lg bg-[#fafafa] px-3 py-2.5 text-left text-sm shadow-[0px_0px_0px_1px_rgba(0,0,0,0.08)] ${
+                                        className={`flex w-full items-center justify-between rounded-lg bg-[#fafafa] px-3 py-2.5 text-left text-sm shadow-[0px_0px_0px_1px_rgba(0,0,0,0.08)] transition-[box-shadow] hover:shadow-[0px_0px_0px_2px_rgba(121,40,202,0.35)] ${
                                             !selectedCourse || sessions.length === 0 ? 'cursor-not-allowed opacity-60' : ''
                                         }`}
                                         onClick={() => selectedCourse && sessions.length && toggleSelect('session')}
@@ -965,7 +955,7 @@ const HomePage = () => {
                                     {openSelects.session && selectedCourse && (
                                         <ul className="absolute z-[60] mt-1 max-h-56 w-full overflow-auto rounded-lg bg-white py-1 shadow-[0px_8px_24px_-8px_rgba(15,23,42,0.25),0px_0px_0px_1px_rgba(0,0,0,0.08)]">
                                             <li
-                                                className={`cursor-pointer px-3 py-2 text-sm hover:bg-[#f8fafc] ${selectedSession === '' ? 'bg-[#ede9fe]' : ''}`}
+                                                className={`cursor-pointer px-3 py-2 text-sm transition-colors hover:bg-[#ede9fe] hover:text-[#5b21b6] ${selectedSession === '' ? 'bg-[#ede9fe] font-medium text-[#5b21b6]' : ''}`}
                                                 onClick={() => handleSessionChange('')}
                                             >
                                                 — Choose session —
@@ -973,8 +963,8 @@ const HomePage = () => {
                                             {sessions.map((session) => (
                                                 <li
                                                     key={session}
-                                                    className={`cursor-pointer px-3 py-2 text-sm hover:bg-[#f8fafc] ${
-                                                        selectedSession === session ? 'bg-[#d1fae5] font-semibold text-[#065f46]' : ''
+                                                    className={`cursor-pointer px-3 py-2 text-sm transition-colors hover:bg-[#ede9fe] hover:text-[#5b21b6] ${
+                                                        selectedSession === session ? 'bg-[#d1fae5] font-semibold text-[#065f46] hover:bg-[#a7f3d0] hover:text-[#065f46]' : ''
                                                     }`}
                                                     onClick={() => handleSessionChange(session)}
                                                 >
@@ -1029,7 +1019,7 @@ const HomePage = () => {
                                         onClick={() => createObjectiveBlock({ openModal: true })}
                                         className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#10b981] bg-white px-4 py-2 text-sm font-semibold text-[#047857] shadow-[0px_0px_0px_1px_rgba(16,185,129,0.25)] hover:bg-[#ecfdf5]"
                                     >
-                                        + Add CO
+                                        Add course objective
                                     </button>
                                 </div>
 
@@ -1037,6 +1027,11 @@ const HomePage = () => {
                                     {isLoadingObjectives ? (
                                         <div className="px-2 py-4">
                                             <SkeletonTable rows={4} cols={8} />
+                                        </div>
+                                    ) : courseObjectives.length === 0 ? (
+                                        <div className="px-4 py-12 text-center text-sm text-[#64748b]">
+                                            No course objectives found for this course and session. Use{' '}
+                                            <span className="font-semibold text-[#7928ca]">Add course objective</span> to create one.
                                         </div>
                                     ) : (
                                         <table className="min-w-[1100px] w-full border-separate border-spacing-0 text-left text-sm">
@@ -1188,8 +1183,7 @@ const HomePage = () => {
                                                                     </button>
                                                                     <button
                                                                         type="button"
-                                                                        className="rounded-lg px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40"
-                                                                        disabled={courseObjectives.length <= 1}
+                                                                        className="rounded-lg px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
                                                                         onClick={() => handleRemoveObjective(obj.id)}
                                                                     >
                                                                         Delete
@@ -1249,6 +1243,10 @@ const HomePage = () => {
                                         <button
                                             type="button"
                                             onClick={() => {
+                                                if (courseObjectives.length === 0) {
+                                                    showToast('Add a course objective to begin.', 'warning');
+                                                    return;
+                                                }
                                                 const target = courseObjectives.find((o) => !o.description.trim() || !o.programOutcome);
                                                 if (target) setObjectiveModalId(target.id);
                                                 else showToast('Everything looks complete. Save when ready.', 'success');
@@ -1261,11 +1259,11 @@ const HomePage = () => {
                                 </div>
                             </section>
 
-                            <div className="sticky bottom-4 z-20 flex flex-col gap-3 rounded-xl border border-black/[0.06] bg-white/95 p-4 shadow-[0px_8px_30px_-12px_rgba(15,23,42,0.35)] backdrop-blur sm:flex-row sm:justify-end">
+                            <div className="sticky bottom-4 z-[1020] flex flex-row flex-wrap items-center justify-end gap-3 rounded-xl border border-black/[0.06] bg-white/95 p-4 shadow-[0px_8px_30px_-12px_rgba(15,23,42,0.35)] backdrop-blur max-sm:pr-4 sm:pr-[220px]">
                                 <button
                                     type="button"
                                     onClick={handleDiscardChanges}
-                                    className="inline-flex flex-1 items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-[#475569] shadow-[0px_0px_0px_1px_rgba(0,0,0,0.08)] hover:bg-[#f8fafc] sm:flex-none"
+                                    className="inline-flex shrink-0 items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-[#475569] shadow-[0px_0px_0px_1px_rgba(0,0,0,0.08)] transition-colors hover:border-[#7928ca]/30 hover:bg-[#faf5ff]"
                                 >
                                     Discard changes
                                 </button>
@@ -1273,7 +1271,7 @@ const HomePage = () => {
                                     type="button"
                                     onClick={handleSaveAllObjectives}
                                     disabled={isSaving}
-                                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#1e293b] px-5 py-2.5 text-sm font-semibold text-white shadow-[0px_0px_0px_1px_rgba(0,0,0,0.08)] hover:bg-[#0f172a] disabled:opacity-60 sm:flex-none"
+                                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-[#1e293b] px-5 py-2.5 text-sm font-semibold text-white shadow-[0px_0px_0px_1px_rgba(0,0,0,0.08)] transition-colors hover:bg-[#0f172a] disabled:opacity-60"
                                 >
                                     {isSaving ? 'Saving…' : 'Save changes'}
                                 </button>
@@ -1312,7 +1310,7 @@ const HomePage = () => {
                                 </div>
                                 <button
                                     type="button"
-                                    className="rounded-lg p-2 text-[#64748b] hover:bg-[#f8fafc]"
+                                    className="rounded-lg p-2 text-[#64748b] transition-colors hover:bg-[#ede9fe] hover:text-[#5b21b6]"
                                     onClick={() => setObjectiveModalId(null)}
                                     aria-label="Close"
                                 >
@@ -1324,8 +1322,7 @@ const HomePage = () => {
                                 <div className="flex gap-2">
                                     <button
                                         type="button"
-                                        className="rounded-lg px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40"
-                                        disabled={courseObjectives.length <= 1}
+                                        className="rounded-lg px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
                                         onClick={() => handleRemoveObjective(modalObjective.id)}
                                     >
                                         Delete CO

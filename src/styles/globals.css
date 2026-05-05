@@ -1097,8 +1097,15 @@ input[type=number] {
     text-overflow: ellipsis;
 }
 
-.custom-select-option:hover {
-    background-color: #f3f4f6;
+.custom-select-toggle:not(.disabled):hover {
+    border-color: #7928ca;
+    box-shadow: 0 0 0 1px rgba(121, 40, 202, 0.28), 0 0 0 3px rgba(121, 40, 202, 0.12);
+}
+
+.custom-select-option:hover:not(.selected) {
+    background-color: #ede9fe;
+    color: #5b21b6;
+    font-weight: 500;
 }
 
 .custom-select-option.selected {
